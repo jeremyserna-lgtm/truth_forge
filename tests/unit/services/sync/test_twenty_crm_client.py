@@ -624,3 +624,77 @@ class TestTwentyCRMClient:
         with TwentyCRMClient(secret_service=mock_secret_service) as client:
             assert client is not None
             assert client.secret_service == mock_secret_service
+    
+    def test_list_contacts_unexpected_data_format(
+        self, mock_secret_service: Mock, mock_settings: None, mock_requests: Dict[str, Mock]
+    ) -> None:
+        """Test list_contacts with unexpected data format."""
+        mock_response = create_mock_response(json_data="unexpected_string")
+        mock_requests["get"].return_value = mock_response
+        
+        client = TwentyCRMClient(secret_service=mock_secret_service)
+        result = client.list_contacts()
+        
+        assert result == []
+    
+    def test_list_contacts_dict_single_item(
+        self, mock_secret_service: Mock, mock_settings: None, mock_requests: Dict[str, Mock]
+    ) -> None:
+        """Test list_contacts with 'people' key containing a dict (not list)."""
+        # When result is a dict with 'people' key that is also a dict (not list)
+        mock_response = create_mock_response(json_data={"people": {"id": "crm_1", "name": "Test"}})
+        mock_requests["get"].return_value = mock_response
+        
+        client = TwentyCRMClient(secret_service=mock_secret_service)
+        result = client.list_contacts()
+        
+        # Should wrap single dict in list
+        assert len(result) == 1
+        assert result[0]["id"] == "crm_1"
+    
+    def test_create_contact_nested_id_extraction(
+        self, mock_secret_service: Mock, mock_settings: None, mock_requests: Dict[str, Mock]
+    ) -> None:
+        """Test create_contact with nested ID extraction."""
+        mock_response = create_mock_response(
+            json_data={"data": {"createPerson": {"id": "crm_123"}}}
+        )
+        mock_requests["post"].return_value = mock_response
+        
+        client = TwentyCRMClient(secret_service=mock_secret_service)
+        contact_data = {"name": {"firstName": "Test"}}
+        
+        result = client.create_contact(contact_data)
+        
+        assert result["id"] == "crm_123"
+    
+    def test_upsert_contact_with_email_phone_update(
+        self, mock_secret_service: Mock, mock_settings: None, mock_requests: Dict[str, Mock]
+    ) -> None:
+        """Test upsert_contact with email and phone update."""
+        # First call: get_contact finds existing
+        get_response = create_mock_response(
+            json_data={"id": "crm_existing", "customFields": {"contact_id": "bq_123"}}
+        )
+        # Second call: update_contact
+        update_response = create_mock_response(
+            json_data={"id": "crm_existing", "name": "Updated"}
+        )
+        # Third call: _update_contact_identifiers (PATCH)
+        patch_response = create_mock_response(json_data={"id": "crm_existing"})
+        
+        mock_requests["get"].side_effect = [get_response]
+        mock_requests["patch"].side_effect = [update_response, patch_response]
+        
+        client = TwentyCRMClient(secret_service=mock_secret_service)
+        contact_data = {
+            "customFields": {"contact_id": "bq_123"},
+            "email": "test@example.com",
+            "phone": "+1234567890",
+        }
+        
+        result = client.upsert_contact(contact_data)
+        
+        assert result["id"] == "crm_existing"
+        # Should have called patch twice (update + identifiers)
+        assert mock_requests["patch"].call_count == 2

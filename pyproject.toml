@@ -117,6 +117,7 @@ dev = [
     "pytest-cov>=4.0.0",
     "mypy>=1.8.0",
     "ruff>=0.4.0",
+    "tenacity>=8.0.0",
 ]
 
 [tool.uv.workspace]
@@ -157,7 +158,7 @@ include = [
 [tool.ruff]
 target-version = "py311"
 line-length = 100
-src = ["src", "tests"]
+src = ["src", "tests", "pipelines"]
 
 [tool.ruff.lint]
 select = [
@@ -204,6 +205,7 @@ lines-after-imports = 2
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["PLR2004", "S101"]  # Allow asserts and magic values in tests
 "__init__.py" = ["F401"]  # Allow unused imports in __init__.py
+"pipelines/enrichment/**/*.py" = ["PLC0415", "PLR0911", "TC002"]  # Lazy imports; multiple returns; bigquery at runtime
 
 [tool.ruff.format]
 quote-style = "double"
@@ -238,6 +240,23 @@ module = [
     "mcp.*",
     "spacy.*",
     "structlog.*",
+]
+ignore_missing_imports = true
+
+# Enrichment pipeline optional NLP/ML deps (no stubs)
+[[tool.mypy.overrides]]
+module = [
+    "textblob.*",
+    "textstat",
+    "nrclex.*",
+    "transformers.*",
+    "torch.*",
+    "keybert.*",
+    "sentence_transformers.*",
+    "bertopic.*",
+    "hdbscan.*",
+    "sklearn.*",
+    "google.generativeai.*",
 ]
 ignore_missing_imports = true
 
