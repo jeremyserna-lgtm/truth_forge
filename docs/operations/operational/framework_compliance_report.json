@@ -1,0 +1,14 @@
+{
+  "timestamp": "2026-01-07T23:58:19.345558+00:00",
+  "run_id": "run_589eeed7",
+  "summary": {
+    "total_components": 0,
+    "compliant": 0,
+    "non_compliant": 0,
+    "by_type": {},
+    "by_phase": {}
+  },
+  "compliant_components": [],
+  "non_compliant_components": [],
+  "issues": {}
+}

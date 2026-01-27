@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "truth-forge-mcp"
+version = "2.0.0"
+description = "MCP Server for Truth Forge"
+requires-python = ">=3.12"
+dependencies = [
+    "mcp>=1.0.0",
+    "duckdb>=0.10.0",
+    "google-cloud-bigquery>=3.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "mypy>=1.0",
+    "pytest>=8.0",
+    "ruff>=0.4",
+]
+
+[project.scripts]
+truth-forge-mcp = "truth_forge_mcp.server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/truth_forge_mcp"]
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]

@@ -1,0 +1,203 @@
+# Claude Code Pipeline Configuration
+# Universal 16-Stage Pipeline Pattern Implementation
+
+[pipeline]
+name = "claude_code"
+version = "2.0.0"
+description = "Process Claude Code session exports through the Universal 16-Stage Pipeline"
+source_name = "claude_code"
+target_table = "spine.entity_unified"
+pattern = "universal_16_stage"
+
+[bigquery]
+project_id = "${BIGQUERY_PROJECT_ID:flash-clover-464719-g1}"
+dataset_id = "${BIGQUERY_DATASET:spine}"
+location = "US"
+
+[source]
+type = "jsonl"
+path = "~/.claude-code/sessions"
+pattern = "*.jsonl"
+encoding = "utf-8"
+
+[stages]
+# Phase 1: Ingestion
+[stages.stage_0]
+name = "assessment"
+type = "assessment"
+input = "source"
+output = "report"
+script = "stage_0/claude_code_stage_0.py"
+
+[stages.stage_1]
+name = "extraction"
+type = "extraction"
+input = "source"
+output = "claude_code_stage_1"
+script = "stage_1/claude_code_stage_1.py"
+batch_size = 1000
+
+[stages.stage_2]
+name = "cleaning"
+type = "cleaning"
+input = "claude_code_stage_1"
+output = "claude_code_stage_2"
+script = "stage_2/claude_code_stage_2.py"
+batch_size = 1000
+
+[stages.stage_3]
+name = "identity_gate"
+type = "identity"
+input = "claude_code_stage_2"
+output = "claude_code_stage_3"
+script = "stage_3/claude_code_stage_3.py"
+batch_size = 1000
+uses_identity_service = true
+
+[stages.stage_4]
+name = "staging"
+type = "staging"
+input = "claude_code_stage_3"
+output = "claude_code_stage_4"
+script = "stage_4/claude_code_stage_4.py"
+batch_size = 1000
+
+# Phase 2: Entity Creation
+[stages.stage_5]
+name = "l1_tokens"
+type = "entity_creation"
+level = 1
+input = "claude_code_stage_4"
+output = "claude_code_stage_5"
+script = "stage_5/claude_code_stage_5.py"
+batch_size = 10000
+model = "spacy:en_core_web_sm"
+
+[stages.stage_6]
+name = "l3_sentences"
+type = "entity_creation"
+level = 3
+input = "claude_code_stage_4"
+output = "claude_code_stage_6"
+script = "stage_6/claude_code_stage_6.py"
+batch_size = 5000
+model = "spacy:en_core_web_sm"
+
+[stages.stage_7]
+name = "l5_messages"
+type = "entity_creation"
+level = 5
+input = "claude_code_stage_4"
+output = "claude_code_stage_7"
+script = "stage_7/claude_code_stage_7.py"
+batch_size = 5000
+
+[stages.stage_8]
+name = "l8_conversations"
+type = "entity_creation"
+level = 8
+input = "claude_code_stage_7"
+output = "claude_code_stage_8"
+script = "stage_8/claude_code_stage_8.py"
+batch_size = 1000
+
+# Phase 3: Enrichment
+[stages.stage_9]
+name = "embeddings"
+type = "enrichment"
+input = "claude_code_stage_7"
+output = "claude_code_stage_9"
+script = "stage_9/claude_code_stage_9.py"
+batch_size = 1000
+model = "text-embedding-004"
+dimension = 768
+
+[stages.stage_10]
+name = "llm_extraction"
+type = "enrichment"
+input = "claude_code_stage_7"
+output = "claude_code_stage_10"
+script = "stage_10/claude_code_stage_10.py"
+batch_size = 500
+model = "gemini-2.0-flash"
+cost_per_1k_tokens = 0.00015
+
+[stages.stage_11]
+name = "sentiment"
+type = "enrichment"
+input = "claude_code_stage_6"
+output = "claude_code_stage_11"
+script = "stage_11/claude_code_stage_11.py"
+batch_size = 64
+model = "SamLowe/roberta-base-go_emotions"
+threshold = 0.3
+
+[stages.stage_12]
+name = "topics"
+type = "enrichment"
+input = "claude_code_stage_7"
+output = "claude_code_stage_12"
+script = "stage_12/claude_code_stage_12.py"
+batch_size = 1000
+model = "all-MiniLM-L6-v2"
+top_n = 10
+
+[stages.stage_13]
+name = "relationships"
+type = "enrichment"
+input = ["claude_code_stage_6", "claude_code_stage_7", "claude_code_stage_8"]
+output = "claude_code_stage_13"
+script = "stage_13/claude_code_stage_13.py"
+batch_size = 5000
+
+# Phase 4: Finalization
+[stages.stage_14]
+name = "aggregation"
+type = "aggregation"
+input = ["claude_code_stage_7", "claude_code_stage_9", "claude_code_stage_10", "claude_code_stage_11", "claude_code_stage_12"]
+output = "claude_code_stage_14"
+script = "stage_14/claude_code_stage_14.py"
+batch_size = 10000
+
+[stages.stage_15]
+name = "validation"
+type = "validation"
+input = "claude_code_stage_14"
+output = "claude_code_stage_15"
+script = "stage_15/claude_code_stage_15.py"
+strict_mode = false
+
+[stages.stage_16]
+name = "promotion"
+type = "promotion"
+input = "claude_code_stage_15"
+output = "spine.entity_unified"
+script = "stage_16/claude_code_stage_16.py"
+include_warnings = true
+
+[entity_levels]
+token = 1
+sentence = 3
+message = 5
+conversation = 8
+
+[models]
+embedding = "text-embedding-004"
+llm = "gemini-2.0-flash"
+sentiment = "SamLowe/roberta-base-go_emotions"
+topics = "all-MiniLM-L6-v2"
+tokenizer = "spacy:en_core_web_sm"
+
+[governance]
+use_central_logging = true
+use_pipeline_tracker = true
+use_identity_service = true
+use_governance_policies = true
+require_diagnostic_on_error = true
+
+[framework_alignment]
+hold_pattern = true
+stage_five_grounding = true
+furnace_principle = true
+blind_spots_documented = true
+definition_of_done = true

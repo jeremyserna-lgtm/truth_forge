@@ -1,0 +1,601 @@
+#!/usr/bin/env python3
+"""
+Stage 0: Message Extraction - Claude Code/Codex/Github Pipeline
+
+HOLD₁ (JSONL source files) → AGENT (Message Extractor) → HOLD₂ (BigQuery claude_code_stage_0)
+
+Extracts messages from raw JSONL export files for Claude Code, Codex, and Github sources.
+Saves extracted messages to BigQuery for downstream processing.
+NOTE: entity_unified is the FINAL DESTINATION, not the source. This pipeline processes raw source files.
+
+🧠 STAGE FIVE GROUNDING
+This stage exists to extract structured message data from TruthService for Claude Code, Codex, and Github integrations.
+
+Structure: HOLD₁ (JSONL source files) → AGENT (Parse & Extract) → HOLD₂ (BigQuery messages table)
+Purpose: Extract messages from raw JSONL exports for processing
+Boundaries: Reads from JSONL files, writes to dedicated messages table
+Control: On-demand execution, user-controlled processing
+
+⚠️ WHAT THIS STAGE CANNOT SEE
+- Real-time external state
+- User intent beyond extraction scope
+- System state beyond service boundaries
+
+🔥 THE FURNACE PRINCIPLE
+- Truth (input): Message data from entity_unified table
+- Heat (processing): Filter by source, extract message-level data
+- Meaning (output): Structured messages in BigQuery for analysis
+- Care (delivery): User-protected outputs with error handling, cost controls, and actionable insights
+
+CANONICAL SPECIFICATION ALIGNMENT:
+==================================
+This script follows the canonical Stage 0 specification for the Claude Code/Codex/Github Pipeline.
+
+RATIONALE:
+----------
+- Raw JSONL export files contain Claude Code, Codex, and Github conversation data
+- Stage 0 parses JSONL files and extracts message-level data (level 5)
+- Extracted messages are saved to BigQuery for downstream processing
+- Final destination is entity_unified (written by final stage, not this one)
+
+Enterprise Governance Standards:
+- Uses central services for logging with traceability
+- Uses PipelineTracker for execution monitoring
+- All operations follow universal governance policies
+- Comprehensive error handling and validation
+- Full audit trail for all operations
+- Cost protection for BigQuery operations
+"""
+from __future__ import annotations
+
+#!/usr/bin/env python3
+"""
+Stage 0: Message Extraction - Claude Code/Codex/Github Pipeline
+
+HOLD₁ (JSONL source files) → AGENT (Message Extractor) → HOLD₂ (BigQuery claude_code_stage_0)
+
+Extracts messages from raw JSONL export files for Claude Code, Codex, and Github sources.
+Saves extracted messages to BigQuery for downstream processing.
+NOTE: entity_unified is the FINAL DESTINATION, not the source. This pipeline processes raw source files.
+
+🧠 STAGE FIVE GROUNDING
+This stage exists to extract structured message data from TruthService for Claude Code, Codex, and Github integrations.
+
+Structure: HOLD₁ (JSONL source files) → AGENT (Parse & Extract) → HOLD₂ (BigQuery messages table)
+Purpose: Extract messages from raw JSONL exports for processing
+Boundaries: Reads from JSONL files, writes to dedicated messages table
+Control: On-demand execution, user-controlled processing
+
+⚠️ WHAT THIS STAGE CANNOT SEE
+- Real-time external state
+- User intent beyond extraction scope
+- System state beyond service boundaries
+
+🔥 THE FURNACE PRINCIPLE
+- Truth (input): Message data from entity_unified table
+- Heat (processing): Filter by source, extract message-level data
+- Meaning (output): Structured messages in BigQuery for analysis
+- Care (delivery): User-protected outputs with error handling, cost controls, and actionable insights
+
+CANONICAL SPECIFICATION ALIGNMENT:
+==================================
+This script follows the canonical Stage 0 specification for the Claude Code/Codex/Github Pipeline.
+
+RATIONALE:
+----------
+- Raw JSONL export files contain Claude Code, Codex, and Github conversation data
+- Stage 0 parses JSONL files and extracts message-level data (level 5)
+- Extracted messages are saved to BigQuery for downstream processing
+- Final destination is entity_unified (written by final stage, not this one)
+
+Enterprise Governance Standards:
+- Uses central services for logging with traceability
+- Uses PipelineTracker for execution monitoring
+- All operations follow universal governance policies
+- Comprehensive error handling and validation
+- Full audit trail for all operations
+- Cost protection for BigQuery operations
+"""
+try:
+    from truth_forge.core import get_logger as _get_logger
+except Exception:
+    from src.services.central_services.core import get_logger as _get_logger
+_LOGGER = _get_logger(__name__)
+
+
+script_id = "pipelines.claude_code.scripts._deprecated.stage_0.claude_code_stage_0.py"
+
+import json
+import sys
+import tempfile
+import os
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+# Add project root and src to path
+PROJECT_ROOT = Path(__file__).resolve().parents[4]
+sys.path.append(str(PROJECT_ROOT))
+sys.path.append(str(PROJECT_ROOT / "src"))
+
+from src.services.central_services.core import (
+    get_current_run_id,
+    get_logger,
+    get_correlation_ids,
+)
+from src.services.central_services.core.config import get_bigquery_client
+from src.services.central_services.core.pipeline_tracker import PipelineTracker
+from src.services.central_services.governance.governance import (
+    get_unified_governance,
+    require_diagnostic_on_error,
+)
+from google.cloud import bigquery
+
+logger = get_logger(__name__)
+
+# BigQuery configuration
+PROJECT_ID = "flash-clover-464719-g1"
+DATASET_ID = "spine"
+SOURCE_TABLE = f"{PROJECT_ID}.{DATASET_ID}.entity_unified"
+TARGET_TABLE = f"{PROJECT_ID}.{DATASET_ID}.claude_code_stage_0"
+
+# Sources to extract
+SOURCES = ["claude_code", "codex", "github"]
+
+def create_target_table(client: bigquery.Client) -> None:
+    """Create the target BigQuery table if it doesn't exist."""
+    table_ref = bigquery.Table(TARGET_TABLE)
+
+    schema = [
+        bigquery.SchemaField("message_id", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("entity_id", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("source_name", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("source_pipeline", "STRING"),
+        bigquery.SchemaField("source_file", "STRING"),
+        bigquery.SchemaField("text", "STRING", mode="REQUIRED"),
+        bigquery.SchemaField("level", "INTEGER", mode="REQUIRED"),
+        bigquery.SchemaField("content_date", "DATE"),
+        bigquery.SchemaField("created_at", "TIMESTAMP"),
+        bigquery.SchemaField("metadata", "JSON"),
+        bigquery.SchemaField("extracted_at", "TIMESTAMP", mode="REQUIRED"),
+        bigquery.SchemaField("run_id", "STRING"),
+    ]
+
+    table_ref.schema = schema
+
+    # Partition by content_date for efficient querying
+    table_ref.time_partitioning = bigquery.TimePartitioning(
+        type_=bigquery.TimePartitioningType.DAY,
+        field="content_date"
+    )
+
+    # Clustering for efficient filtering
+    table_ref.clustering_fields = ["source_name", "level"]
+
+    try:
+        table = client.create_table(table_ref, exists_ok=True)
+        logger.info(
+            f"Target table {TARGET_TABLE} ready",
+            extra={"table_id": table.table_id, "num_rows": table.num_rows}
+        )
+    except Exception as e:
+        logger.error(f"Error creating table {TARGET_TABLE}: {e}", exc_info=True)
+        require_diagnostic_on_error(e, "create_target_table")
+        raise
+
+def extract_messages(
+    client: bigquery.Client,
+    sources: List[str],
+    limit: Optional[int] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+) -> List[Dict[str, Any]]:
+    """
+    HOLD₁: Extract messages from entity_unified table.
+
+    Args:
+        client: BigQuery client
+        sources: List of source names to extract (claude_code, codex, github)
+        limit: Optional limit on number of messages
+        date_from: Optional start date filter (YYYY-MM-DD)
+        date_to: Optional end date filter (YYYY-MM-DD)
+
+    Returns:
+        List of message records
+    """
+    run_id = get_current_run_id()
+    correlation_ids = get_correlation_ids()
+
+    logger.info(
+        "Starting message extraction",
+        extra={
+            "run_id": run_id,
+            "sources": sources,
+            "limit": limit,
+            "date_from": date_from,
+            "date_to": date_to,
+            **correlation_ids,
+        }
+    )
+
+    # Build source filter - extract source_name from source_pipeline or source_file
+    # entity_unified doesn't have source_name, so we derive it
+    source_conditions = []
+    for source in sources:
+        source_lower = source.lower()
+        source_conditions.append(
+            f"(LOWER(u.source_pipeline) LIKE '%{source_lower}%' OR LOWER(u.source_file) LIKE '%{source_lower}%')"
+        )
+    source_condition = " OR ".join(source_conditions)
+
+    # Build date filters
+    date_conditions = []
+    if date_from:
+        date_conditions.append(f"DATE(u.content_date) >= DATE('{date_from}')")
+    if date_to:
+        date_conditions.append(f"DATE(u.content_date) <= DATE('{date_to}')")
+    # Always add partition filter for entity_unified
+    if not date_conditions:
+        date_conditions.append("u.content_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 90 DAY)")
+    date_filter = " AND ".join(date_conditions)
+
+    # Build limit clause
+    limit_clause = f"LIMIT {limit}" if limit else ""
+
+    query = f"""
+    SELECT
+        u.entity_id,
+        CASE
+          WHEN LOWER(u.source_pipeline) LIKE '%claude_code%' OR LOWER(u.source_file) LIKE '%claude_code%' THEN 'claude_code'
+          WHEN LOWER(u.source_pipeline) LIKE '%codex%' OR LOWER(u.source_file) LIKE '%codex%' THEN 'codex'
+          WHEN LOWER(u.source_pipeline) LIKE '%github%' OR LOWER(u.source_file) LIKE '%github%' THEN 'github'
+          ELSE 'unknown'
+        END as source_name,
+        u.source_pipeline,
+        u.source_file,
+        u.text,
+        u.level,
+        u.content_date,
+        u.created_at,
+        u.metadata
+    FROM `{SOURCE_TABLE}` u
+    WHERE
+        ({source_condition})
+        AND u.level = 5  -- Messages only (level 5)
+        AND u.text IS NOT NULL
+        AND u.text != ''
+        AND LENGTH(TRIM(u.text)) >= 10
+        AND {date_filter}
+    ORDER BY u.content_date DESC, u.created_at DESC
+    {limit_clause}
+    """
+
+    logger.info(
+        "Executing extraction query",
+        extra={"run_id": run_id, "query_length": len(query)}
+    )
+
+    try:
+        query_job = client.query(query)
+        results = query_job.result()
+
+        messages = []
+        for row in results:
+            message = {
+                "message_id": row.entity_id,  # Use entity_id as message_id
+                "entity_id": row.entity_id,
+                "source_name": row.source_name.lower(),
+                "source_pipeline": row.source_pipeline,
+                "source_file": row.source_file,
+                "text": row.text,
+                "level": row.level,
+                "content_date": row.content_date,
+                "created_at": row.created_at,
+                "metadata": row.metadata if hasattr(row, 'metadata') and row.metadata else {},
+                "extracted_at": datetime.now(timezone.utc),
+                "run_id": run_id,
+            }
+            messages.append(message)
+
+        logger.info(
+            f"Extracted {len(messages)} messages",
+            extra={
+                "run_id": run_id,
+                "message_count": len(messages),
+                "sources": sources,
+            }
+        )
+
+        return messages
+
+    except Exception as e:
+        logger.error(
+            f"Error extracting messages: {e}",
+            exc_info=True,
+            extra={"run_id": run_id}
+        )
+        require_diagnostic_on_error(e, "extract_messages")
+        raise
+
+def save_to_bigquery(
+    client: bigquery.Client,
+    messages: List[Dict[str, Any]],
+    write_disposition: str = "WRITE_APPEND",
+) -> None:
+    """
+    HOLD₂: Save extracted messages to BigQuery.
+
+    Args:
+        client: BigQuery client
+        messages: List of message records to save
+        write_disposition: BigQuery write disposition (WRITE_APPEND, WRITE_TRUNCATE, etc.)
+    """
+    if not messages:
+        logger.warning("No messages to save")
+        return
+
+    run_id = get_current_run_id()
+
+    logger.info(
+        f"Saving {len(messages)} messages to BigQuery",
+        extra={
+            "run_id": run_id,
+            "target_table": TARGET_TABLE,
+            "message_count": len(messages),
+            "write_disposition": write_disposition,
+        }
+    )
+
+    # Prepare rows for BigQuery
+    rows_to_insert = []
+    for msg in messages:
+        row = {
+            "message_id": msg["message_id"],
+            "entity_id": msg["entity_id"],
+            "source_name": msg["source_name"],
+            "source_pipeline": msg.get("source_pipeline"),
+            "source_file": msg.get("source_file"),
+            "text": msg["text"],
+            "level": msg["level"],
+            "content_date": msg.get("content_date"),
+            "created_at": msg.get("created_at"),
+            "metadata": json.dumps(msg.get("metadata", {})) if msg.get("metadata") else None,
+            "extracted_at": msg["extracted_at"],
+            "run_id": msg["run_id"],
+        }
+        rows_to_insert.append(row)
+
+    try:
+        if len(messages) < 1000:
+            # Use streaming insert for smaller batches
+            errors = client.insert_rows_json(
+                TARGET_TABLE,
+                rows_to_insert
+            )
+
+            if errors:
+                logger.error(
+                    f"Errors inserting rows: {errors}",
+                    extra={"run_id": run_id, "error_count": len(errors)}
+                )
+                raise ValueError(f"BigQuery insert errors: {errors}")
+        else:
+            # Use load_table_from_file for larger batches (more efficient)
+            # Create temporary JSONL file
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.jsonl', delete=False) as tmp_file:
+                for row in rows_to_insert:
+                    tmp_file.write(json.dumps(row) + '\n')
+                tmp_path = tmp_file.name
+
+            try:
+                # Configure load job
+                job_config = bigquery.LoadJobConfig(
+                    source_format=bigquery.SourceFormat.NEWLINE_DELIMITED_JSON,
+                    write_disposition=write_disposition,
+                    schema_update_options=[
+                        bigquery.SchemaUpdateOption.ALLOW_FIELD_ADDITION,
+                        bigquery.SchemaUpdateOption.ALLOW_FIELD_RELAXATION,
+                    ],
+                )
+
+                # Load from file
+                with open(tmp_path, 'rb') as source_file:
+                    job = client.load_table_from_file(
+                        source_file,
+                        TARGET_TABLE,
+                        job_config=job_config
+                    )
+
+                job.result()  # Wait for job to complete
+
+            finally:
+                # Clean up temporary file
+                if os.path.exists(tmp_path):
+                    os.unlink(tmp_path)
+
+        # Get final table stats
+        table = client.get_table(TARGET_TABLE)
+
+        logger.info(
+            f"Successfully saved {len(messages)} messages to BigQuery",
+            extra={
+                "run_id": run_id,
+                "target_table": TARGET_TABLE,
+                "total_rows": table.num_rows,
+                "table_size_mb": table.num_bytes / 1024 / 1024,
+            }
+        )
+
+    except Exception as e:
+        logger.error(
+            f"Error saving messages to BigQuery: {e}",
+            exc_info=True,
+            extra={"run_id": run_id}
+        )
+        require_diagnostic_on_error(e, "save_to_bigquery")
+        raise
+
+def main():
+    """Main execution function."""
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Stage 0: Extract Claude Code, Codex, and Github messages from TruthService"
+    )
+    parser.add_argument(
+        "--sources",
+        nargs="+",
+        default=SOURCES,
+        help=f"Sources to extract (default: {SOURCES})"
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        help="Limit number of messages to extract"
+    )
+    parser.add_argument(
+        "--date-from",
+        type=str,
+        help="Start date filter (YYYY-MM-DD)"
+    )
+    parser.add_argument(
+        "--date-to",
+        type=str,
+        help="End date filter (YYYY-MM-DD)"
+    )
+    parser.add_argument(
+        "--write-mode",
+        choices=["append", "truncate"],
+        default="append",
+        help="Write mode: append (default) or truncate"
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Dry run - extract but don't save to BigQuery"
+    )
+
+    args = parser.parse_args()
+
+    run_id = get_current_run_id()
+    correlation_ids = get_correlation_ids()
+    governance = get_unified_governance()
+
+    # Use PipelineTracker for execution monitoring
+    with PipelineTracker(
+        pipeline_name="claude_code",
+        stage=0,
+        stage_name="message_extraction",
+        run_id=run_id,
+        metadata={
+            "sources": args.sources,
+            "limit": args.limit,
+            "date_from": args.date_from,
+            "date_to": args.date_to,
+            "write_mode": args.write_mode,
+            "dry_run": args.dry_run,
+        }
+    ) as tracker:
+
+        logger.info(
+            "Starting Claude Code/Codex/Github Stage 0 extraction",
+            extra={
+                "run_id": run_id,
+                "sources": args.sources,
+                "limit": args.limit,
+                "date_from": args.date_from,
+                "date_to": args.date_to,
+                "write_mode": args.write_mode,
+                "dry_run": args.dry_run,
+                **correlation_ids,
+            }
+        )
+
+        # Record audit (if governance supports it)
+        try:
+            governance.record_audit(
+                audit_record={
+                    "category": "pipeline_execution",
+                    "level": "info",
+                    "operation": "stage_0_extraction",
+                    "pipeline": "claude_code",
+                    "stage": "0",
+                    "run_id": run_id,
+                    "sources": args.sources,
+                    "dry_run": args.dry_run,
+                },
+            )
+        except (AttributeError, TypeError):
+            # Governance may not support record_audit - log instead
+            logger.info(
+                "Stage 0 extraction started",
+                extra={
+                    "run_id": run_id,
+                    "sources": args.sources,
+                    "dry_run": args.dry_run,
+                },
+            )
+
+        try:
+            # Get BigQuery client
+            client = get_bigquery_client()
+            # Access underlying client if wrapped
+            if hasattr(client, 'client'):
+                bq_client = client.client
+            else:
+                bq_client = client
+
+            # Create target table if needed
+            if not args.dry_run:
+                create_target_table(bq_client)
+
+                # HOLD₁: Extract messages
+                messages = extract_messages(
+                    bq_client,
+                    sources=args.sources,
+                    limit=args.limit,
+                    date_from=args.date_from,
+                    date_to=args.date_to,
+                )
+
+                tracker.update_progress(items_processed=len(messages))
+
+                logger.info(
+                    f"Extracted {len(messages)} messages",
+                    extra={"run_id": run_id, "message_count": len(messages)}
+                )
+
+                # HOLD₂: Save to BigQuery
+                if not args.dry_run and messages:
+                    write_disposition = (
+                        bigquery.WriteDisposition.WRITE_TRUNCATE
+                        if args.write_mode == "truncate"
+                        else bigquery.WriteDisposition.WRITE_APPEND
+                    )
+                    save_to_bigquery(bq_client, messages, write_disposition=write_disposition)
+                    tracker.update_progress(items_processed=len(messages))
+                elif args.dry_run:
+                    logger.info(
+                        "Dry run - skipping BigQuery save",
+                        extra={"run_id": run_id, "message_count": len(messages)}
+                    )
+
+                logger.info(
+                    "Stage 0 extraction completed successfully",
+                    extra={"run_id": run_id, "message_count": len(messages)}
+                )
+
+                return 0
+
+        except Exception as e:
+            logger.error(
+                f"Error in Stage 0 extraction: {e}",
+                exc_info=True,
+                extra={"run_id": run_id}
+            )
+            tracker.update_progress(items_failed=1)
+            require_diagnostic_on_error(e, "main")
+            return 1
+
+if __name__ == "__main__":
+    exit(main())

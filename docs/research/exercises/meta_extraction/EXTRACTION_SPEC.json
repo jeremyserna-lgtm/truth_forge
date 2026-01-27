@@ -1,0 +1,55 @@
+{
+  "name": "True Extraction Specification",
+  "version": "1.0",
+  "created": "2025-12-24",
+  "purpose": "Define what complete, faithful extraction means",
+
+  "source": {
+    "file": "~/.claude/projects/-Users-jeremyserna-Truth-Engine/0a66b5ca-ed1d-4b9d-b183-9011912c7abc.jsonl",
+    "format": "jsonl",
+    "description": "Claude Code conversation record for the transcript extraction exercise"
+  },
+
+  "principles": [
+    "Every byte of source content appears in output",
+    "Nothing is added that is not in source",
+    "Nothing is truncated for any reason",
+    "Nothing is filtered or excluded",
+    "Format may change but content must not"
+  ],
+
+  "rules": {
+    "entry_handling": {
+      "include_all_types": true,
+      "types_to_process": ["user", "assistant", "queue-operation", "file-history-snapshot", "tool_result"],
+      "comment": "All entry types are included, none filtered"
+    },
+    "content_handling": {
+      "truncate": false,
+      "max_length": null,
+      "comment": "No length limits of any kind"
+    },
+    "field_handling": {
+      "include_all_fields": true,
+      "preserve_original_json": true,
+      "comment": "Every field in source appears in output"
+    },
+    "formatting": {
+      "output_format": "json",
+      "json_indent": 2,
+      "ensure_ascii": false,
+      "comment": "Pretty-printed JSON array of all entries"
+    }
+  },
+
+  "verification": {
+    "entry_count": "Output entry count must equal input line count",
+    "field_preservation": "Every field in every input entry must appear in output",
+    "no_additions": "Output contains only data from source plus mechanical structure"
+  },
+
+  "output": {
+    "file": "COMPLETE_FAITHFUL_EXTRACTION.json",
+    "description": "Complete JSON array of all JSONL entries, no content lost"
+  }
+}

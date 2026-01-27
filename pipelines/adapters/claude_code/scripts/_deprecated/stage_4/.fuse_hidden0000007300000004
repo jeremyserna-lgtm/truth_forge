@@ -1,0 +1,655 @@
+#!/usr/bin/env python3
+"""Stage 4: LLM Text Correction - Claude Code/Codex/Github (Primitive Pattern)
+
+🧠 STAGE FIVE GROUNDING:
+========================
+This script implements THE_PATTERN: HOLD₁ → AGENT → HOLD₂
+- HOLD₁: Receives text from Stage 3 (BigQuery → JSONL staging)
+- AGENT: LLM correction agent (transforms text with fidelity preservation)
+- HOLD₂: Delivers corrected text to Stage 4/5 (JSONL staging → BigQuery)
+
+THE FURNACE PRINCIPLE:
+- Truth (Input): Text from Stage 3 (may have formatting issues)
+- Heat (Processing): LLM correction (spellcheck, grammar, formatting cleanup)
+- Meaning (Output): Corrected text ready for NLP processing
+- Care (Delivery): Validated text in Stage 4/5 tables
+
+⚠️ WHAT THIS SCRIPT CANNOT SEE:
+- Why text has errors (source context beyond Stage 3)
+- Whether corrections are accurate (requires human validation)
+- Future NLP processing requirements (Stage 5 handles that)
+
+CANONICAL SPECIFICATION ALIGNMENT:
+==================================
+This script follows the canonical Stage 4 specification for the Claude Code/Codex/Github Pipeline.
+
+STAGE 4 PURPOSE:
+----------------
+Correct and validate text from Stage 3 using LLM processing via THE_PATTERN.
+This implementation uses PrimitivePattern for HOLD₁ → AGENT → HOLD₂ flow.
+
+WHAT STAGE 4 DOES:
+------------------
+✓ Exports Stage 3 data to HOLD₁ (JSONL/DuckDB staging)
+✓ Processes L5 messages through LLM AGENT for text correction
+✓ Validates text readiness for NLP processing
+✓ Writes to HOLD₂ (JSONL/DuckDB staging)
+✓ Loads HOLD₂ to BigQuery (claude_codex_github_stage_4 and claude_codex_github_stage_5)
+
+RATIONALE:
+----------
+- Uses THE_PATTERN for architectural consistency
+- HOLD₁ preserves Stage 3 data with fidelity
+- AGENT transforms text (LLM correction)
+- HOLD₂ preserves corrected text with fidelity
+- Staging files enable recovery and audit trail
+
+Enterprise Governance Standards:
+- Uses PrimitivePattern (THE_PATTERN implementation)
+- Uses central services for logging with traceability
+- All operations follow universal governance policies
+- Comprehensive error handling and validation
+- Full audit trail for all operations
+- Memory-efficient batch processing
+- Cost tracking for LLM API usage
+
+Model: Ollama (local, free)
+- Uses ask_ollama_json() directly to ensure local Ollama (no cloud API calls)
+- Provider: Ollama (local hardware, zero cost)
+- Model: primitive (default Ollama model)
+- Implementation: Direct call to local Ollama via model_gateway_service.convenience.ask_ollama_json()
+"""
+
+import argparse
+import gc
+import json
+import os
+import sys
+import tempfile
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+from google.cloud import bigquery
+from google.cloud.bigquery import (
+    CreateDisposition,
+    LoadJobConfig,
+    SchemaField,
+    SchemaUpdateOption,
+    SourceFormat,
+    WriteDisposition,
+)
+
+# Add project root and src to path
+PROJECT_ROOT = Path(__file__).resolve().parents[4]
+sys.path.append(str(PROJECT_ROOT))
+sys.path.append(str(PROJECT_ROOT / "src"))
+
+# 🎓 LEARNING: Central Services Integration
+# All stages MUST use central services for logging, governance, and identity
+from src.services.central_services.core import (
+    get_correlation_ids,
+    get_current_run_id,
+    get_logger,
+)
+from src.services.central_services.core.config import get_bigquery_client
+from src.services.central_services.core.pipeline_tracker import PipelineTracker
+from src.services.central_services.governance.governance import (
+    get_unified_governance,
+    require_diagnostic_on_error,
+)
+
+# 🎓 LEARNING: Primitive Pattern Integration
+# Use THE_PATTERN: HOLD₁ → AGENT → HOLD₂
+from src.services.central_services.primitive_pattern import (
+    PrimitivePattern,
+    PrimitivePatternConfig,
+)
+
+# Import agent function
+from claude_codex_github_stage_4_agent import llm_correction_agent
+
+# Initialize logger (NOT print())
+logger = get_logger(__name__)
+
+# Configuration
+PROJECT_ID = "flash-clover-464719-g1"
+DATASET_ID = "spine"
+TABLE_STAGE_3 = "claude_codex_github_stage_3"
+TABLE_STAGE_4 = "claude_codex_github_stage_4"
+TABLE_STAGE_5 = "claude_codex_github_stage_5"
+
+# Minimum text length for processing
+MIN_TEXT_LENGTH = 10  # Skip very short messages
+
+# PrimitivePattern staging paths
+STAGING_ROOT = PROJECT_ROOT / "Primitive" / "staging" / "claude_codex_github_stage_4"
+HOLD1_JSONL = STAGING_ROOT / "hold1_input.jsonl"
+HOLD1_DUCKDB = STAGING_ROOT / "hold1_input.duckdb"
+HOLD2_JSONL = STAGING_ROOT / "hold2_output.jsonl"
+HOLD2_DUCKDB = STAGING_ROOT / "hold2_output.duckdb"
+
+# Ensure staging directory exists
+STAGING_ROOT.mkdir(parents=True, exist_ok=True)
+
+
+def export_stage3_to_hold1(
+    client: Any,
+    run_id: str,
+    correlation_ids: dict,
+    limit: Optional[int] = None,
+    restart: bool = False,
+) -> int:
+    """Export Stage 3 data to HOLD₁ (JSONL).
+
+    🎓 LEARNING: HOLD₁ Export Pattern
+    Exporting to JSONL enables PrimitivePattern to process data efficiently.
+    This separates data extraction from transformation.
+
+    Args:
+        client: BigQuery client
+        run_id: Current run ID
+        correlation_ids: Correlation IDs for tracing
+        limit: Optional limit on number of messages
+        restart: If True, overwrite existing HOLD₁ files
+
+    Returns:
+        Number of records exported
+    """
+    logger.info(
+        "Exporting Stage 3 to HOLD₁",
+        extra={
+            "run_id": run_id,
+            "correlation_id": correlation_ids.get("correlation_id"),
+            "component": "claude_codex_github_stage_4",
+            "operation": "export_stage3",
+            "limit": limit,
+            "restart": restart,
+        },
+    )
+
+    # Skip if HOLD₁ exists and not restarting
+    if not restart and HOLD1_JSONL.exists():
+        logger.info(
+            f"HOLD₁ already exists: {HOLD1_JSONL}",
+            extra={"run_id": run_id, "operation": "export_stage3", "skipped": True},
+        )
+        # Count existing records
+        count = 0
+        with open(HOLD1_JSONL, "r", encoding="utf-8") as f:
+            for _ in f:
+                count += 1
+        return count
+
+    # Build query
+    limit_clause = f"LIMIT {limit}" if limit else ""
+
+    query = f"""
+    SELECT
+        entity_id,
+        source_name,
+        source_pipeline,
+        source_file,
+        text,
+        level,
+        content_date,
+        created_at,
+        extracted_at,
+        metadata,
+        sentiment_score,
+        sentiment_label,
+        entities,
+        topics,
+        quality_score,
+        text_length,
+        word_count,
+        enriched_at,
+        enrichment_run_id,
+        registered_at,
+        registration_run_id,
+        stage_1_run_id
+    FROM `{PROJECT_ID}.{DATASET_ID}.{TABLE_STAGE_3}`
+    WHERE level = 5
+      AND text IS NOT NULL
+      AND text != ''
+      AND LENGTH(TRIM(text)) >= {MIN_TEXT_LENGTH}
+    ORDER BY content_date DESC, created_at DESC
+    {limit_clause}
+    """
+
+    logger.info(
+        "Executing query to read Stage 3 data",
+        extra={"run_id": run_id, "query_length": len(query)},
+    )
+
+    # Execute query and export to JSONL
+    records_exported = 0
+    with open(HOLD1_JSONL, "w", encoding="utf-8") as f:
+        for row in client.query(query).result():
+            record = {
+                "entity_id": row.entity_id,
+                "source_name": row.source_name,
+                "source_pipeline": row.source_pipeline,
+                "source_file": row.source_file,
+                "text": row.text,
+                "level": row.level,
+                "content_date": row.content_date.isoformat() if hasattr(row.content_date, "isoformat") else str(row.content_date),
+                "created_at": row.created_at.isoformat() if hasattr(row.created_at, "isoformat") else str(row.created_at),
+                "extracted_at": row.extracted_at.isoformat() if hasattr(row.extracted_at, "isoformat") else str(row.extracted_at),
+                "metadata": json.loads(row.metadata) if isinstance(row.metadata, str) else row.metadata,
+                "sentiment_score": float(row.sentiment_score) if row.sentiment_score is not None else None,
+                "sentiment_label": row.sentiment_label,
+                "entities": row.entities,
+                "topics": row.topics,
+                "quality_score": float(row.quality_score) if row.quality_score is not None else None,
+                "text_length": int(row.text_length) if row.text_length is not None else None,
+                "word_count": int(row.word_count) if row.word_count is not None else None,
+                "enriched_at": row.enriched_at.isoformat() if hasattr(row.enriched_at, "isoformat") else str(row.enriched_at),
+                "enrichment_run_id": row.enrichment_run_id,
+                "registered_at": row.registered_at.isoformat() if hasattr(row.registered_at, "isoformat") else str(row.registered_at),
+                "registration_run_id": row.registration_run_id,
+                "stage_1_run_id": row.stage_1_run_id,
+            }
+            f.write(json.dumps(record) + "\n")
+            records_exported += 1
+
+    logger.info(
+        f"Exported {records_exported} records to HOLD₁",
+        extra={
+            "run_id": run_id,
+            "records_exported": records_exported,
+            "hold1_path": str(HOLD1_JSONL),
+        },
+    )
+
+    return records_exported
+
+
+def load_hold2_to_bigquery(
+    client: Any,
+    run_id: str,
+    correlation_ids: dict,
+) -> Dict[str, int]:
+    """Load HOLD₂ data to BigQuery (Stage 4 and Stage 5 tables).
+
+    🎓 LEARNING: HOLD₂ to BigQuery Pattern
+    After PrimitivePattern completes, load corrected text from HOLD₂ to BigQuery.
+    This separates transformation from storage.
+
+    Args:
+        client: BigQuery client
+        run_id: Current run ID
+        correlation_ids: Correlation IDs for tracing
+
+    Returns:
+        Dict with stage4_count and stage5_count
+    """
+    logger.info(
+        "Loading HOLD₂ to BigQuery",
+        extra={
+            "run_id": run_id,
+            "correlation_id": correlation_ids.get("correlation_id"),
+            "component": "claude_codex_github_stage_4",
+            "operation": "load_hold2",
+        },
+    )
+
+    if not HOLD2_JSONL.exists():
+        logger.warning(
+            "HOLD₂ JSONL not found, nothing to load",
+            extra={"run_id": run_id, "hold2_path": str(HOLD2_JSONL)},
+        )
+        return {"stage4_count": 0, "stage5_count": 0}
+
+    # Read HOLD₂ JSONL and separate Stage 4 and Stage 5 records
+    stage4_records = []
+    stage5_records = []
+
+    with open(HOLD2_JSONL, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                record = json.loads(line)
+                output_type = record.get("_output_type")
+
+                if output_type == "stage_4":
+                    # Stage 4 record
+                    stage4_records.append({
+                        "entity_id": record["entity_id"],
+                        "source_name": record.get("source_name"),
+                        "original_text": record.get("original_text", ""),
+                        "corrected_text": record.get("corrected_text", ""),
+                        "correction_applied": record.get("correction_applied", False),
+                        "is_ready": record.get("is_ready", True),
+                        "run_id": run_id,
+                        "created_at": datetime.now(timezone.utc).isoformat(),
+                    })
+                elif output_type == "stage_5":
+                    # Stage 5 record
+                    stage5_records.append({
+                        "entity_id": record["entity_id"],
+                        "source_name": record.get("source_name"),
+                        "text": record.get("text", ""),
+                        "original_text": record.get("original_text", ""),
+                        "run_id": run_id,
+                        "created_at": datetime.now(timezone.utc).isoformat(),
+                    })
+            except (json.JSONDecodeError, KeyError) as e:
+                logger.warning(
+                    f"Error parsing HOLD₂ record: {e}",
+                    extra={"run_id": run_id, "error": str(e), "line": line[:100]},
+                )
+
+    logger.info(
+        f"Read {len(stage4_records)} Stage 4 records and {len(stage5_records)} Stage 5 records from HOLD₂",
+        extra={
+            "run_id": run_id,
+            "stage4_count": len(stage4_records),
+            "stage5_count": len(stage5_records),
+        },
+    )
+
+    # Load Stage 4 records
+    stage4_count = 0
+    if stage4_records:
+        stage4_count = _load_records_to_table(
+            client,
+            stage4_records,
+            f"{PROJECT_ID}.{DATASET_ID}.{TABLE_STAGE_4}",
+            [
+                SchemaField("entity_id", "STRING", mode="REQUIRED"),
+                SchemaField("source_name", "STRING", mode="NULLABLE"),
+                SchemaField("original_text", "STRING", mode="NULLABLE"),
+                SchemaField("corrected_text", "STRING", mode="NULLABLE"),
+                SchemaField("correction_applied", "BOOLEAN", mode="NULLABLE"),
+                SchemaField("is_ready", "BOOLEAN", mode="NULLABLE"),
+                SchemaField("run_id", "STRING", mode="REQUIRED"),
+                SchemaField("created_at", "TIMESTAMP", mode="REQUIRED"),
+            ],
+        )
+
+    # Load Stage 5 records
+    stage5_count = 0
+    if stage5_records:
+        stage5_count = _load_records_to_table(
+            client,
+            stage5_records,
+            f"{PROJECT_ID}.{DATASET_ID}.{TABLE_STAGE_5}",
+            [
+                SchemaField("entity_id", "STRING", mode="REQUIRED"),
+                SchemaField("source_name", "STRING", mode="NULLABLE"),
+                SchemaField("text", "STRING", mode="REQUIRED"),
+                SchemaField("original_text", "STRING", mode="NULLABLE"),
+                SchemaField("run_id", "STRING", mode="REQUIRED"),
+                SchemaField("created_at", "TIMESTAMP", mode="REQUIRED"),
+            ],
+        )
+
+    logger.info(
+        f"Loaded {stage4_count} Stage 4 records and {stage5_count} Stage 5 records to BigQuery",
+        extra={
+            "run_id": run_id,
+            "stage4_count": stage4_count,
+            "stage5_count": stage5_count,
+        },
+    )
+
+    return {"stage4_count": stage4_count, "stage5_count": stage5_count}
+
+
+def _load_records_to_table(
+    client: Any,
+    records: List[Dict],
+    table_name: str,
+    schema: List[SchemaField],
+) -> int:
+    """Helper to load records to a BigQuery table."""
+    if not records:
+        return 0
+
+    # Write to temp file as newline-delimited JSON
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".ndjson", delete=False) as f:
+        for record in records:
+            f.write(json.dumps(record) + "\n")
+        temp_path = f.name
+
+    try:
+        job_config = LoadJobConfig(
+            source_format=SourceFormat.NEWLINE_DELIMITED_JSON,
+            write_disposition=WriteDisposition.WRITE_APPEND,
+            create_disposition=CreateDisposition.CREATE_IF_NEEDED,
+            schema=schema,
+            schema_update_options=[SchemaUpdateOption.ALLOW_FIELD_ADDITION],
+        )
+
+        with open(temp_path, "rb") as source_file:
+            job = client.load_table_from_file(
+                source_file,
+                table_name,
+                job_config=job_config,
+            )
+
+        job.result()  # Wait for completion
+
+        if job.errors:
+            error_msg = f"Batch load errors for {table_name}: {job.errors}"
+            logger.error(error_msg)
+            raise Exception(error_msg)
+
+        return len(records)
+
+    finally:
+        # Clean up temp file
+        if os.path.exists(temp_path):
+            os.unlink(temp_path)
+
+
+def main():
+    """Main execution function."""
+    parser = argparse.ArgumentParser(
+        description="Stage 4: LLM Text Correction (Primitive Pattern)"
+    )
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=1000,
+        help="PrimitivePattern batch size (default: 1000)",
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        help="Limit number of messages to process (for testing)",
+    )
+    parser.add_argument(
+        "--restart",
+        action="store_true",
+        help="Restart from beginning (overwrite existing HOLD₁)",
+    )
+    parser.add_argument(
+        "--test",
+        action="store_true",
+        help="Test mode (100 records only)",
+    )
+    parser.add_argument(
+        "--skip-pattern",
+        action="store_true",
+        help="Skip PrimitivePattern execution (only load HOLD₂ to BigQuery)",
+    )
+
+    args = parser.parse_args()
+
+    # Test mode: limit to 100 records
+    if args.test:
+        args.limit = 100
+
+    run_id = get_current_run_id()
+    correlation_ids = get_correlation_ids()
+    governance = get_unified_governance()
+
+    # Use PipelineTracker for execution monitoring
+    with PipelineTracker(
+        pipeline_name="claude_codex_github",
+        stage=4,
+        stage_name="llm_text_correction",
+        run_id=run_id,
+        metadata={
+            "batch_size": args.batch_size,
+            "limit": args.limit,
+            "restart": args.restart,
+            "test": args.test,
+        },
+    ) as tracker:
+
+        logger.info(
+            "Starting Claude Code/Codex/Github Stage 4 LLM Text Correction",
+            extra={
+                "run_id": run_id,
+                "batch_size": args.batch_size,
+                "limit": args.limit,
+                "restart": args.restart,
+                "test": args.test,
+                **correlation_ids,
+            },
+        )
+
+        # Record audit
+        try:
+            governance.record_audit(
+                audit_record={
+                    "category": "pipeline_execution",
+                    "level": "info",
+                    "operation": "stage_4_llm_correction",
+                    "pipeline": "claude_codex_github",
+                    "stage": "4",
+                    "run_id": run_id,
+                    "batch_size": args.batch_size,
+                    "limit": args.limit,
+                },
+            )
+        except (AttributeError, TypeError):
+            # Governance may not support record_audit - log instead
+            logger.info(
+                "Stage 4 LLM correction started",
+                extra={
+                    "run_id": run_id,
+                    "batch_size": args.batch_size,
+                    "limit": args.limit,
+                },
+            )
+
+        try:
+            client = get_bigquery_client()
+            if hasattr(client, 'client'):
+                bq_client = client.client
+            else:
+                bq_client = client
+
+            # Step 1: Export Stage 3 to HOLD₁
+            records_exported = export_stage3_to_hold1(
+                bq_client,
+                run_id,
+                correlation_ids,
+                limit=args.limit,
+                restart=args.restart,
+            )
+
+            if records_exported == 0:
+                logger.warning(
+                    "No records exported to HOLD₁",
+                    extra={"run_id": run_id},
+                )
+                return 0
+
+            # Step 2: Run PrimitivePattern (unless skipped)
+            if not args.skip_pattern:
+                logger.info(
+                    "Running PrimitivePattern",
+                    extra={
+                        "run_id": run_id,
+                        "batch_size": args.batch_size,
+                        "hold1_jsonl": str(HOLD1_JSONL),
+                        "hold2_jsonl": str(HOLD2_JSONL),
+                    },
+                )
+
+                # Configure PrimitivePattern
+                # Use HOLD1_DUCKDB if it exists, otherwise create it
+                duckdb1_path = HOLD1_DUCKDB if HOLD1_DUCKDB.exists() else HOLD1_DUCKDB
+                config = PrimitivePatternConfig(
+                    jsonl1_path=HOLD1_JSONL,
+                    duckdb1_path=duckdb1_path,
+                    jsonl2_path=HOLD2_JSONL,
+                    duckdb2_path=HOLD2_DUCKDB,
+                    agent_func=llm_correction_agent,
+                    batch_size=args.batch_size,
+                    pattern_name="claude_codex_github_stage_4",
+                )
+
+                # Execute pattern
+                pattern = PrimitivePattern(config)
+                result = pattern.execute()
+
+                logger.info(
+                    "PrimitivePattern execution complete",
+                    extra={
+                        "run_id": run_id,
+                        "hold1_records_read": result.hold1_records_read,
+                        "hold2_records_written": result.hold2_records_written,
+                        "errors": len(result.agent_errors),
+                        "duration_seconds": result.duration_seconds,
+                    },
+                )
+
+                tracker.update_progress(
+                    items_processed=result.hold2_records_written,
+                    items_failed=len(result.agent_errors),
+                )
+            else:
+                logger.info(
+                    "Skipping PrimitivePattern execution",
+                    extra={"run_id": run_id},
+                )
+
+            # Step 3: Load HOLD₂ to BigQuery
+            load_stats = load_hold2_to_bigquery(
+                bq_client,
+                run_id,
+                correlation_ids,
+            )
+
+            logger.info(
+                "Stage 4 LLM Text Correction completed successfully",
+                extra={
+                    "run_id": run_id,
+                    "records_exported": records_exported,
+                    "stage4_count": load_stats["stage4_count"],
+                    "stage5_count": load_stats["stage5_count"],
+                },
+            )
+
+            print("\n" + "="*80)
+            print("STAGE 4 LLM TEXT CORRECTION COMPLETE")
+            print("="*80)
+            print(f"Records Exported: {records_exported:,}")
+            print(f"Stage 4 Records: {load_stats['stage4_count']:,}")
+            print(f"Stage 5 Records: {load_stats['stage5_count']:,}")
+            print("="*80 + "\n")
+
+            return 0
+
+        except Exception as e:
+            logger.error(
+                f"Error in Stage 4 LLM Text Correction: {e}",
+                exc_info=True,
+                extra={"run_id": run_id},
+            )
+            tracker.update_progress(items_failed=1)
+            require_diagnostic_on_error(e, "main")
+            return 1
+
+
+if __name__ == "__main__":
+    exit(main())

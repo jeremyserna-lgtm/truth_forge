@@ -1,0 +1,43 @@
+{
+  "assessment_timestamp": "2026-01-22T12:27:26.962673+00:00",
+  "run_id": "run_49178b5f",
+  "pipeline": "claude_code",
+  "source": "claude_code",
+  "summary": {
+    "total_files_discovered": 1,
+    "files_analyzed": 1,
+    "total_messages": 0,
+    "total_cost_usd": 0.0,
+    "message_types": {},
+    "models_used": [],
+    "tools_used": {},
+    "files_with_errors": 1
+  },
+  "date_range": {
+    "earliest": null,
+    "latest": null
+  },
+  "files_analyzed": [
+    {
+      "file_path": "/tmp/stage0_bad/bad.jsonl",
+      "file_size_bytes": 9,
+      "message_count": 0,
+      "message_types": {},
+      "models_used": [],
+      "tools_used": {},
+      "total_cost_usd": 0.0,
+      "timestamps": [],
+      "errors": [
+        "Line 0: Expecting value: line 1 column 1 (char 0)"
+      ],
+      "sample_messages": []
+    }
+  ],
+  "recommendations": [
+    "WARNING: 100.0% of files have parse errors. Review data quality.",
+    "CRITICAL: No messages found in analyzed files.",
+    "WARNING: No 'user' message type found. Check export format.",
+    "WARNING: No 'assistant' message type found. Check export format."
+  ],
+  "go_no_go": "NO-GO: No messages found"
+}

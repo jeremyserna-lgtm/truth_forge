@@ -1,0 +1,9 @@
+{
+  "run_id": null,
+  "source_file": "/Users/jeremyserna/.claude/projects/-Users-jeremyserna-Truth-Engine/0a66b5ca-ed1d-4b9d-b183-9011912c7abc.jsonl",
+  "source_lines": 500,
+  "output_entries": 500,
+  "parse_errors": 0,
+  "match": true,
+  "output_file": "COMPLETE_FAITHFUL_EXTRACTION.json"
+}

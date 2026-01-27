@@ -1,0 +1,78 @@
+{
+  "assessment_timestamp": "2026-01-22T12:27:54.051397+00:00",
+  "run_id": "run_bcfef78b",
+  "pipeline": "claude_code",
+  "source": "claude_code",
+  "summary": {
+    "total_files_discovered": 1,
+    "files_analyzed": 1,
+    "total_messages": 1000,
+    "total_cost_usd": 0.0,
+    "message_types": {
+      "user": 1000
+    },
+    "models_used": [],
+    "tools_used": {},
+    "files_with_errors": 0
+  },
+  "date_range": {
+    "earliest": null,
+    "latest": null
+  },
+  "files_analyzed": [
+    {
+      "file_path": "/tmp/stage0_large/large.jsonl",
+      "file_size_bytes": 108390,
+      "message_count": 1000,
+      "message_types": {
+        "user": 1000
+      },
+      "models_used": [],
+      "tools_used": {},
+      "total_cost_usd": 0.0,
+      "timestamps": [],
+      "errors": [],
+      "sample_messages": [
+        {
+          "type": "user",
+          "message": {
+            "role": "user",
+            "content": "message 0"
+          }
+        },
+        {
+          "type": "user",
+          "message": {
+            "role": "user",
+            "content": "message 1"
+          }
+        },
+        {
+          "type": "user",
+          "message": {
+            "role": "user",
+            "content": "message 2"
+          }
+        },
+        {
+          "type": "user",
+          "message": {
+            "role": "user",
+            "content": "message 3"
+          }
+        },
+        {
+          "type": "user",
+          "message": {
+            "role": "user",
+            "content": "message 4"
+          }
+        }
+      ]
+    }
+  ],
+  "recommendations": [
+    "WARNING: No 'assistant' message type found. Check export format."
+  ],
+  "go_no_go": "GO: Data ready for processing"
+}

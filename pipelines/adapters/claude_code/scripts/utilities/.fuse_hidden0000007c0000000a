@@ -1,0 +1,88 @@
+#!/usr/bin/env python3
+"""Run the complete claude_codex_github pipeline from Stage 0 through Stage 5.
+
+This script runs all pipeline stages sequentially to process all messages.
+"""
+
+import subprocess
+import sys
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[4]
+STAGE_0 = PROJECT_ROOT / "pipelines" / "claude_codex_github" / "scripts" / "stage_0" / "claude_codex_github_stage_0.py"
+STAGE_1 = PROJECT_ROOT / "pipelines" / "claude_codex_github" / "scripts" / "stage_1" / "claude_codex_github_stage_1.py"
+STAGE_3 = PROJECT_ROOT / "pipelines" / "claude_codex_github" / "scripts" / "stage_3" / "claude_codex_github_stage_3.py"
+STAGE_4 = PROJECT_ROOT / "pipelines" / "claude_codex_github" / "scripts" / "stage_4" / "claude_codex_github_stage_4.py"
+STAGE_6 = PROJECT_ROOT / "pipelines" / "claude_codex_github" / "scripts" / "stage_6" / "claude_codex_github_stage_6.py"
+
+
+def run_stage(stage_name: str, script_path: Path, args: list = None) -> bool:
+    """Run a pipeline stage and return True if successful."""
+    print("\n" + "="*80)
+    print(f"RUNNING {stage_name}")
+    print("="*80 + "\n")
+
+    cmd = [sys.executable, str(script_path)]
+    if args:
+        cmd.extend(args)
+
+    try:
+        result = subprocess.run(
+            cmd,
+            cwd=str(PROJECT_ROOT),
+            check=True,
+            capture_output=False,
+        )
+        print(f"\n✅ {stage_name} completed successfully\n")
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"\n❌ {stage_name} failed with exit code {e.returncode}\n")
+        return False
+
+
+def main():
+    """Run all pipeline stages sequentially."""
+    print("\n" + "="*80)
+    print("CLAUDE CODEX GITHUB PIPELINE - FULL RUN")
+    print("="*80)
+    print("\nThis will run all stages sequentially:")
+    print("  1. Stage 0: Message Extraction")
+    print("  2. Stage 1: Message Enrichment")
+    print("  3. Stage 3: ID Registration (THE GATE)")
+    print("  4. Stage 4: LLM Text Correction")
+    print("  5. Stage 5: Ready Messages (output of Stage 4)")
+    print("  6. Stage 6: Write to entity_unified (FINAL DESTINATION)")
+    print("\n" + "="*80 + "\n")
+
+    stages = [
+        ("Stage 0: Message Extraction", STAGE_0, []),
+        ("Stage 1: Message Enrichment", STAGE_1, []),
+        ("Stage 3: ID Registration", STAGE_3, []),
+        ("Stage 4: LLM Text Correction", STAGE_4, []),
+        ("Stage 6: Write to entity_unified", STAGE_6, []),
+    ]
+
+    for stage_name, script_path, args in stages:
+        if not script_path.exists():
+            print(f"❌ Script not found: {script_path}")
+            return 1
+
+        success = run_stage(stage_name, script_path, args)
+        if not success:
+            print(f"\n❌ Pipeline stopped at {stage_name}")
+            print("Fix the error and re-run from this stage.")
+            return 1
+
+    print("\n" + "="*80)
+    print("✅ PIPELINE COMPLETE!")
+    print("="*80)
+    print("\nAll stages have been run successfully.")
+    print("Stage 5 (Ready Messages) is automatically created by Stage 4.")
+    print("All processed messages have been written to entity_unified (final destination).")
+    print("\n" + "="*80 + "\n")
+
+    return 0
+
+
+if __name__ == "__main__":
+    exit(main())

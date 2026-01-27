@@ -1,0 +1,77 @@
+# Description: Extract full conversation structure
+# Tool: Bash
+
+python3 << 'EOF'
+import json
+
+# Read the file
+with open('/Users/jeremyserna/.claude/projects/-Users-jeremyserna-Truth-Engine/3018bf4e-565e-4c52-b5a6-aae9278bfea7.jsonl', 'r') as f:
+    lines = f.readlines()
+
+entries = []
+for line in lines:
+    try:
+        entries.append(json.loads(line))
+    except:
+        pass
+
+# Build the conversation structure
+conversation = []
+
+for obj in entries:
+    msg_type = obj.get('type', '')
+
+    if msg_type == 'user':
+        message = obj.get('message', {})
+        content = message.get('content', [])
+
+        for item in content:
+            if isinstance(item, dict):
+                if item.get('type') == 'text':
+                    text = item.get('text', '')
+                    if not text.startswith('<ide_opened_file>') and text.strip():
+                        conversation.append({
+                            'role': 'user',
+                            'type': 'message',
+                            'content': text
+                        })
+                    elif '<ide_opened_file>' in text and '</ide_opened_file>' in text:
+                        # Extract context
+                        conversation.append({
+                            'role': 'user',
+                            'type': 'context',
+                            'content': text
+                        })
+
+    elif msg_type == 'assistant':
+        message = obj.get('message', {})
+        content = message.get('content', [])
+
+        for item in content:
+            if isinstance(item, dict):
+                item_type = item.get('type', '')
+                if item_type == 'thinking':
+                    conversation.append({
+                        'role': 'assistant',
+                        'type': 'thinking',
+                        'content': item.get('thinking', '')
+                    })
+                elif item_type == 'text':
+                    text = item.get('text', '')
+                    if text.strip():
+                        conversation.append({
+                            'role': 'assistant',
+                            'type': 'message',
+                            'content': text
+                        })
+                elif item_type == 'tool_use':
+                    conversation.append({
+                        'role': 'assistant',
+                        'type': 'tool_use',
+                        'tool': item.get('name', ''),
+                        'input': item.get('input', {})
+                    })
+
+# Output as structured JSON for further processing
+print(json.dumps(conversation, indent=2))
+EOF

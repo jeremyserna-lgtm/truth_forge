@@ -1,0 +1,50 @@
+{
+  "assessment_timestamp": "2026-01-22T12:27:51.595561+00:00",
+  "run_id": "run_229b73b4",
+  "pipeline": "claude_code",
+  "source": "claude_code",
+  "summary": {
+    "total_files_discovered": 1,
+    "files_analyzed": 1,
+    "total_messages": 1,
+    "total_cost_usd": 0.0,
+    "message_types": {
+      "user": 1
+    },
+    "models_used": [],
+    "tools_used": {},
+    "files_with_errors": 0
+  },
+  "date_range": {
+    "earliest": null,
+    "latest": null
+  },
+  "files_analyzed": [
+    {
+      "file_path": "/tmp/stage0_unicode/\u6d4b\u8bd5.jsonl",
+      "file_size_bytes": 59,
+      "message_count": 1,
+      "message_types": {
+        "user": 1
+      },
+      "models_used": [],
+      "tools_used": {},
+      "total_cost_usd": 0.0,
+      "timestamps": [],
+      "errors": [],
+      "sample_messages": [
+        {
+          "type": "user",
+          "message": {
+            "role": "user",
+            "content": "test"
+          }
+        }
+      ]
+    }
+  ],
+  "recommendations": [
+    "WARNING: No 'assistant' message type found. Check export format."
+  ],
+  "go_no_go": "GO: Data ready for processing"
+}

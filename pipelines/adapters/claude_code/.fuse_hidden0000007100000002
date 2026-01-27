@@ -1,0 +1,226 @@
+# Claude Code/Codex/Github Message Pipeline
+
+**Status:** ✅ Stage 0-1 Complete, ✅ Stage 3 Complete (THE GATE), ✅ Stage 4-5 Complete (LLM Correction), ✅ Stage 6 Complete (Write to entity_unified)
+**Pattern:** Message Extraction & Enrichment
+**Data Source:** Raw JSONL export files (Claude Code, Codex, Github)
+**Final Destination:** entity_unified table (written by Stage 6)
+**Framework Alignment:** ✅ Complete (All stages aligned with HOLD → AGENT → HOLD pattern)
+
+---
+
+## Overview
+
+The Claude Code/Codex/Github pipeline extracts and processes messages from TruthService for three key sources:
+- **Claude Code**: IDE-based AI assistant interactions
+- **Codex**: Codex AI assistant interactions
+- **Github**: GitHub-related AI interactions
+
+**Key Characteristics:**
+- **Format:** BigQuery entity_unified table (TruthService)
+- **Structure:** Message-level entities (level 5)
+- **Content:** Raw message text with metadata
+- **IDs:** Uses existing entity_id from TruthService
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+- Python 3.10+
+- Google Cloud credentials configured
+- BigQuery dataset `spine` with `entity_unified` table
+- Access to TruthService data
+
+### Run Stage 0 (Extraction)
+
+```bash
+cd /Users/jeremyserna/Truth_Engine/pipelines/claude_codex_github/scripts/stage_0
+python claude_codex_github_stage_0.py
+```
+
+### Run Stage 1 (Enrichment)
+
+```bash
+cd /Users/jeremyserna/Truth_Engine/pipelines/claude_codex_github/scripts/stage_1
+python claude_codex_github_stage_1.py
+```
+
+### Run Stage 3 (ID Registration - THE GATE)
+
+```bash
+cd /Users/jeremyserna/Truth_Engine/pipelines/claude_codex_github/scripts/stage_3
+python claude_codex_github_stage_3.py
+```
+
+### Run Stage 4 (LLM Text Correction)
+
+```bash
+cd /Users/jeremyserna/Truth_Engine/pipelines/claude_codex_github/scripts/stage_4
+python claude_codex_github_stage_4.py
+```
+
+**Options:**
+- `--batch-size 1000`: PrimitivePattern batch size (default: 1000)
+- `--limit 100`: Limit number of messages (for testing)
+- `--restart`: Restart from beginning (overwrite existing HOLD₁)
+- `--test`: Test mode (100 records only)
+- `--skip-pattern`: Skip PrimitivePattern execution (only load HOLD₂ to BigQuery)
+
+### Dry Run
+
+```bash
+python claude_codex_github_stage_0.py --dry-run
+```
+
+### Assess Text Quality (Determine if Stage 2 needed)
+
+```bash
+cd /Users/jeremyserna/Truth_Engine/pipelines/claude_codex_github/scripts/assessment
+python assess_text_quality.py
+```
+
+This will assess text quality and recommend whether Stage 2 (Normalization) is needed.
+
+---
+
+## Pipeline Stages
+
+| Stage | Purpose | Status | Output Table |
+|-------|---------|--------|--------------|
+| **Stage 0** | Message Extraction | ✅ Complete | `claude_codex_github_stage_0` |
+| **Stage 1** | Message Enrichment | ✅ Complete | `claude_codex_github_stage_1` |
+| **Stage 3** | ID Registration (THE GATE) | ✅ Complete | `claude_codex_github_stage_3` |
+| **Stage 4** | LLM Text Correction | ✅ Complete | `claude_codex_github_stage_4` |
+| **Stage 5** | Ready Messages | ✅ Complete | `claude_codex_github_stage_5` |
+| **Stage 6** | Write to entity_unified | ✅ Complete | `entity_unified` (final destination) |
+
+---
+
+## Stage 0: Message Extraction
+
+**Purpose:** Extract messages from TruthService (entity_unified) for Claude Code, Codex, and Github sources.
+
+**What It Does:**
+- Reads from `flash-clover-464719-g1.spine.entity_unified`
+- Filters by source_name (claude_code, codex, github)
+- Extracts level 5 entities (messages)
+- Writes to BigQuery `claude_codex_github_stage_0` table
+- Supports date range filtering and pagination
+
+**Output Schema:**
+- `message_id`: Entity ID from TruthService
+- `entity_id`: Entity ID (same as message_id)
+- `source_name`: Source identifier (claude_code, codex, github)
+- `source_pipeline`: Pipeline identifier
+- `source_file`: Source file path
+- `text`: Message text content
+- `level`: Entity level (5 for messages)
+- `content_date`: Content date (partitioned)
+- `created_at`: Original creation timestamp
+- `metadata`: Additional metadata (JSON)
+- `extracted_at`: Extraction timestamp
+- `run_id`: Run identifier for traceability
+
+**Features:**
+- Partitioned by `content_date` for efficient date-based queries
+- Clustered by `source_name` and `level` for efficient filtering
+- Supports append and truncate write modes
+- Dry-run mode for testing
+
+---
+
+## Stage 1: Message Enrichment
+
+**Purpose:** Enrich extracted messages with additional context and processing.
+
+**What It Does:**
+- Reads from `claude_codex_github_stage_0`
+- Enriches messages with:
+  - Sentiment analysis
+  - Entity extraction
+  - Topic classification
+  - Quality scoring
+- Writes to BigQuery `claude_codex_github_stage_1` table
+
+**Output Schema:**
+- All Stage 0 fields plus:
+- `sentiment_score`: Sentiment analysis score
+- `sentiment_label`: Sentiment label (positive, negative, neutral)
+- `entities`: Extracted entities (JSON array)
+- `topics`: Topic classifications (JSON array)
+- `quality_score`: Message quality score
+- `enriched_at`: Enrichment timestamp
+
+---
+
+## Architecture
+
+### HOLD Pattern
+
+**Stage 0:**
+- **HOLD₁**: `flash-clover-464719-g1.spine.entity_unified` (reads from TruthService if data already loaded)
+- **AGENT**: Message extraction and filtering
+- **HOLD₂**: `flash-clover-464719-g1.spine.claude_codex_github_stage_0`
+
+**Stage 1:**
+- **HOLD₁**: `flash-clover-464719-g1.spine.claude_codex_github_stage_0`
+- **AGENT**: Message enrichment and processing
+- **HOLD₂**: `flash-clover-464719-g1.spine.claude_codex_github_stage_1`
+
+**Stage 3:**
+- **HOLD₁**: `flash-clover-464719-g1.spine.claude_codex_github_stage_1`
+- **AGENT**: Entity ID registration with identity_service (THE GATE)
+- **HOLD₂**: `flash-clover-464719-g1.spine.claude_codex_github_stage_3`
+
+**Stage 4:**
+- **HOLD₁**: `Primitive/staging/claude_codex_github_stage_4/hold1_input.jsonl` (exported from Stage 3)
+- **AGENT**: LLM text correction via PrimitivePattern (`llm_correction_agent`)
+- **HOLD₂**: `Primitive/staging/claude_codex_github_stage_4/hold2_output.jsonl` → BigQuery
+  - Stage 4 table: All corrections (`claude_codex_github_stage_4`)
+  - Stage 5 table: Ready messages only (`claude_codex_github_stage_5`)
+
+**Stage 6:**
+- **HOLD₁**: `flash-clover-464719-g1.spine.claude_codex_github_stage_5`
+- **AGENT**: Transform to entity_unified format and write
+- **HOLD₂**: `flash-clover-464719-g1.spine.entity_unified` (FINAL DESTINATION)
+
+---
+
+## Related Documents
+
+- **Pipeline Plan**: `docs/PIPELINE_PLAN.md` - Complete pipeline plan following universal pattern
+- **THE_CLAUDE.md**: `docs/business/THE_CLAUDE.md` - Documentation on Claude integration
+- **System Catalogue**: `docs/COMPLETE_SYSTEM_CATALOGUE.md` - System registry
+- **Framework Specs**: `docs/FRAMEWORK_TECHNICAL_SPECIFICATIONS.md` - Canonical sources
+- **Universal Pattern**: `framework/standards/PIPELINE_PATTERN_SPECIFICATION.md` - Pipeline pattern spec
+
+---
+
+## Governance
+
+All stages follow:
+- ✅ Universal governance policies
+- ✅ Central services integration (logging, cost tracking, identity)
+- ✅ HOLD₁ → AGENT → HOLD₂ pattern
+- ✅ Stage Five cognitive alignment
+- ✅ Four Pillars of Hardening (Fail-Safe, No Magic, Observability, Idempotency)
+- ✅ PipelineTracker integration for execution monitoring
+- ✅ Complete framework documentation (Stage Five Grounding, Blind Spots, Furnace Principle)
+- ✅ CANONICAL SPECIFICATION ALIGNMENT sections
+- ✅ RATIONALE sections explaining stage purpose
+
+### PipelineTracker Integration
+
+Both stages use `PipelineTracker` for execution monitoring:
+- Tracks execution start/end times
+- Records processing metrics (items processed, skipped, failed)
+- Logs events to `logs/pipelines/claude_codex_github.jsonl`
+- Provides visibility into pipeline execution
+
+### Stage Connection
+
+Stages connect at HOLDs (following universal pipeline pattern):
+- **Stage 0 HOLD₂** = **Stage 1 HOLD₁**
+- No direct AGENT-to-AGENT communication
+- All data flows through BigQuery tables (HOLDs)

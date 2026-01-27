@@ -1,0 +1,25 @@
+# Description: Extract actual scripts from conversation JSONL
+# Tool: Bash
+
+python3 << 'EOF'
+import json
+
+# This conversation's JSONL
+filepath = "/Users/jeremyserna/.claude/projects/-Users-jeremyserna-Truth-Engine/3018bf4e-565e-4c52-b5a6-aae9278bfea7.jsonl"
+
+with open(filepath, 'r') as f:
+    for line in f:
+        obj = json.loads(line)
+        if obj.get('type') == 'assistant':
+            content = obj.get('message', {}).get('content', [])
+            for item in content:
+                if isinstance(item, dict) and item.get('type') == 'tool_use':
+                    if item.get('name') == 'Bash':
+                        cmd = item.get('input', {}).get('command', '')
+                        if 'python3' in cmd and 'import json' in cmd:
+                            print("=" * 60)
+                            print("SCRIPT FROM CONVERSATION RECORD:")
+                            print("=" * 60)
+                            print(cmd)
+                            print()
+EOF

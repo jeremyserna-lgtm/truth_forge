@@ -1,0 +1,28 @@
+python3 << 'EOF'
+import json
+
+filepath = "/Users/jeremyserna/.claude/projects/-Users-jeremyserna-Truth-Engine/0a66b5ca-ed1d-4b9d-b183-9011912c7abc.jsonl"
+output_dir = "/Users/jeremyserna/PrimitiveEngine/docs/exercises/transcript_extraction_exercise_2025-12-24/scripts/actual_from_record"
+
+import os
+os.makedirs(output_dir, exist_ok=True)
+
+script_count = 0
+with open(filepath, 'r') as f:
+    for line in f:
+        obj = json.loads(line)
+        if obj.get('type') == 'assistant':
+            content = obj.get('message', {}).get('content', [])
+            for item in content:
+                if isinstance(item, dict) and item.get('type') == 'tool_use':
+                    if item.get('name') == 'Bash':
+                        cmd = item.get('input', {}).get('command', '')
+                        if 'python3' in cmd and 'json.loads' in cmd and 'PERSON_DOCUMENT' in cmd:
+                            script_count += 1
+                            outfile = f"{output_dir}/script_{script_count}_from_record.txt"
+                            with open(outfile, 'w') as out:
+                                out.write(cmd)
+                            print(f"Saved: script_{script_count}_from_record.txt")
+
+print(f"\nTotal scripts saved: {script_count}")
+EOF

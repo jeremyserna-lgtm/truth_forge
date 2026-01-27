@@ -1,0 +1,1786 @@
+2026-01-27 14:38:04 [debug    ] service_registered             service=governance
+2026-01-27 14:38:06 [debug    ] service_registered             service=secret
+2026-01-27 14:38:06 [debug    ] service_registered             service=knowledge
+2026-01-27 14:38:06 [debug    ] service_registered             service=action
+2026-01-27 14:38:06 [debug    ] service_registered             service=cognition
+2026-01-27 14:38:06 [debug    ] service_registered             service=logging
+2026-01-27 14:38:06 [debug    ] service_registered             service=mediator
+2026-01-27 14:38:07 [debug    ] service_registered             service=perception
+2026-01-27 14:38:07 [debug    ] service_registered             service=relationship
+2026-01-27 14:38:10,211 - __main__ - INFO - ============================================================
+2026-01-27 14:38:10,213 - __main__ - INFO - INDUSTRY STANDARD SYNC SERVICE
+2026-01-27 14:38:10,214 - __main__ - INFO - ============================================================
+2026-01-27 14:38:10,214 - __main__ - INFO - 
+2026-01-27 14:38:10,214 - __main__ - INFO - This service implements industry-standard patterns:
+2026-01-27 14:38:10,214 - __main__ - INFO -   ✅ Change Data Capture (CDC) - Change tracking & audit trail
+2026-01-27 14:38:10,214 - __main__ - INFO -   ✅ Event-Driven Architecture - Real-time sync
+2026-01-27 14:38:10,214 - __main__ - INFO -   ✅ Polling - Reliability & catch-up
+2026-01-27 14:38:10,214 - __main__ - INFO - 
+2026-01-27 14:38:10,214 - __main__ - INFO - All layers will stay in sync automatically:
+2026-01-27 14:38:10,214 - __main__ - INFO -   - BigQuery ↔ Twenty CRM ↔ Supabase ↔ Local DB
+2026-01-27 14:38:10,214 - __main__ - INFO - 
+2026-01-27 14:38:10 [info     ] service_initialized            paths={'root': '/Users/jeremyserna/truth_forge/data/services/secret', 'hold1': '/Users/jeremyserna/truth_forge/data/services/secret/hold1', 'hold2': '/Users/jeremyserna/truth_forge/data/services/secret/hold2', 'staging': '/Users/jeremyserna/truth_forge/data/services/secret/staging'} service=secret
+2026-01-27 14:38:10 [info     ] secret_fetched                 secret_id=Twenty_CRM service=secret
+2026-01-27 14:38:10,807 - truth_forge.services.sync.twenty_crm_client - INFO - ✅ Retrieved Twenty CRM API key from secrets manager
+2026-01-27 14:38:10,818 - truth_forge.services.sync.twenty_crm_service - WARNING - Supabase library not installed, skipping Supabase sync
+2026-01-27 14:38:11,328 - truth_forge.services.sync.cdc_sync_service - WARNING - Change tracking tables may already exist: 400 Syntax error: Expected ")" or "," but got keyword DEFAULT at [12:41]; reason: invalidQuery, location: query, message: Syntax error: Expected ")" or "," but got keyword DEFAULT at [12:41]
+
+Location: US
+Job ID: 65913f7e-f441-482d-9b1b-e387948cee2e
+
+2026-01-27 14:38:11 [info     ] service_initialized            paths={'root': '/Users/jeremyserna/truth_forge/data/services/secret', 'hold1': '/Users/jeremyserna/truth_forge/data/services/secret/hold1', 'hold2': '/Users/jeremyserna/truth_forge/data/services/secret/hold2', 'staging': '/Users/jeremyserna/truth_forge/data/services/secret/staging'} service=secret
+2026-01-27 14:38:11 [info     ] secret_fetched                 secret_id=Twenty_CRM service=secret
+2026-01-27 14:38:11,826 - truth_forge.services.sync.twenty_crm_client - INFO - ✅ Retrieved Twenty CRM API key from secrets manager
+2026-01-27 14:38:11,835 - truth_forge.services.sync.twenty_crm_service - WARNING - Supabase library not installed, skipping Supabase sync
+2026-01-27 14:38:12,355 - truth_forge.services.sync.cdc_sync_service - WARNING - Change tracking tables may already exist: 400 Syntax error: Expected ")" or "," but got keyword DEFAULT at [12:41]; reason: invalidQuery, location: query, message: Syntax error: Expected ")" or "," but got keyword DEFAULT at [12:41]
+
+Location: US
+Job ID: 5a4fa0ec-9de8-47bc-817d-8dcb58de967f
+
+2026-01-27 14:38:12,356 - truth_forge.services.sync.event_driven_sync - INFO - Subscribed handler to contact events
+2026-01-27 14:38:12,356 - truth_forge.services.sync.event_driven_sync - INFO - Subscribed handler to business events
+2026-01-27 14:38:12,356 - truth_forge.services.sync.event_driven_sync - INFO - Subscribed handler to relationship events
+2026-01-27 14:38:12,356 - truth_forge.services.sync.industry_standard_sync - INFO - ============================================================
+2026-01-27 14:38:12,356 - truth_forge.services.sync.industry_standard_sync - INFO - STARTING INDUSTRY STANDARD SYNC SERVICE
+2026-01-27 14:38:12,356 - truth_forge.services.sync.industry_standard_sync - INFO - ============================================================
+2026-01-27 14:38:12,356 - truth_forge.services.sync.industry_standard_sync - INFO - CDC: ✅
+2026-01-27 14:38:12,356 - truth_forge.services.sync.industry_standard_sync - INFO - Event-Driven: ✅
+2026-01-27 14:38:12,356 - truth_forge.services.sync.industry_standard_sync - INFO - Polling: ✅
+2026-01-27 14:38:12,356 - truth_forge.services.sync.industry_standard_sync - INFO - 
+2026-01-27 14:38:12,357 - truth_forge.services.sync.industry_standard_sync - INFO - CDC service ready
+2026-01-27 14:38:12,357 - truth_forge.services.sync.event_driven_sync - INFO - Starting event-driven sync service
+2026-01-27 14:38:12,357 - truth_forge.services.sync.event_driven_sync - INFO - ✅ Event-driven sync service started
+2026-01-27 14:38:12,357 - truth_forge.services.sync.industry_standard_sync - INFO - ✅ Event-driven sync service started
+2026-01-27 14:38:12,357 - truth_forge.services.sync.auto_sync_service - INFO - ============================================================
+2026-01-27 14:38:12,357 - truth_forge.services.sync.auto_sync_service - INFO - STARTING AUTO SYNC SERVICE
+2026-01-27 14:38:12,357 - truth_forge.services.sync.auto_sync_service - INFO - ============================================================
+2026-01-27 14:38:12,357 - truth_forge.services.sync.auto_sync_service - INFO - Sync interval: 300 seconds
+2026-01-27 14:38:12,357 - truth_forge.services.sync.auto_sync_service - INFO - Batch size: 100
+2026-01-27 14:38:12,358 - truth_forge.services.sync.auto_sync_service - INFO - ✅ Auto sync service started
+2026-01-27 14:38:12,358 - truth_forge.services.sync.auto_sync_service - INFO -    Service will keep all layers in sync automatically
+2026-01-27 14:38:12,358 - truth_forge.services.sync.auto_sync_service - INFO -    Press Ctrl+C to stop
+2026-01-27 14:38:12,365 - truth_forge.services.sync.industry_standard_sync - INFO - ✅ Polling sync service started
+2026-01-27 14:38:12,368 - truth_forge.services.sync.industry_standard_sync - INFO - ✅ CDC change processor started
+2026-01-27 14:38:12,369 - truth_forge.services.sync.industry_standard_sync - INFO - 
+2026-01-27 14:38:12 [info     ] service_initialized            paths={'root': '/Users/jeremyserna/truth_forge/data/services/secret', 'hold1': '/Users/jeremyserna/truth_forge/data/services/secret/hold1', 'hold2': '/Users/jeremyserna/truth_forge/data/services/secret/hold2', 'staging': '/Users/jeremyserna/truth_forge/data/services/secret/staging'} service=secret
+2026-01-27 14:38:12,370 - truth_forge.services.sync.industry_standard_sync - INFO - ============================================================
+2026-01-27 14:38:12,371 - truth_forge.services.sync.industry_standard_sync - INFO - INDUSTRY STANDARD SYNC SERVICE RUNNING
+2026-01-27 14:38:12,371 - truth_forge.services.sync.industry_standard_sync - INFO - ============================================================
+2026-01-27 14:38:12,372 - truth_forge.services.sync.industry_standard_sync - INFO - All layers will stay in sync automatically
+2026-01-27 14:38:12,380 - truth_forge.services.sync.industry_standard_sync - INFO - Press Ctrl+C to stop
+2026-01-27 14:38:12,381 - truth_forge.services.sync.industry_standard_sync - INFO - 
+2026-01-27 14:38:12,381 - __main__ - INFO - 
+2026-01-27 14:38:12,382 - __main__ - INFO - Service running. Press Ctrl+C to stop.
+2026-01-27 14:38:12,383 - __main__ - INFO - 
+2026-01-27 14:38:12,632 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 6da56d76-2e87-498d-8031-23e74d337c25
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 6da56d76-2e87-498d-8031-23e74d337c25
+
+2026-01-27 14:38:12 [info     ] secret_fetched                 secret_id=Twenty_CRM service=secret
+2026-01-27 14:38:12,877 - truth_forge.services.sync.twenty_crm_client - INFO - ✅ Retrieved Twenty CRM API key from secrets manager
+2026-01-27 14:38:12,890 - truth_forge.services.sync.twenty_crm_service - WARNING - Supabase library not installed, skipping Supabase sync
+2026-01-27 14:38:12,890 - truth_forge.services.sync.auto_sync_service - INFO - 
+============================================================
+2026-01-27 14:38:12,891 - truth_forge.services.sync.auto_sync_service - INFO - SYNC CYCLE - 2026-01-27T21:38:12.890708
+2026-01-27 14:38:12,891 - truth_forge.services.sync.auto_sync_service - INFO - ============================================================
+2026-01-27 14:38:12,891 - truth_forge.services.sync.auto_sync_service - INFO - 
+[1/3] Syncing from BigQuery to all systems...
+2026-01-27 14:38:12,891 - truth_forge.services.sync.auto_sync_service - ERROR - Error syncing from BigQuery: Expected an instance of QueryJobConfig class for the job_config parameter, but received job_config = {'query_parameters': [('last_sync', 'TIMESTAMP', '2026-01-26T21:38:12.891526'), ('batch_size', 'INT64', 100)]}
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/auto_sync_service.py", line 196, in _sync_from_bigquery
+    query_job = self.bq_client.query(query, job_config=job_config)
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/client.py", line 3569, in query
+    _verify_job_config_type(job_config, QueryJobConfig)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/_helpers.py", line 1072, in _verify_job_config_type
+    raise TypeError(
+    ...<5 lines>...
+    )
+TypeError: Expected an instance of QueryJobConfig class for the job_config parameter, but received job_config = {'query_parameters': [('last_sync', 'TIMESTAMP', '2026-01-26T21:38:12.891526'), ('batch_size', 'INT64', 100)]}
+2026-01-27 14:38:12,904 - truth_forge.services.sync.auto_sync_service - INFO - 
+[2/3] Syncing from Twenty CRM to BigQuery...
+2026-01-27 14:38:13,814 - truth_forge.services.sync.auto_sync_service - INFO -   Found 1 contacts to sync from CRM
+2026-01-27 14:38:14,139 - truth_forge.services.sync.crm_twenty_sync - ERROR - Failed to fetch from CRM Twenty: 400 Client Error: Bad Request for url: https://api.twenty.com/rest/people/None
+2026-01-27 14:38:14,141 - truth_forge.services.sync.auto_sync_service - WARNING -   ⚠️  CRM contact None sync issue: 400 Client Error: Bad Request for url: https://api.twenty.com/rest/people/None
+2026-01-27 14:38:14,141 - truth_forge.services.sync.auto_sync_service - INFO -   ✅ Synced 0/1 contacts from CRM
+2026-01-27 14:38:14,141 - truth_forge.services.sync.auto_sync_service - INFO - 
+[3/3] Syncing from Supabase to BigQuery...
+2026-01-27 14:38:14,142 - truth_forge.services.sync.auto_sync_service - INFO - 
+============================================================
+2026-01-27 14:38:14,142 - truth_forge.services.sync.auto_sync_service - INFO - SYNC CYCLE COMPLETE
+2026-01-27 14:38:14,142 - truth_forge.services.sync.auto_sync_service - INFO - ============================================================
+2026-01-27 14:38:14,142 - truth_forge.services.sync.auto_sync_service - INFO - Duration: 1.25s
+2026-01-27 14:38:14,142 - truth_forge.services.sync.auto_sync_service - INFO - Synced: 0 records
+2026-01-27 14:38:14,142 - truth_forge.services.sync.auto_sync_service - INFO - Total synced (all time): 0
+2026-01-27 14:38:14,142 - truth_forge.services.sync.auto_sync_service - INFO - Total errors: 0
+2026-01-27 14:38:14,142 - truth_forge.services.sync.auto_sync_service - INFO - Next sync in: 300s
+2026-01-27 14:39:12,982 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: cf5f490b-75ee-402e-b7e5-006fb883df46
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: cf5f490b-75ee-402e-b7e5-006fb883df46
+
+2026-01-27 14:40:13,294 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: b402e451-c3e8-40ac-83b5-b0267d3ea5c7
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: b402e451-c3e8-40ac-83b5-b0267d3ea5c7
+
+2026-01-27 14:41:13,612 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: f1bc90cb-eece-4e8a-a63b-08e4db5573e7
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: f1bc90cb-eece-4e8a-a63b-08e4db5573e7
+
+2026-01-27 14:42:13,893 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: d10a08af-280c-4ecb-b28a-a183e7ba555e
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: d10a08af-280c-4ecb-b28a-a183e7ba555e
+
+2026-01-27 14:43:14,185 - truth_forge.services.sync.auto_sync_service - INFO - 
+============================================================
+2026-01-27 14:43:14,186 - truth_forge.services.sync.auto_sync_service - INFO - SYNC CYCLE - 2026-01-27T21:43:14.185153
+2026-01-27 14:43:14,186 - truth_forge.services.sync.auto_sync_service - INFO - ============================================================
+2026-01-27 14:43:14,186 - truth_forge.services.sync.auto_sync_service - INFO - 
+[1/3] Syncing from BigQuery to all systems...
+2026-01-27 14:43:14,187 - truth_forge.services.sync.auto_sync_service - ERROR - Error syncing from BigQuery: Expected an instance of QueryJobConfig class for the job_config parameter, but received job_config = {'query_parameters': [('last_sync', 'TIMESTAMP', '2026-01-26T21:43:14.186909'), ('batch_size', 'INT64', 100)]}
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/auto_sync_service.py", line 196, in _sync_from_bigquery
+    query_job = self.bq_client.query(query, job_config=job_config)
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/client.py", line 3569, in query
+    _verify_job_config_type(job_config, QueryJobConfig)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/_helpers.py", line 1072, in _verify_job_config_type
+    raise TypeError(
+    ...<5 lines>...
+    )
+TypeError: Expected an instance of QueryJobConfig class for the job_config parameter, but received job_config = {'query_parameters': [('last_sync', 'TIMESTAMP', '2026-01-26T21:43:14.186909'), ('batch_size', 'INT64', 100)]}
+2026-01-27 14:43:14,189 - truth_forge.services.sync.auto_sync_service - INFO - 
+[2/3] Syncing from Twenty CRM to BigQuery...
+2026-01-27 14:43:14,274 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: b20a4586-1220-4d31-859d-da07ab16fa2e
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: b20a4586-1220-4d31-859d-da07ab16fa2e
+
+2026-01-27 14:43:14,539 - truth_forge.services.sync.auto_sync_service - INFO -   Found 1 contacts to sync from CRM
+2026-01-27 14:43:14,910 - truth_forge.services.sync.crm_twenty_sync - ERROR - Failed to fetch from CRM Twenty: 400 Client Error: Bad Request for url: https://api.twenty.com/rest/people/None
+2026-01-27 14:43:14,912 - truth_forge.services.sync.auto_sync_service - WARNING -   ⚠️  CRM contact None sync issue: 400 Client Error: Bad Request for url: https://api.twenty.com/rest/people/None
+2026-01-27 14:43:14,912 - truth_forge.services.sync.auto_sync_service - INFO -   ✅ Synced 0/1 contacts from CRM
+2026-01-27 14:43:14,912 - truth_forge.services.sync.auto_sync_service - INFO - 
+[3/3] Syncing from Supabase to BigQuery...
+2026-01-27 14:43:14,912 - truth_forge.services.sync.auto_sync_service - INFO - 
+============================================================
+2026-01-27 14:43:14,912 - truth_forge.services.sync.auto_sync_service - INFO - SYNC CYCLE COMPLETE
+2026-01-27 14:43:14,912 - truth_forge.services.sync.auto_sync_service - INFO - ============================================================
+2026-01-27 14:43:14,912 - truth_forge.services.sync.auto_sync_service - INFO - Duration: 0.73s
+2026-01-27 14:43:14,912 - truth_forge.services.sync.auto_sync_service - INFO - Synced: 0 records
+2026-01-27 14:43:14,912 - truth_forge.services.sync.auto_sync_service - INFO - Total synced (all time): 0
+2026-01-27 14:43:14,912 - truth_forge.services.sync.auto_sync_service - INFO - Total errors: 0
+2026-01-27 14:43:14,912 - truth_forge.services.sync.auto_sync_service - INFO - Next sync in: 300s
+2026-01-27 14:44:14,685 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 5f6572dc-e403-4ffd-ad66-1a2a6794af6f
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 5f6572dc-e403-4ffd-ad66-1a2a6794af6f
+
+2026-01-27 14:45:14,984 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 613991bc-b5db-426f-be4c-9e5af3bfd2e2
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 613991bc-b5db-426f-be4c-9e5af3bfd2e2
+
+2026-01-27 14:46:15,378 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: b0698a5d-dff8-448d-bfbe-d3182b774dc6
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: b0698a5d-dff8-448d-bfbe-d3182b774dc6
+
+2026-01-27 14:47:15,757 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: e8791fdc-3e19-46bd-8fce-9954ea04ccd4
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: e8791fdc-3e19-46bd-8fce-9954ea04ccd4
+
+2026-01-27 14:48:14,932 - truth_forge.services.sync.auto_sync_service - INFO - 
+============================================================
+2026-01-27 14:48:14,933 - truth_forge.services.sync.auto_sync_service - INFO - SYNC CYCLE - 2026-01-27T21:48:14.932685
+2026-01-27 14:48:14,933 - truth_forge.services.sync.auto_sync_service - INFO - ============================================================
+2026-01-27 14:48:14,933 - truth_forge.services.sync.auto_sync_service - INFO - 
+[1/3] Syncing from BigQuery to all systems...
+2026-01-27 14:48:14,933 - truth_forge.services.sync.auto_sync_service - ERROR - Error syncing from BigQuery: Expected an instance of QueryJobConfig class for the job_config parameter, but received job_config = {'query_parameters': [('last_sync', 'TIMESTAMP', '2026-01-26T21:48:14.933640'), ('batch_size', 'INT64', 100)]}
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/auto_sync_service.py", line 196, in _sync_from_bigquery
+    query_job = self.bq_client.query(query, job_config=job_config)
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/client.py", line 3569, in query
+    _verify_job_config_type(job_config, QueryJobConfig)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/_helpers.py", line 1072, in _verify_job_config_type
+    raise TypeError(
+    ...<5 lines>...
+    )
+TypeError: Expected an instance of QueryJobConfig class for the job_config parameter, but received job_config = {'query_parameters': [('last_sync', 'TIMESTAMP', '2026-01-26T21:48:14.933640'), ('batch_size', 'INT64', 100)]}
+2026-01-27 14:48:14,934 - truth_forge.services.sync.auto_sync_service - INFO - 
+[2/3] Syncing from Twenty CRM to BigQuery...
+2026-01-27 14:48:15,291 - truth_forge.services.sync.auto_sync_service - INFO -   Found 1 contacts to sync from CRM
+2026-01-27 14:48:15,648 - truth_forge.services.sync.crm_twenty_sync - ERROR - Failed to fetch from CRM Twenty: 400 Client Error: Bad Request for url: https://api.twenty.com/rest/people/None
+2026-01-27 14:48:15,649 - truth_forge.services.sync.auto_sync_service - WARNING -   ⚠️  CRM contact None sync issue: 400 Client Error: Bad Request for url: https://api.twenty.com/rest/people/None
+2026-01-27 14:48:15,649 - truth_forge.services.sync.auto_sync_service - INFO -   ✅ Synced 0/1 contacts from CRM
+2026-01-27 14:48:15,650 - truth_forge.services.sync.auto_sync_service - INFO - 
+[3/3] Syncing from Supabase to BigQuery...
+2026-01-27 14:48:15,650 - truth_forge.services.sync.auto_sync_service - INFO - 
+============================================================
+2026-01-27 14:48:15,650 - truth_forge.services.sync.auto_sync_service - INFO - SYNC CYCLE COMPLETE
+2026-01-27 14:48:15,650 - truth_forge.services.sync.auto_sync_service - INFO - ============================================================
+2026-01-27 14:48:15,650 - truth_forge.services.sync.auto_sync_service - INFO - Duration: 0.72s
+2026-01-27 14:48:15,650 - truth_forge.services.sync.auto_sync_service - INFO - Synced: 0 records
+2026-01-27 14:48:15,650 - truth_forge.services.sync.auto_sync_service - INFO - Total synced (all time): 0
+2026-01-27 14:48:15,650 - truth_forge.services.sync.auto_sync_service - INFO - Total errors: 0
+2026-01-27 14:48:15,650 - truth_forge.services.sync.auto_sync_service - INFO - Next sync in: 300s
+2026-01-27 14:48:16,259 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 7001c758-ea80-40cc-b049-b0e6530a90ee
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 7001c758-ea80-40cc-b049-b0e6530a90ee
+
+2026-01-27 14:49:16,737 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 1f6f8526-bd7b-4877-ba5b-11d369bfd3fd
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 1f6f8526-bd7b-4877-ba5b-11d369bfd3fd
+
+2026-01-27 14:50:16,969 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: c106394d-6d41-4632-81dd-e1a332cbaa1a
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: c106394d-6d41-4632-81dd-e1a332cbaa1a
+
+2026-01-27 14:51:17,371 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: fb7a3cec-58df-4455-9859-96e15b344bb0
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: fb7a3cec-58df-4455-9859-96e15b344bb0
+
+2026-01-27 14:52:17,720 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 414e2e79-a5b5-4083-87f1-3a9febf727f8
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 414e2e79-a5b5-4083-87f1-3a9febf727f8
+
+2026-01-27 14:53:15,718 - truth_forge.services.sync.auto_sync_service - INFO - 
+============================================================
+2026-01-27 14:53:15,720 - truth_forge.services.sync.auto_sync_service - INFO - SYNC CYCLE - 2026-01-27T21:53:15.718689
+2026-01-27 14:53:15,720 - truth_forge.services.sync.auto_sync_service - INFO - ============================================================
+2026-01-27 14:53:15,720 - truth_forge.services.sync.auto_sync_service - INFO - 
+[1/3] Syncing from BigQuery to all systems...
+2026-01-27 14:53:15,720 - truth_forge.services.sync.auto_sync_service - ERROR - Error syncing from BigQuery: Expected an instance of QueryJobConfig class for the job_config parameter, but received job_config = {'query_parameters': [('last_sync', 'TIMESTAMP', '2026-01-26T21:53:15.720248'), ('batch_size', 'INT64', 100)]}
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/auto_sync_service.py", line 196, in _sync_from_bigquery
+    query_job = self.bq_client.query(query, job_config=job_config)
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/client.py", line 3569, in query
+    _verify_job_config_type(job_config, QueryJobConfig)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/_helpers.py", line 1072, in _verify_job_config_type
+    raise TypeError(
+    ...<5 lines>...
+    )
+TypeError: Expected an instance of QueryJobConfig class for the job_config parameter, but received job_config = {'query_parameters': [('last_sync', 'TIMESTAMP', '2026-01-26T21:53:15.720248'), ('batch_size', 'INT64', 100)]}
+2026-01-27 14:53:15,720 - truth_forge.services.sync.auto_sync_service - INFO - 
+[2/3] Syncing from Twenty CRM to BigQuery...
+2026-01-27 14:53:16,092 - truth_forge.services.sync.auto_sync_service - INFO -   Found 1 contacts to sync from CRM
+2026-01-27 14:53:16,444 - truth_forge.services.sync.crm_twenty_sync - ERROR - Failed to fetch from CRM Twenty: 400 Client Error: Bad Request for url: https://api.twenty.com/rest/people/None
+2026-01-27 14:53:16,446 - truth_forge.services.sync.auto_sync_service - WARNING -   ⚠️  CRM contact None sync issue: 400 Client Error: Bad Request for url: https://api.twenty.com/rest/people/None
+2026-01-27 14:53:16,446 - truth_forge.services.sync.auto_sync_service - INFO -   ✅ Synced 0/1 contacts from CRM
+2026-01-27 14:53:16,446 - truth_forge.services.sync.auto_sync_service - INFO - 
+[3/3] Syncing from Supabase to BigQuery...
+2026-01-27 14:53:16,447 - truth_forge.services.sync.auto_sync_service - INFO - 
+============================================================
+2026-01-27 14:53:16,447 - truth_forge.services.sync.auto_sync_service - INFO - SYNC CYCLE COMPLETE
+2026-01-27 14:53:16,447 - truth_forge.services.sync.auto_sync_service - INFO - ============================================================
+2026-01-27 14:53:16,447 - truth_forge.services.sync.auto_sync_service - INFO - Duration: 0.73s
+2026-01-27 14:53:16,447 - truth_forge.services.sync.auto_sync_service - INFO - Synced: 0 records
+2026-01-27 14:53:16,447 - truth_forge.services.sync.auto_sync_service - INFO - Total synced (all time): 0
+2026-01-27 14:53:16,447 - truth_forge.services.sync.auto_sync_service - INFO - Total errors: 0
+2026-01-27 14:53:16,447 - truth_forge.services.sync.auto_sync_service - INFO - Next sync in: 300s
+2026-01-27 14:53:17,982 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 3ff9f9d0-827f-40f3-b750-c4ae5efd91b9
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 3ff9f9d0-827f-40f3-b750-c4ae5efd91b9
+
+2026-01-27 14:54:18,282 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 71ba6b46-c5a5-4432-9a49-264518576527
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 71ba6b46-c5a5-4432-9a49-264518576527
+
+2026-01-27 14:55:18,534 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 3e92ce39-a596-402f-ab1c-8676d0669fcc
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 3e92ce39-a596-402f-ab1c-8676d0669fcc
+
+2026-01-27 14:56:18,856 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: c76395e4-06bc-4a27-ae0a-8cf251628b50
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: c76395e4-06bc-4a27-ae0a-8cf251628b50
+
+2026-01-27 14:57:19,238 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 3945fd21-9b1a-42d1-b9f7-5785cfa8e757
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 3945fd21-9b1a-42d1-b9f7-5785cfa8e757
+
+2026-01-27 14:58:16,484 - truth_forge.services.sync.auto_sync_service - INFO - 
+============================================================
+2026-01-27 14:58:16,485 - truth_forge.services.sync.auto_sync_service - INFO - SYNC CYCLE - 2026-01-27T21:58:16.484273
+2026-01-27 14:58:16,485 - truth_forge.services.sync.auto_sync_service - INFO - ============================================================
+2026-01-27 14:58:16,485 - truth_forge.services.sync.auto_sync_service - INFO - 
+[1/3] Syncing from BigQuery to all systems...
+2026-01-27 14:58:16,485 - truth_forge.services.sync.auto_sync_service - ERROR - Error syncing from BigQuery: Expected an instance of QueryJobConfig class for the job_config parameter, but received job_config = {'query_parameters': [('last_sync', 'TIMESTAMP', '2026-01-26T21:58:16.485460'), ('batch_size', 'INT64', 100)]}
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/auto_sync_service.py", line 196, in _sync_from_bigquery
+    query_job = self.bq_client.query(query, job_config=job_config)
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/client.py", line 3569, in query
+    _verify_job_config_type(job_config, QueryJobConfig)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/_helpers.py", line 1072, in _verify_job_config_type
+    raise TypeError(
+    ...<5 lines>...
+    )
+TypeError: Expected an instance of QueryJobConfig class for the job_config parameter, but received job_config = {'query_parameters': [('last_sync', 'TIMESTAMP', '2026-01-26T21:58:16.485460'), ('batch_size', 'INT64', 100)]}
+2026-01-27 14:58:16,486 - truth_forge.services.sync.auto_sync_service - INFO - 
+[2/3] Syncing from Twenty CRM to BigQuery...
+2026-01-27 14:58:16,799 - truth_forge.services.sync.auto_sync_service - INFO -   Found 1 contacts to sync from CRM
+2026-01-27 14:58:17,044 - truth_forge.services.sync.crm_twenty_sync - ERROR - Failed to fetch from CRM Twenty: 400 Client Error: Bad Request for url: https://api.twenty.com/rest/people/None
+2026-01-27 14:58:17,045 - truth_forge.services.sync.auto_sync_service - WARNING -   ⚠️  CRM contact None sync issue: 400 Client Error: Bad Request for url: https://api.twenty.com/rest/people/None
+2026-01-27 14:58:17,045 - truth_forge.services.sync.auto_sync_service - INFO -   ✅ Synced 0/1 contacts from CRM
+2026-01-27 14:58:17,045 - truth_forge.services.sync.auto_sync_service - INFO - 
+[3/3] Syncing from Supabase to BigQuery...
+2026-01-27 14:58:17,045 - truth_forge.services.sync.auto_sync_service - INFO - 
+============================================================
+2026-01-27 14:58:17,045 - truth_forge.services.sync.auto_sync_service - INFO - SYNC CYCLE COMPLETE
+2026-01-27 14:58:17,046 - truth_forge.services.sync.auto_sync_service - INFO - ============================================================
+2026-01-27 14:58:17,046 - truth_forge.services.sync.auto_sync_service - INFO - Duration: 0.56s
+2026-01-27 14:58:17,046 - truth_forge.services.sync.auto_sync_service - INFO - Synced: 0 records
+2026-01-27 14:58:17,046 - truth_forge.services.sync.auto_sync_service - INFO - Total synced (all time): 0
+2026-01-27 14:58:17,046 - truth_forge.services.sync.auto_sync_service - INFO - Total errors: 0
+2026-01-27 14:58:17,046 - truth_forge.services.sync.auto_sync_service - INFO - Next sync in: 300s
+2026-01-27 14:58:19,568 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: c41de65f-a8e9-4f63-a914-5c9434554ee4
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: c41de65f-a8e9-4f63-a914-5c9434554ee4
+
+2026-01-27 14:59:20,096 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: c2c0120b-2eea-46b3-aa73-be915cb26d4d
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: c2c0120b-2eea-46b3-aa73-be915cb26d4d
+
+2026-01-27 15:00:20,485 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 0193e5d7-146c-4451-b8a4-ae14029d93cc
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 0193e5d7-146c-4451-b8a4-ae14029d93cc
+
+2026-01-27 15:01:20,899 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: ab1562fa-e0a7-4578-a743-b5a45576e188
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: ab1562fa-e0a7-4578-a743-b5a45576e188
+
+2026-01-27 15:02:21,232 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 9356f2a8-457b-46a0-81da-29010a3af40c
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 9356f2a8-457b-46a0-81da-29010a3af40c
+
+2026-01-27 15:03:17,069 - truth_forge.services.sync.auto_sync_service - INFO - 
+============================================================
+2026-01-27 15:03:17,072 - truth_forge.services.sync.auto_sync_service - INFO - SYNC CYCLE - 2026-01-27T22:03:17.069230
+2026-01-27 15:03:17,072 - truth_forge.services.sync.auto_sync_service - INFO - ============================================================
+2026-01-27 15:03:17,072 - truth_forge.services.sync.auto_sync_service - INFO - 
+[1/3] Syncing from BigQuery to all systems...
+2026-01-27 15:03:17,073 - truth_forge.services.sync.auto_sync_service - ERROR - Error syncing from BigQuery: Expected an instance of QueryJobConfig class for the job_config parameter, but received job_config = {'query_parameters': [('last_sync', 'TIMESTAMP', '2026-01-26T22:03:17.072791'), ('batch_size', 'INT64', 100)]}
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/auto_sync_service.py", line 196, in _sync_from_bigquery
+    query_job = self.bq_client.query(query, job_config=job_config)
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/client.py", line 3569, in query
+    _verify_job_config_type(job_config, QueryJobConfig)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/_helpers.py", line 1072, in _verify_job_config_type
+    raise TypeError(
+    ...<5 lines>...
+    )
+TypeError: Expected an instance of QueryJobConfig class for the job_config parameter, but received job_config = {'query_parameters': [('last_sync', 'TIMESTAMP', '2026-01-26T22:03:17.072791'), ('batch_size', 'INT64', 100)]}
+2026-01-27 15:03:17,077 - truth_forge.services.sync.auto_sync_service - INFO - 
+[2/3] Syncing from Twenty CRM to BigQuery...
+2026-01-27 15:03:17,924 - truth_forge.services.sync.auto_sync_service - INFO -   Found 1 contacts to sync from CRM
+2026-01-27 15:03:19,130 - truth_forge.services.sync.crm_twenty_sync - ERROR - Failed to fetch from CRM Twenty: 400 Client Error: Bad Request for url: https://api.twenty.com/rest/people/None
+2026-01-27 15:03:19,131 - truth_forge.services.sync.auto_sync_service - WARNING -   ⚠️  CRM contact None sync issue: 400 Client Error: Bad Request for url: https://api.twenty.com/rest/people/None
+2026-01-27 15:03:19,132 - truth_forge.services.sync.auto_sync_service - INFO -   ✅ Synced 0/1 contacts from CRM
+2026-01-27 15:03:19,132 - truth_forge.services.sync.auto_sync_service - INFO - 
+[3/3] Syncing from Supabase to BigQuery...
+2026-01-27 15:03:19,132 - truth_forge.services.sync.auto_sync_service - INFO - 
+============================================================
+2026-01-27 15:03:19,132 - truth_forge.services.sync.auto_sync_service - INFO - SYNC CYCLE COMPLETE
+2026-01-27 15:03:19,132 - truth_forge.services.sync.auto_sync_service - INFO - ============================================================
+2026-01-27 15:03:19,135 - truth_forge.services.sync.auto_sync_service - INFO - Duration: 2.06s
+2026-01-27 15:03:19,135 - truth_forge.services.sync.auto_sync_service - INFO - Synced: 0 records
+2026-01-27 15:03:19,135 - truth_forge.services.sync.auto_sync_service - INFO - Total synced (all time): 0
+2026-01-27 15:03:19,135 - truth_forge.services.sync.auto_sync_service - INFO - Total errors: 0
+2026-01-27 15:03:19,135 - truth_forge.services.sync.auto_sync_service - INFO - Next sync in: 300s
+2026-01-27 15:03:21,756 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: dc6079e3-9e29-4ef3-8c0f-dc4f44f63494
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: dc6079e3-9e29-4ef3-8c0f-dc4f44f63494
+
+2026-01-27 15:04:22,144 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: c3fac9fd-47dc-4822-91b4-6f9eb49e35cd
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: c3fac9fd-47dc-4822-91b4-6f9eb49e35cd
+
+2026-01-27 15:05:22,468 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 2faabe94-36a3-476b-ab71-81828595b3fb
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 2faabe94-36a3-476b-ab71-81828595b3fb
+
+2026-01-27 15:06:22,747 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: cf4aa4fa-2122-47e6-9158-c63cea68a004
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: cf4aa4fa-2122-47e6-9158-c63cea68a004
+
+2026-01-27 15:07:23,093 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 4f869bfe-f8f6-4b3f-97ab-3deb1a707d22
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 4f869bfe-f8f6-4b3f-97ab-3deb1a707d22
+
+2026-01-27 15:08:19,153 - truth_forge.services.sync.auto_sync_service - INFO - 
+============================================================
+2026-01-27 15:08:19,155 - truth_forge.services.sync.auto_sync_service - INFO - SYNC CYCLE - 2026-01-27T22:08:19.153459
+2026-01-27 15:08:19,156 - truth_forge.services.sync.auto_sync_service - INFO - ============================================================
+2026-01-27 15:08:19,156 - truth_forge.services.sync.auto_sync_service - INFO - 
+[1/3] Syncing from BigQuery to all systems...
+2026-01-27 15:08:19,156 - truth_forge.services.sync.auto_sync_service - ERROR - Error syncing from BigQuery: Expected an instance of QueryJobConfig class for the job_config parameter, but received job_config = {'query_parameters': [('last_sync', 'TIMESTAMP', '2026-01-26T22:08:19.156499'), ('batch_size', 'INT64', 100)]}
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/auto_sync_service.py", line 196, in _sync_from_bigquery
+    query_job = self.bq_client.query(query, job_config=job_config)
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/client.py", line 3569, in query
+    _verify_job_config_type(job_config, QueryJobConfig)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/_helpers.py", line 1072, in _verify_job_config_type
+    raise TypeError(
+    ...<5 lines>...
+    )
+TypeError: Expected an instance of QueryJobConfig class for the job_config parameter, but received job_config = {'query_parameters': [('last_sync', 'TIMESTAMP', '2026-01-26T22:08:19.156499'), ('batch_size', 'INT64', 100)]}
+2026-01-27 15:08:19,157 - truth_forge.services.sync.auto_sync_service - INFO - 
+[2/3] Syncing from Twenty CRM to BigQuery...
+2026-01-27 15:08:19,476 - truth_forge.services.sync.auto_sync_service - INFO -   Found 1 contacts to sync from CRM
+2026-01-27 15:08:19,745 - truth_forge.services.sync.crm_twenty_sync - ERROR - Failed to fetch from CRM Twenty: 400 Client Error: Bad Request for url: https://api.twenty.com/rest/people/None
+2026-01-27 15:08:19,747 - truth_forge.services.sync.auto_sync_service - WARNING -   ⚠️  CRM contact None sync issue: 400 Client Error: Bad Request for url: https://api.twenty.com/rest/people/None
+2026-01-27 15:08:19,747 - truth_forge.services.sync.auto_sync_service - INFO -   ✅ Synced 0/1 contacts from CRM
+2026-01-27 15:08:19,747 - truth_forge.services.sync.auto_sync_service - INFO - 
+[3/3] Syncing from Supabase to BigQuery...
+2026-01-27 15:08:19,748 - truth_forge.services.sync.auto_sync_service - INFO - 
+============================================================
+2026-01-27 15:08:19,748 - truth_forge.services.sync.auto_sync_service - INFO - SYNC CYCLE COMPLETE
+2026-01-27 15:08:19,748 - truth_forge.services.sync.auto_sync_service - INFO - ============================================================
+2026-01-27 15:08:19,748 - truth_forge.services.sync.auto_sync_service - INFO - Duration: 0.59s
+2026-01-27 15:08:19,748 - truth_forge.services.sync.auto_sync_service - INFO - Synced: 0 records
+2026-01-27 15:08:19,748 - truth_forge.services.sync.auto_sync_service - INFO - Total synced (all time): 0
+2026-01-27 15:08:19,748 - truth_forge.services.sync.auto_sync_service - INFO - Total errors: 0
+2026-01-27 15:08:19,748 - truth_forge.services.sync.auto_sync_service - INFO - Next sync in: 300s
+2026-01-27 15:08:23,552 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: bd8bf96c-108f-4127-80e5-4e8c24a16823
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: bd8bf96c-108f-4127-80e5-4e8c24a16823
+
+2026-01-27 15:09:23,899 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 759990fb-c4a0-451f-becd-3d4e058e5865
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 759990fb-c4a0-451f-becd-3d4e058e5865
+
+2026-01-27 15:10:24,202 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 39ca7747-4034-42ec-a830-5533bb4533d7
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 39ca7747-4034-42ec-a830-5533bb4533d7
+
+2026-01-27 15:11:24,520 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 52507df2-a2a9-4db2-85dd-1d74372aaeea
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 52507df2-a2a9-4db2-85dd-1d74372aaeea
+
+2026-01-27 15:12:24,953 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: c819c75e-0862-4089-90e5-dc52e32e4b57
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: c819c75e-0862-4089-90e5-dc52e32e4b57
+
+2026-01-27 15:13:19,795 - truth_forge.services.sync.auto_sync_service - INFO - 
+============================================================
+2026-01-27 15:13:19,796 - truth_forge.services.sync.auto_sync_service - INFO - SYNC CYCLE - 2026-01-27T22:13:19.795603
+2026-01-27 15:13:19,796 - truth_forge.services.sync.auto_sync_service - INFO - ============================================================
+2026-01-27 15:13:19,796 - truth_forge.services.sync.auto_sync_service - INFO - 
+[1/3] Syncing from BigQuery to all systems...
+2026-01-27 15:13:19,796 - truth_forge.services.sync.auto_sync_service - ERROR - Error syncing from BigQuery: Expected an instance of QueryJobConfig class for the job_config parameter, but received job_config = {'query_parameters': [('last_sync', 'TIMESTAMP', '2026-01-26T22:13:19.796213'), ('batch_size', 'INT64', 100)]}
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/auto_sync_service.py", line 196, in _sync_from_bigquery
+    query_job = self.bq_client.query(query, job_config=job_config)
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/client.py", line 3569, in query
+    _verify_job_config_type(job_config, QueryJobConfig)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/_helpers.py", line 1072, in _verify_job_config_type
+    raise TypeError(
+    ...<5 lines>...
+    )
+TypeError: Expected an instance of QueryJobConfig class for the job_config parameter, but received job_config = {'query_parameters': [('last_sync', 'TIMESTAMP', '2026-01-26T22:13:19.796213'), ('batch_size', 'INT64', 100)]}
+2026-01-27 15:13:19,797 - truth_forge.services.sync.auto_sync_service - INFO - 
+[2/3] Syncing from Twenty CRM to BigQuery...
+2026-01-27 15:13:20,900 - truth_forge.services.sync.auto_sync_service - INFO -   Found 1 contacts to sync from CRM
+2026-01-27 15:13:22,223 - truth_forge.services.sync.crm_twenty_sync - ERROR - Failed to fetch from CRM Twenty: 400 Client Error: Bad Request for url: https://api.twenty.com/rest/people/None
+2026-01-27 15:13:22,224 - truth_forge.services.sync.auto_sync_service - WARNING -   ⚠️  CRM contact None sync issue: 400 Client Error: Bad Request for url: https://api.twenty.com/rest/people/None
+2026-01-27 15:13:22,224 - truth_forge.services.sync.auto_sync_service - INFO -   ✅ Synced 0/1 contacts from CRM
+2026-01-27 15:13:22,224 - truth_forge.services.sync.auto_sync_service - INFO - 
+[3/3] Syncing from Supabase to BigQuery...
+2026-01-27 15:13:22,224 - truth_forge.services.sync.auto_sync_service - INFO - 
+============================================================
+2026-01-27 15:13:22,224 - truth_forge.services.sync.auto_sync_service - INFO - SYNC CYCLE COMPLETE
+2026-01-27 15:13:22,224 - truth_forge.services.sync.auto_sync_service - INFO - ============================================================
+2026-01-27 15:13:22,224 - truth_forge.services.sync.auto_sync_service - INFO - Duration: 2.43s
+2026-01-27 15:13:22,224 - truth_forge.services.sync.auto_sync_service - INFO - Synced: 0 records
+2026-01-27 15:13:22,225 - truth_forge.services.sync.auto_sync_service - INFO - Total synced (all time): 0
+2026-01-27 15:13:22,225 - truth_forge.services.sync.auto_sync_service - INFO - Total errors: 0
+2026-01-27 15:13:22,225 - truth_forge.services.sync.auto_sync_service - INFO - Next sync in: 300s
+2026-01-27 15:13:25,326 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: fbe56757-1815-462f-9ecb-b0077a12359b
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: fbe56757-1815-462f-9ecb-b0077a12359b
+
+2026-01-27 15:14:25,652 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: c5226bc9-34d1-4e78-9266-be294327700b
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: c5226bc9-34d1-4e78-9266-be294327700b
+
+2026-01-27 15:15:26,011 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: e362f87c-cad7-401f-8846-498fcf8f68e4
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: e362f87c-cad7-401f-8846-498fcf8f68e4
+
+2026-01-27 15:16:26,396 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: d9e4fa33-8e34-49ba-baa4-434c320a529a
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: d9e4fa33-8e34-49ba-baa4-434c320a529a
+
+2026-01-27 15:17:26,694 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: f6aa2c51-4991-46f4-b215-cd918b3d7dc0
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: f6aa2c51-4991-46f4-b215-cd918b3d7dc0
+
+2026-01-27 15:18:22,280 - truth_forge.services.sync.auto_sync_service - INFO - 
+============================================================
+2026-01-27 15:18:22,282 - truth_forge.services.sync.auto_sync_service - INFO - SYNC CYCLE - 2026-01-27T22:18:22.279945
+2026-01-27 15:18:22,282 - truth_forge.services.sync.auto_sync_service - INFO - ============================================================
+2026-01-27 15:18:22,282 - truth_forge.services.sync.auto_sync_service - INFO - 
+[1/3] Syncing from BigQuery to all systems...
+2026-01-27 15:18:22,283 - truth_forge.services.sync.auto_sync_service - ERROR - Error syncing from BigQuery: Expected an instance of QueryJobConfig class for the job_config parameter, but received job_config = {'query_parameters': [('last_sync', 'TIMESTAMP', '2026-01-26T22:18:22.282497'), ('batch_size', 'INT64', 100)]}
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/auto_sync_service.py", line 196, in _sync_from_bigquery
+    query_job = self.bq_client.query(query, job_config=job_config)
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/client.py", line 3569, in query
+    _verify_job_config_type(job_config, QueryJobConfig)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/_helpers.py", line 1072, in _verify_job_config_type
+    raise TypeError(
+    ...<5 lines>...
+    )
+TypeError: Expected an instance of QueryJobConfig class for the job_config parameter, but received job_config = {'query_parameters': [('last_sync', 'TIMESTAMP', '2026-01-26T22:18:22.282497'), ('batch_size', 'INT64', 100)]}
+2026-01-27 15:18:22,290 - truth_forge.services.sync.auto_sync_service - INFO - 
+[2/3] Syncing from Twenty CRM to BigQuery...
+2026-01-27 15:18:22,659 - truth_forge.services.sync.auto_sync_service - INFO -   Found 1 contacts to sync from CRM
+2026-01-27 15:18:22,928 - truth_forge.services.sync.crm_twenty_sync - ERROR - Failed to fetch from CRM Twenty: 400 Client Error: Bad Request for url: https://api.twenty.com/rest/people/None
+2026-01-27 15:18:22,929 - truth_forge.services.sync.auto_sync_service - WARNING -   ⚠️  CRM contact None sync issue: 400 Client Error: Bad Request for url: https://api.twenty.com/rest/people/None
+2026-01-27 15:18:22,930 - truth_forge.services.sync.auto_sync_service - INFO -   ✅ Synced 0/1 contacts from CRM
+2026-01-27 15:18:22,930 - truth_forge.services.sync.auto_sync_service - INFO - 
+[3/3] Syncing from Supabase to BigQuery...
+2026-01-27 15:18:22,930 - truth_forge.services.sync.auto_sync_service - INFO - 
+============================================================
+2026-01-27 15:18:22,930 - truth_forge.services.sync.auto_sync_service - INFO - SYNC CYCLE COMPLETE
+2026-01-27 15:18:22,930 - truth_forge.services.sync.auto_sync_service - INFO - ============================================================
+2026-01-27 15:18:22,930 - truth_forge.services.sync.auto_sync_service - INFO - Duration: 0.65s
+2026-01-27 15:18:22,930 - truth_forge.services.sync.auto_sync_service - INFO - Synced: 0 records
+2026-01-27 15:18:22,930 - truth_forge.services.sync.auto_sync_service - INFO - Total synced (all time): 0
+2026-01-27 15:18:22,931 - truth_forge.services.sync.auto_sync_service - INFO - Total errors: 0
+2026-01-27 15:18:22,931 - truth_forge.services.sync.auto_sync_service - INFO - Next sync in: 300s
+2026-01-27 15:18:27,273 - truth_forge.services.sync.cdc_sync_service - ERROR - Failed to process pending changes: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 644efbb8-2749-41f1-89c8-8710f06ad4c9
+Traceback (most recent call last):
+  File "/Users/jeremyserna/truth_forge/src/truth_forge/services/sync/cdc_sync_service.py", line 428, in process_pending_changes
+    results = list(self.bq_client.query(query, job_config=job_config).result())
+                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1773, in result
+    while not is_job_done():
+              ~~~~~~~~~~~^^
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 294, in retry_wrapped_func
+    return retry_target(
+        target,
+    ...<3 lines>...
+        on_error=on_error,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 156, in retry_target
+    next_sleep = _retry_error_helper(
+        exc,
+    ...<6 lines>...
+        timeout,
+    )
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_base.py", line 214, in _retry_error_helper
+    raise final_exc from source_exc
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/api_core/retry/retry_unary.py", line 147, in retry_target
+    result = target()
+  File "/Users/jeremyserna/truth_forge/.venv/lib/python3.14/site-packages/google/cloud/bigquery/job/query.py", line 1722, in is_job_done
+    raise job_failed_exception
+google.api_core.exceptions.NotFound: 404 Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US; reason: notFound, message: Not found: Table flash-clover-464719-g1:identity.sync_change_log was not found in location US
+
+Location: US
+Job ID: 644efbb8-2749-41f1-89c8-8710f06ad4c9
+

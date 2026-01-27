@@ -1,0 +1,47 @@
+# Description: Parse JSONL structure
+# Tool: Bash
+
+python3 << 'EOF'
+import json
+import sys
+
+# Read the file
+with open('/Users/jeremyserna/.claude/projects/-Users-jeremyserna-Truth-Engine/3018bf4e-565e-4c52-b5a6-aae9278bfea7.jsonl', 'r') as f:
+    lines = f.readlines()
+
+# Parse each line
+for i, line in enumerate(lines):
+    try:
+        obj = json.loads(line)
+        msg_type = obj.get('type', '')
+
+        # Print message type and key info
+        if msg_type == 'user':
+            message = obj.get('message', {})
+            content = message.get('content', [])
+            print(f"\n=== LINE {i+1}: USER MESSAGE ===")
+            for item in content:
+                if isinstance(item, dict):
+                    if item.get('type') == 'text':
+                        print(f"TEXT: {item.get('text', '')[:500]}...")
+                    elif item.get('type') == 'tool_result':
+                        print(f"TOOL_RESULT: {item.get('tool_use_id', '')[:50]}")
+        elif msg_type == 'assistant':
+            message = obj.get('message', {})
+            content = message.get('content', [])
+            print(f"\n=== LINE {i+1}: ASSISTANT MESSAGE ===")
+            for item in content:
+                if isinstance(item, dict):
+                    item_type = item.get('type', '')
+                    if item_type == 'thinking':
+                        thinking = item.get('thinking', '')
+                        print(f"THINKING: {thinking[:500]}...")
+                    elif item_type == 'text':
+                        print(f"TEXT: {item.get('text', '')[:500]}...")
+                    elif item_type == 'tool_use':
+                        print(f"TOOL_USE: {item.get('name', '')} - {item.get('id', '')[:20]}")
+        elif msg_type in ['queue-operation', 'file-history-snapshot']:
+            print(f"\n=== LINE {i+1}: {msg_type.upper()} ===")
+    except json.JSONDecodeError as e:
+        print(f"Line {i+1}: JSON error - {e}")
+EOF

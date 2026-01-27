@@ -1,0 +1,50 @@
+# Test Pipeline Configuration
+#
+# MOLT LINEAGE:
+# - Source: New for truth_forge
+# - Version: 2.0.0
+# - Date: 2026-01-26
+#
+# Simple test pipeline to verify runner works.
+
+[pipeline]
+name = "test_pipeline"
+version = "2.0.0"
+description = "Test pipeline for validation"
+source_name = "test_source"
+target_table = "test_output"
+
+[source]
+type = "jsonl"
+path = "data/staging/test_input.jsonl"
+
+[destination]
+type = "jsonl"
+path = "data/output/test_output.jsonl"
+
+[stages.stage_0]
+name = "Extract Test Data"
+type = "extract"
+input = "data/staging/test_input.jsonl"
+output = "data/staging/stage_0_output.jsonl"
+
+[stages.stage_1]
+name = "Transform Test Data"
+type = "transform"
+input = "data/staging/stage_0_output.jsonl"
+output = "data/staging/stage_1_output.jsonl"
+
+[stages.stage_2]
+name = "Load Test Data"
+type = "load"
+input = "data/staging/stage_1_output.jsonl"
+output = "data/output/test_output.jsonl"
+
+[governance]
+cost_limit = 1.00
+audit_enabled = true
+
+[models]
+default = "haiku"
+extract = "haiku"
+transform = "sonnet"

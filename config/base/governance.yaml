@@ -1,0 +1,60 @@
+# Governance Configuration
+#
+# MOLT LINEAGE:
+# - Source: Truth_Engine/config/base/compliance_policies.yaml
+# - Version: 2.0.0
+# - Date: 2026-01-26
+#
+# THE PATTERN enforcement and governance rules.
+
+# HOLD isolation rules
+hold_isolation:
+  strict_mode: true
+  allowed_flows:
+    - source: external
+      operation: write
+      target: hold1
+    - source: agent
+      operation: read
+      target: hold1
+    - source: agent
+      operation: write
+      target: hold2
+    - source: consumer
+      operation: read
+      target: hold2
+
+# Audit settings
+audit:
+  enabled: true
+  buffer_size: 1000
+  auto_flush: true
+  retention_days: 90
+
+# Cost enforcement
+cost:
+  enforcement: true
+  track_all: true
+  alert_on_warning: true
+  block_on_limit: true
+
+# Four Pillars
+pillars:
+  fail_safe:
+    enabled: true
+    dlq_required: true
+    retry_with_backoff: true
+
+  no_magic:
+    enabled: true
+    explicit_config: true
+    no_hidden_defaults: true
+
+  observability:
+    enabled: true
+    structured_logging: true
+    metrics_enabled: true
+
+  idempotency:
+    enabled: true
+    require_idempotent_operations: true

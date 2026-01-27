@@ -1,0 +1,45 @@
+# Daily Budget Configuration
+#
+# MOLT LINEAGE:
+# - Source: Truth_Engine/config/base/budgets/daily_budget.yaml
+# - Version: 2.0.0
+# - Date: 2026-01-26
+#
+# Cost governance settings for daily operations.
+
+# Default budgets in USD
+budgets:
+  daily:
+    total: 10.00
+    warning_threshold: 0.8  # Warn at 80%
+    hard_limit_threshold: 0.95  # Block at 95%
+
+  monthly:
+    total: 100.00
+    warning_threshold: 0.8
+    hard_limit_threshold: 0.95
+
+  per_run:
+    total: 1.00
+    warning_threshold: 0.8
+    hard_limit_threshold: 0.95
+
+# Service-specific limits
+services:
+  openai:
+    daily_limit: 5.00
+    per_call_limit: 0.50
+
+  anthropic:
+    daily_limit: 5.00
+    per_call_limit: 0.50
+
+  google:
+    daily_limit: 2.00
+    per_call_limit: 0.25
+
+# Emergency stop settings
+emergency:
+  enabled: true
+  cooldown_minutes: 60
+  max_errors_per_hour: 10

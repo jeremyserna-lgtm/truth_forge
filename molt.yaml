@@ -1,0 +1,306 @@
+# molt.yaml - Molt Configuration for truth_forge
+# Version: 2.0.0
+#
+# This is the DNA capability configuration for this organism.
+# Molt is a BUSINESS PRODUCT - the unified migration mechanism.
+# See: framework/standards/molt/CONFIGURATION.md
+# See: docs/business/products/MOLT_SERVICE.md
+
+# Organism identity
+organism:
+  name: truth_forge
+  type: genesis  # genesis | offspring
+
+# =============================================================================
+# DOCUMENT MOLT (DONE - currently implemented)
+# =============================================================================
+# Source configurations for document migration
+# Each source defines a mapping from old location to new location
+sources:
+  - name: technical
+    source: Truth_Engine/docs/04_technical
+    destination: docs/technical
+    archive: Truth_Engine/docs/archive
+    patterns:
+      - "*.md"
+      - "**/*.md"
+    exclude:
+      - "**/archive/**"
+      - "**/.git/**"
+
+  - name: business
+    source: Truth_Engine/docs/03_business
+    destination: docs/business
+    archive: Truth_Engine/docs/archive
+    patterns:
+      - "*.md"
+
+  - name: personal
+    source: Truth_Engine/docs/05_personal
+    destination: docs/personal
+    archive: Truth_Engine/docs/archive
+    patterns:
+      - "*.md"
+
+  - name: operations
+    source: Truth_Engine/docs/08_operations
+    destination: docs/operations
+    archive: Truth_Engine/docs/archive
+    patterns:
+      - "*.md"
+
+  - name: research
+    source: Truth_Engine/docs/06_research
+    destination: docs/research
+    archive: Truth_Engine/docs/archive
+    patterns:
+      - "*.md"
+
+  - name: guides
+    source: Truth_Engine/docs/00_onboarding
+    destination: docs/guides
+    archive: Truth_Engine/docs/archive
+    patterns:
+      - "*.md"
+
+# Archive settings
+archive:
+  # Date format for batch folders (e.g., molt_2026_01_26)
+  date_format: "%Y_%m_%d"
+  # Index file name in archive
+  index_file: INDEX.md
+  # Preserve relative directory structure in archive
+  preserve_structure: true
+
+# Stub settings
+stub:
+  # Template for redirect stubs
+  # Available variables: {title}, {dest_name}, {dest_path}, {archive_name}, {archive_path}, {date}
+  template: |
+    # {title}
+
+    > **MOVED**: This document has been molted to truth_forge.
+    >
+    > **New Location**: [{dest_name}]({dest_path})
+    >
+    > **Archive**: [{archive_name}]({archive_path})
+    >
+    > **Molted On**: {date}
+
+  # Maximum lines for a valid stub
+  max_lines: 20
+
+# Verification settings
+verification:
+  # Maximum stub lines (stubs exceeding this fail verification)
+  max_stub_lines: 20
+  # Required markers that must be present in every stub
+  required_markers:
+    - "**MOVED**"
+    - "**New Location**"
+    - "**Archive**"
+    - "**Molted On**"
+
+# Tracking settings
+tracking:
+  # Enable history tracking
+  enabled: true
+  # History file location (JSONL format)
+  history_file: .molt/history.jsonl
+
+# =============================================================================
+# CODE MOLT (DONE - code_molt.py implemented)
+# =============================================================================
+# Code migration from Truth_Engine to truth_forge
+# Maps to MIGRATION_PLAN.md phases 1-8
+# Implementation: src/truth_forge/molt/code_molt.py
+code:
+  # Import transformations applied during molt
+  transforms:
+    imports:
+      - from: "from Primitive.*"
+        to: "from truth_forge.*"
+      - from: "from central_services.*"
+        to: "from truth_forge.services.*"
+      - from: "from src.services.*"
+        to: "from truth_forge.services.*"
+    paths:
+      - from: "/Users/jeremyserna/Truth_Engine"
+        to: "PROJECT_ROOT"
+      - from: "Path.home() / 'Truth_Engine'"
+        to: "PROJECT_ROOT"
+    env:
+      - from: "os.environ['GCP_PROJECT']"
+        to: "settings.gcp_project"
+
+  # Code sources by phase
+  phases:
+    - phase: 1
+      name: core
+      sources:
+        - source: Truth_Engine/src/truth_forge/core.py
+          destination: src/truth_forge/core.py
+        - source: Truth_Engine/src/truth_forge/result.py
+          destination: src/truth_forge/result.py
+        - source: Truth_Engine/src/truth_forge/logger.py
+          destination: src/truth_forge/logger.py
+
+    - phase: 2
+      name: infrastructure
+      sources:
+        - source: Truth_Engine/src/truth_forge/furnace/
+          destination: src/truth_forge/furnace/
+        - source: Truth_Engine/src/truth_forge/observability/
+          destination: src/truth_forge/observability/
+
+    - phase: 3
+      name: gateway
+      sources:
+        - source: Truth_Engine/src/truth_forge/api/
+          destination: src/truth_forge/gateway/api/
+        - source: Truth_Engine/src/truth_forge/membrane/
+          destination: src/truth_forge/gateway/membrane/
+
+# =============================================================================
+# SERVICE MOLT (IMPLEMENTED - services are operational)
+# =============================================================================
+# Service migration with HOLD pattern scaffolding
+# Maps to MIGRATION_PLAN.md phase 4
+services:
+  # Services implemented and operational
+  mappings:
+    # Core infrastructure services
+    - name: secret
+      sources:
+        - Truth_Engine/src/services/secret_service/
+      destination: src/truth_forge/services/secret/
+      hold_pattern: false  # Synchronous provider, no HOLD
+      status: operational
+
+    - name: mediator
+      sources:
+        - Truth_Engine/src/services/central_services/service_mediator/
+      destination: src/truth_forge/services/mediator/
+      hold_pattern: true
+      status: operational
+      description: "Central event router for inter-service communication"
+
+    - name: governance
+      sources:
+        - Truth_Engine/src/services/governance_service/
+      destination: src/truth_forge/services/governance/
+      hold_pattern: true
+      status: operational
+      description: "Records immutable history and enforces core principles"
+
+    # Knowledge and cognition services
+    - name: knowledge
+      sources:
+        - Truth_Engine/src/services/central_services/knowledge_service/
+        - Truth_Engine/src/services/knowledge_graph_service/
+        - Truth_Engine/src/services/search_service/
+      destination: src/truth_forge/services/knowledge/
+      hold_pattern: true
+      status: operational
+      description: "Metabolizes raw data into Knowledge Atoms"
+
+    - name: cognition
+      sources:
+        - Truth_Engine/src/services/cognition_service/
+      destination: src/truth_forge/services/cognition/
+      hold_pattern: true
+      status: operational
+      description: "Assembles Knowledge Atoms into thoughts, plans, and awareness"
+
+    # Perception and action services
+    - name: perception
+      sources:
+        - Truth_Engine/src/services/perception_service/
+      destination: src/truth_forge/services/perception/
+      hold_pattern: true
+      status: operational
+      description: "Sensory organs - web scraping, API polling"
+
+    - name: action
+      sources:
+        - Truth_Engine/src/services/action_service/
+      destination: src/truth_forge/services/action/
+      hold_pattern: true
+      status: operational
+      description: "Motor system - executes plans on external world"
+
+    # Relationship and logging services
+    - name: relationship
+      sources:
+        - Truth_Engine/src/services/relationship_service/
+      destination: src/truth_forge/services/relationship/
+      hold_pattern: true
+      status: operational
+      description: "Manages partnerships, trust levels, and interaction context"
+
+    - name: logging
+      sources:
+        - Truth_Engine/src/services/logging_service/
+      destination: src/truth_forge/services/logging/
+      hold_pattern: true
+      status: operational
+      description: "Captures log records and sends to KnowledgeService"
+
+    # Legacy mappings (to be consolidated)
+    - name: identity
+      sources:
+        - Truth_Engine/src/services/identity_service/
+      destination: src/truth_forge/services/identity/
+      hold_pattern: true
+      status: pending
+      description: "To be merged with relationship service"
+
+    - name: analytics
+      sources:
+        - Truth_Engine/src/services/analytics_service/
+        - Truth_Engine/src/services/cost_service/
+      destination: src/truth_forge/services/analytics/
+      hold_pattern: true
+      status: pending
+
+# =============================================================================
+# APP MOLT (TODO - extend molt service)
+# =============================================================================
+# Application migration
+# Maps to MIGRATION_PLAN.md phase 10
+apps:
+  mappings:
+    - name: not_me_chat
+      sources:
+        - Truth_Engine/frontend/
+        - Truth_Engine/primitive-slot-builder/
+      destination: apps/not_me_chat/
+      merge: true
+
+    - name: truth_forge_website
+      source: Truth_Engine/truth-forge-website/
+      destination: apps/websites/truth_forge/
+
+    - name: admin
+      source: Truth_Engine/primitive_app/
+      destination: apps/admin/
+
+# =============================================================================
+# PLAN EXECUTION
+# =============================================================================
+# Configuration for executing MIGRATION_PLAN.md
+plan:
+  # Reference to the migration plan
+  plan_file: MIGRATION_PLAN.md
+  # Checkpoint tracking
+  checkpoint_file: .molt/checkpoints.json
+  # Gate verification commands
+  gates:
+    - name: tests
+      command: ".venv/bin/pytest tests/ -v --cov --cov-fail-under=90"
+    - name: mypy
+      command: ".venv/bin/mypy src/truth_forge/ --strict"
+    - name: ruff
+      command: ".venv/bin/ruff check src/truth_forge/"
+    - name: format
+      command: ".venv/bin/ruff format --check src/truth_forge/"

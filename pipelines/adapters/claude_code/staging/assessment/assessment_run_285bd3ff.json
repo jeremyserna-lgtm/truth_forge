@@ -1,0 +1,28 @@
+{
+  "assessment_timestamp": "2026-01-22T12:21:38.773765+00:00",
+  "run_id": "run_285bd3ff",
+  "pipeline": "claude_code",
+  "source": "claude_code",
+  "summary": {
+    "total_files_discovered": 0,
+    "files_sampled": 0,
+    "total_messages": 0,
+    "total_cost_usd": 0.0,
+    "message_types": {},
+    "models_used": [],
+    "tools_used": {},
+    "files_with_errors": 0
+  },
+  "date_range": {
+    "earliest": null,
+    "latest": null
+  },
+  "files_analyzed": [],
+  "recommendations": [
+    "CRITICAL: No JSONL files found. Check source directory.",
+    "CRITICAL: No messages found in sampled files.",
+    "WARNING: No 'user' message type found. Check export format.",
+    "WARNING: No 'assistant' message type found. Check export format."
+  ],
+  "go_no_go": "NO-GO: No source files"
+}

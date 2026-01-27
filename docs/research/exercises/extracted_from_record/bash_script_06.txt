@@ -1,0 +1,57 @@
+# Description: Parse JSONL to understand conversation structure
+# Tool: Bash
+
+python3 << 'EOF'
+import json
+
+filepath = "/Users/jeremyserna/.claude/projects/-Users-jeremyserna-Truth-Engine/3018bf4e-565e-4c52-b5a6-aae9278bfea7.jsonl"
+
+with open(filepath, 'r') as f:
+    lines = f.readlines()
+
+# Extract just the conversation parts for analysis
+conversation = []
+for line in lines:
+    obj = json.loads(line)
+    msg_type = obj.get('type', '')
+
+    if msg_type == 'user':
+        content = obj.get('message', {}).get('content', [])
+        for item in content:
+            if isinstance(item, dict) and item.get('type') == 'text':
+                text = item.get('text', '')
+                if text.strip() and not text.startswith('<ide_'):
+                    conversation.append({
+                        'role': 'user',
+                        'content': text[:500] + '...' if len(text) > 500 else text
+                    })
+
+    elif msg_type == 'assistant':
+        content = obj.get('message', {}).get('content', [])
+        for item in content:
+            if isinstance(item, dict):
+                if item.get('type') == 'thinking':
+                    thinking = item.get('thinking', '')
+                    conversation.append({
+                        'role': 'thinking',
+                        'content': thinking[:500] + '...' if len(thinking) > 500 else thinking
+                    })
+                elif item.get('type') == 'text':
+                    text = item.get('text', '')
+                    if text.strip():
+                        conversation.append({
+                            'role': 'assistant',
+                            'content': text[:500] + '...' if len(text) > 500 else text
+                        })
+                elif item.get('type') == 'tool_use':
+                    conversation.append({
+                        'role': 'tool_use',
+                        'name': item.get('name', ''),
+                        'input': item.get('input', {})
+                    })
+
+# Print summary
+print(f"Total conversation items: {len(conversation)}")
+for i, item in enumerate(conversation[:5]):
+    print(f"\n{i+1}. {item['role']}: {str(item.get('content', item.get('name', '')))[:100]}...")
+EOF

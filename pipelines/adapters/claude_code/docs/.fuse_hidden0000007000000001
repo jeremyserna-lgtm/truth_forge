@@ -1,0 +1,297 @@
+# Claude Code/Codex/Github Pipeline - Complete Plan
+
+**Status:** Planning Complete
+**Pattern:** Universal Pipeline Pattern
+**Framework Alignment:** ✅ Complete
+
+---
+
+## Executive Summary
+
+This document plans the complete Claude Code/Codex/Github pipeline following the universal pipeline pattern. The pipeline extracts messages from TruthService (entity_unified) and processes them through standard stages.
+
+---
+
+## Data Source Analysis
+
+### Source: TruthService (entity_unified)
+
+**Characteristics:**
+- **Format:** BigQuery table (`flash-clover-464719-g1.spine.entity_unified`)
+- **Structure:** Already normalized entity structure (level 5 = messages)
+- **Text Format:** Plain text (no HTML, no special encoding)
+- **IDs:** Already has entity_id from TruthService
+- **Sources:** claude_code, codex, github
+
+### Text Quality Assessment
+
+**Hypothesis:** Text from TruthService is already clean because:
+1. TruthService normalizes data during ingestion
+2. Messages are extracted from structured sources (IDE, code editors)
+3. No HTML parsing needed (unlike Gemini Web)
+4. No special encoding issues expected
+
+**Verification Needed:**
+- Sample query to check text format
+- Check for common issues: extra whitespace, encoding problems, special characters
+- Compare with other pipelines' normalization needs
+
+**Recommendation:**
+- **Stage 2 (Normalization)**: ⚠️ **CONDITIONAL** - Only if text quality issues found
+- If text is clean, skip Stage 2 and proceed to Stage 3 (THE GATE)
+
+---
+
+## Universal Pipeline Pattern
+
+### Standard Pipeline Stages
+
+Based on `PIPELINE_PATTERN_SPECIFICATION.md`, the universal pattern includes:
+
+1. **Stage 0**: Source Assessment (optional, documentation)
+2. **Stage 1**: Source Ingestion (extract raw data)
+3. **Stage 2**: Source Normalization (clean/normalize text) - **CONDITIONAL**
+4. **Stage 3**: System ID Generation (THE GATE) - **REQUIRED**
+5. **Stage 4**: LLM Processing (text correction/cleaning) - **OPTIONAL**
+6. **Stage 5**: NLP Processing (tokenization, advanced extraction) - **OPTIONAL**
+
+### Current Status
+
+- ✅ **Stage 0**: Message Extraction (Complete)
+- ✅ **Stage 1**: Message Enrichment (Complete)
+- ⚠️ **Stage 2**: Text Normalization (Needs Assessment)
+- ⚠️ **Stage 3**: System ID Generation (THE GATE) (Needs Implementation)
+- ⚠️ **Stage 4**: LLM Processing (Optional - Needs Decision)
+- ⚠️ **Stage 5**: NLP Processing (Optional - Needs Decision)
+
+---
+
+## Complete Pipeline Plan
+
+### Stage 0: Message Extraction ✅ COMPLETE
+
+**HOLD₁**: `flash-clover-464719-g1.spine.entity_unified`
+**AGENT**: Filter by source, extract level 5 messages
+**HOLD₂**: `flash-clover-464719-g1.spine.claude_codex_github_stage_0`
+
+**Purpose:** Extract messages from TruthService for focused processing
+**Status:** ✅ Complete and tested
+
+---
+
+### Stage 1: Message Enrichment ✅ COMPLETE
+
+**HOLD₁**: `flash-clover-464719-g1.spine.claude_codex_github_stage_0`
+**AGENT**: Enrich with sentiment, entities, topics, quality scores
+**HOLD₂**: `flash-clover-464719-g1.spine.claude_codex_github_stage_1`
+
+**Purpose:** Add enrichment data for analysis
+**Status:** ✅ Complete and tested
+
+---
+
+### Stage 2: Text Normalization ❌ SKIPPED
+
+**HOLD₁**: `flash-clover-464719-g1.spine.claude_codex_github_stage_1`
+**AGENT**: Normalize text (whitespace, encoding, special characters)
+**HOLD₂**: `flash-clover-464719-g1.spine.claude_codex_github_stage_2`
+
+**Purpose:** Clean and normalize text for downstream processing
+**Status:** ❌ **SKIPPED** (See `docs/NORMALIZATION_ASSESSMENT.md`)
+
+**Decision:** Skip Stage 2 because:
+- Data already normalized by TruthService
+- Structured sources (IDE, code editors) - no HTML/SMS issues
+- No known text quality problems
+- Can be verified after Stage 0 runs
+
+**Decision Criteria:**
+- If text quality is good → **SKIP Stage 2**
+- If text has issues → **IMPLEMENT Stage 2**
+
+**Assessment Query:**
+```sql
+SELECT
+  source_name,
+  COUNT(*) as total_messages,
+  COUNT(CASE WHEN text LIKE '%  %' THEN 1 END) as double_space,
+  COUNT(CASE WHEN text LIKE '%\n\n\n%' THEN 1 END) as triple_newline,
+  COUNT(CASE WHEN text LIKE '%\t%' THEN 1 END) as tabs,
+  COUNT(CASE WHEN LENGTH(text) != LENGTH(TRIM(text)) THEN 1 END) as leading_trailing_whitespace,
+  AVG(LENGTH(text)) as avg_length
+FROM `flash-clover-464719-g1.spine.claude_codex_github_stage_0`
+GROUP BY source_name
+```
+
+**If Needed, Stage 2 Would:**
+- Remove extra whitespace
+- Normalize line breaks
+- Fix encoding issues
+- Remove control characters
+- Preserve text structure
+
+---
+
+### Stage 3: System ID Registration (THE GATE) ✅ COMPLETE
+
+**HOLD₁**: `flash-clover-464719-g1.spine.claude_codex_github_stage_1`
+**AGENT**: Register entity_ids with identity_service
+**HOLD₂**: `flash-clover-464719-g1.spine.claude_codex_github_stage_3`
+
+**Purpose:** Register all entity_ids in central identity service (THE GATE)
+**Status:** ✅ **COMPLETE**
+
+**Why This Matters:**
+- Messages already have entity_id from TruthService
+- Registration enables:
+  - Deduplication across pipelines
+  - Identity resolution
+  - Entity matching
+  - Complete audit trail
+
+**Implementation:**
+- Reads from Stage 1 table
+- Registers each entity_id with identity_service using `register_id()`
+- Syncs registered IDs to BigQuery identity registry using `sync_to_bigquery()`
+- Writes all data to Stage 3 table with registration metadata
+
+**Key Difference:**
+Unlike other pipelines that GENERATE new IDs, this pipeline REGISTERS existing IDs from TruthService. The entity_ids are already stable and exist - we just register them in the central registry.
+
+**Output Schema:**
+- All Stage 1 fields preserved
+- `entity_id` (registered in identity_service)
+- `registered_at` timestamp
+- `registration_run_id`
+
+---
+
+### Stage 4: LLM Processing ⚠️ OPTIONAL
+
+**HOLD₁**: `flash-clover-464719-g1.spine.claude_codex_github_stage_3`
+**AGENT**: LLM text correction via Ollama (Primitive Pattern)
+**HOLD₂**: `flash-clover-464719-g1.spine.claude_codex_github_stage_4`
+
+**Purpose:** Use LLM to correct/clean text (if needed)
+**Status:** ⚠️ **OPTIONAL - Needs Decision**
+
+**Decision Criteria:**
+- If text quality is good → **SKIP Stage 4**
+- If text needs LLM correction → **IMPLEMENT Stage 4**
+
+**If Implemented:**
+- Use PrimitivePattern with Ollama
+- Prompt: `cleaned_text` (from prompt registry)
+- Process one message at a time
+- Output: `original_text`, `cleaned_text`, `is_ready`
+
+**Reference:** `pipelines/gemini_web/docs/STAGE_4_SPECIFICATIONS.md`
+
+---
+
+### Stage 5: NLP Processing ⚠️ OPTIONAL
+
+**HOLD₁**: `flash-clover-464719-g1.spine.claude_codex_github_stage_4` (or stage_3 if Stage 4 skipped)
+**AGENT**: Advanced NLP processing (tokenization, entity extraction, etc.)
+**HOLD₂**: `flash-clover-464719-g1.spine.claude_codex_github_stage_5`
+
+**Purpose:** Advanced NLP analysis (if needed)
+**Status:** ⚠️ **OPTIONAL - Needs Decision**
+
+**Decision Criteria:**
+- If basic enrichment (Stage 1) is sufficient → **SKIP Stage 5**
+- If advanced NLP needed → **IMPLEMENT Stage 5**
+
+**If Implemented:**
+- Tokenization (spaCy)
+- Advanced entity extraction (NER)
+- Dependency parsing
+- Sentiment analysis (advanced)
+- Topic modeling
+
+---
+
+## Recommended Pipeline Path
+
+### Path A: Recommended (Current + THE GATE)
+
+```
+Stage 0: Extraction ✅
+  ↓
+Stage 1: Enrichment ✅
+  ↓
+Stage 3: ID Registration (THE GATE) ⚠️ REQUIRED
+```
+
+**Note:** Stage 2 (Normalization) is **SKIPPED** - see `docs/NORMALIZATION_ASSESSMENT.md` for rationale.
+
+**Rationale:**
+- Text is already clean (from TruthService)
+- Basic enrichment is sufficient
+- Only need to register IDs
+
+### Path B: Full (If Text Issues Found)
+
+```
+Stage 0: Extraction ✅
+  ↓
+Stage 1: Enrichment ✅
+  ↓
+Stage 2: Normalization ⚠️ IF NEEDED
+  ↓
+Stage 3: ID Registration (THE GATE) ⚠️ REQUIRED
+  ↓
+Stage 4: LLM Processing ⚠️ IF NEEDED
+  ↓
+Stage 5: NLP Processing ⚠️ IF NEEDED
+```
+
+---
+
+## Next Steps
+
+### 1. Text Quality Assessment ⚠️ IMMEDIATE
+
+**Action:** Run assessment query to check text quality
+**Decision Point:** Determine if Stage 2 is needed
+
+### 2. Implement Stage 3 (THE GATE) ⚠️ REQUIRED
+
+**Action:** Create Stage 3 script to register entity_ids
+**Priority:** High (required by universal pattern)
+
+### 3. Decision: Stage 4 & 5 ⚠️ OPTIONAL
+
+**Action:** Decide if LLM/NLP processing is needed
+**Priority:** Low (can be added later if needed)
+
+---
+
+## Implementation Checklist
+
+- [x] Stage 0: Message Extraction
+- [x] Stage 1: Message Enrichment
+- [x] **Stage 2: Text Normalization** (Skipped - see assessment)
+- [x] **Stage 3: System ID Registration (THE GATE)** (Complete)
+- [x] **Stage 4: LLM Text Correction** (Complete)
+- [x] **Stage 5: Ready Messages** (Complete - output of Stage 4)
+- [x] **Stage 6: Write to entity_unified** (Complete - final destination)
+- [ ] Stage 7: NLP Processing (Optional)
+- [x] Validation scripts
+- [x] SQL table definitions
+- [x] Pipeline documentation
+- [x] Framework alignment
+
+---
+
+## References
+
+- **Universal Pipeline Pattern**: `framework/standards/PIPELINE_PATTERN_SPECIFICATION.md`
+- **Gemini Web Pipeline**: `pipelines/gemini_web/` (reference implementation)
+- **Stage 4 Specs**: `pipelines/gemini_web/docs/STAGE_4_SPECIFICATIONS.md`
+- **Identity Service**: `src/services/central_services/identity_service/`
+
+---
+
+**Last Updated:** 2026-01-XX
+**Status:** Planning Complete, Assessment Needed

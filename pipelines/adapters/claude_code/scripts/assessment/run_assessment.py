@@ -1,0 +1,807 @@
+#!/usr/bin/env python3
+"""Run text quality assessment on source data."""
+
+import sys
+from pathlib import Path
+
+# Add project root to path
+PROJECT_ROOT = Path(__file__).resolve().parents[5]
+sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
+
+from google.cloud import bigquery
+
+PROJECT_ID = "flash-clover-464719-g1"
+DATASET_ID = "spine"
+SOURCE_TABLE = f"{PROJECT_ID}.{DATASET_ID}.entity_unified"
+STAGE_0_TABLE = f"{PROJECT_ID}.{DATASET_ID}.claude_code_stage_0"
+
+# Try Stage 0 first, fall back to source table
+def check_table_exists(client, table_name):
+    """Check if table exists."""
+    try:
+        client.get_table(table_name)
+        return True
+    except Exception:
+        return False
+
+def assess_from_table(client, table_name, table_label):
+    """Assess text quality from a table."""
+    # Check if it's Stage 0 (has source_name) or source table (needs extraction)
+    if 'stage_0' in table_name:
+        source_col = "source_name"
+        source_filter = "LOWER(source_name) IN ('claude_code', 'codex', 'github')"
+    else:
+        # Extract source from source_pipeline or source_file
+        source_col = """
+        CASE
+          WHEN LOWER(source_pipeline) LIKE '%claude_code%' OR LOWER(source_file) LIKE '%claude_code%' THEN 'claude_code'
+          WHEN LOWER(source_pipeline) LIKE '%codex%' OR LOWER(source_file) LIKE '%codex%' THEN 'codex'
+          WHEN LOWER(source_pipeline) LIKE '%github%' OR LOWER(source_file) LIKE '%github%' THEN 'github'
+          ELSE 'unknown'
+        END
+        """
+        source_filter = """
+        (
+          LOWER(source_pipeline) LIKE '%claude_code%' OR LOWER(source_file) LIKE '%claude_code%' OR
+          LOWER(source_pipeline) LIKE '%codex%' OR LOWER(source_file) LIKE '%codex%' OR
+          LOWER(source_pipeline) LIKE '%github%' OR LOWER(source_file) LIKE '%github%'
+        )
+        """
+
+    # Add date filter for partitioned tables (required for entity_unified)
+    # Try to find any date range that has data
+    date_filter = ""
+    if 'entity_unified' in table_name:
+        # First, try to find what dates have data
+        check_query = f"""
+        SELECT
+          MIN(content_date) as min_date,
+          MAX(content_date) as max_date,
+          COUNT(*) as total_rows
+        FROM `{table_name}`
+        WHERE level = 5
+        """
+        try:
+            check_job = client.query(check_query)
+            check_results = list(check_job.result())
+            if check_results and check_results[0].total_rows > 0:
+                # Use the date range that exists
+                min_date = check_results[0].min_date
+                max_date = check_results[0].max_date
+                date_filter = f"AND content_date >= DATE('{min_date}') AND content_date <= DATE('{max_date}')"
+                print(f"📅 Found data from {min_date} to {max_date} ({check_results[0].total_rows:,} total rows)\n")
+            else:
+                date_filter = "AND content_date >= DATE('2024-01-01')"  # Fallback
+        except Exception as e:
+            # If we can't check, use a wide date range
+            date_filter = "AND content_date >= DATE('2024-01-01')"
+
+    query = f"""
+    SELECT
+      {source_col} as source_name,
+      COUNT(*) as total_messages,
+      COUNT(CASE WHEN text LIKE '%  %' THEN 1 END) as double_space_count,
+      ROUND(COUNT(CASE WHEN text LIKE '%  %' THEN 1 END) * 100.0 / COUNT(*), 2) as double_space_pct,
+      COUNT(CASE WHEN text LIKE '%\\n\\n\\n%' THEN 1 END) as triple_newline_count,
+      COUNT(CASE WHEN text LIKE '%\\t%' THEN 1 END) as tab_count,
+      COUNT(CASE WHEN LENGTH(text) != LENGTH(TRIM(text)) THEN 1 END) as whitespace_trim_count,
+      ROUND(COUNT(CASE WHEN LENGTH(text) != LENGTH(TRIM(text)) THEN 1 END) * 100.0 / COUNT(*), 2) as whitespace_trim_pct,
+      AVG(LENGTH(text)) as avg_length,
+      MIN(LENGTH(text)) as min_length,
+      MAX(LENGTH(text)) as max_length,
+      COUNT(CASE WHEN text IS NULL OR LENGTH(TRIM(text)) = 0 THEN 1 END) as empty_text_count
+    FROM `{table_name}`
+    WHERE level = 5
+      AND {source_filter}
+      {date_filter}
+    GROUP BY source_name
+    ORDER BY source_name
+    """
+
+    query_job = client.query(query)
+    results = list(query_job.result())
+    return results
+
+def main():
+    try:
+        client = bigquery.Client(project=PROJECT_ID)
+
+        # Check which table exists
+        use_stage_0 = check_table_exists(client, STAGE_0_TABLE)
+        use_source = check_table_exists(client, SOURCE_TABLE)
+
+        if not use_stage_0 and not use_source:
+            print("❌ Neither Stage 0 table nor source table found.")
+            print(f"   Stage 0: {STAGE_0_TABLE}")
+            print(f"   Source: {SOURCE_TABLE}")
+            return 1
+
+        # Use Stage 0 if available, otherwise use source
+        if use_stage_0:
+            table_name = STAGE_0_TABLE
+            table_label = "Stage 0"
+            print(f"✅ Using Stage 0 table: {STAGE_0_TABLE}\n")
+        else:
+            table_name = SOURCE_TABLE
+            table_label = "Source (entity_unified)"
+            print(f"⚠️  Stage 0 table not found. Using source table: {SOURCE_TABLE}\n")
+
+        results = assess_from_table(client, table_name, table_label)
+
+        if not results:
+            print(f"❌ No data found in {table_label} table.")
+            return 1
+
+        print("\n" + "="*80)
+        print(f"TEXT QUALITY ASSESSMENT RESULTS ({table_label})")
+        print("="*80)
+
+        needs_normalization = False
+
+        for row in results:
+            print(f"\n📊 Source: {row.source_name}")
+            print(f"   Total Messages: {row.total_messages:,}")
+            print(f"\n   Whitespace Issues:")
+            print(f"   - Double Spaces: {row.double_space_count:,} ({row.double_space_pct}%)")
+            print(f"   - Triple Newlines: {row.triple_newline_count:,}")
+            print(f"   - Tabs: {row.tab_count:,}")
+            print(f"   - Leading/Trailing Whitespace: {row.whitespace_trim_count:,} ({row.whitespace_trim_pct}%)")
+            print(f"\n   Text Length:")
+            print(f"   - Average: {row.avg_length:.0f} chars")
+            print(f"   - Min: {row.min_length} chars")
+            print(f"   - Max: {row.max_length:,} chars")
+            print(f"   - Empty/Null: {row.empty_text_count:,}")
+
+            # Determine if normalization needed
+            issues = (
+                row.double_space_count > 0 or
+                row.triple_newline_count > 0 or
+                row.tab_count > 0 or
+                row.whitespace_trim_pct > 5.0
+            )
+
+            if issues:
+                needs_normalization = True
+                print(f"\n   ⚠️  RECOMMENDATION: Stage 2 (Normalization) is RECOMMENDED")
+            else:
+                print(f"\n   ✅ RECOMMENDATION: Stage 2 (Normalization) can be SKIPPED")
+
+        print("\n" + "="*80)
+        if needs_normalization:
+            print("OVERALL RECOMMENDATION: ⚠️  Implement Stage 2 (Text Normalization)")
+            print("\nReasons:")
+            if any(r.double_space_count > 0 for r in results):
+                print("  - Double spaces found")
+            if any(r.triple_newline_count > 0 for r in results):
+                print("  - Triple newlines found")
+            if any(r.tab_count > 0 for r in results):
+                print("  - Tabs found")
+            if any(r.whitespace_trim_pct > 5.0 for r in results):
+                print("  - High percentage of leading/trailing whitespace")
+        else:
+            print("OVERALL RECOMMENDATION: ✅ Skip Stage 2 (Text Normalization)")
+            print("\nText quality is good - no normalization needed.")
+        print("="*80 + "\n")
+
+        return 0
+
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return 1
+
+if __name__ == "__main__":
+    exit(main())
+
+try:
+    from truth_forge.core import get_logger as _get_logger
+except Exception:
+    from src.services.central_services.core import get_logger as _get_logger
+_LOGGER = _get_logger(__name__)
+script_id = "pipelines.claude_code.scripts.assessment.run_assessment.py"
+
+import sys
+from pathlib import Path
+
+# Add project root to path
+PROJECT_ROOT = Path(__file__).resolve().parents[5]
+sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
+
+from google.cloud import bigquery
+
+PROJECT_ID = "flash-clover-464719-g1"
+DATASET_ID = "spine"
+SOURCE_TABLE = f"{PROJECT_ID}.{DATASET_ID}.entity_unified"
+STAGE_0_TABLE = f"{PROJECT_ID}.{DATASET_ID}.claude_code_stage_0"
+
+# Try Stage 0 first, fall back to source table
+def check_table_exists(client, table_name):
+    """Check if table exists."""
+    try:
+        client.get_table(table_name)
+        return True
+    except Exception:
+        return False
+
+def assess_from_table(client, table_name, table_label):
+    """Assess text quality from a table."""
+    # Check if it's Stage 0 (has source_name) or source table (needs extraction)
+    if 'stage_0' in table_name:
+        source_col = "source_name"
+        source_filter = "LOWER(source_name) IN ('claude_code', 'codex', 'github')"
+    else:
+        # Extract source from source_pipeline or source_file
+        source_col = """
+        CASE
+          WHEN LOWER(source_pipeline) LIKE '%claude_code%' OR LOWER(source_file) LIKE '%claude_code%' THEN 'claude_code'
+          WHEN LOWER(source_pipeline) LIKE '%codex%' OR LOWER(source_file) LIKE '%codex%' THEN 'codex'
+          WHEN LOWER(source_pipeline) LIKE '%github%' OR LOWER(source_file) LIKE '%github%' THEN 'github'
+          ELSE 'unknown'
+        END
+        """
+        source_filter = """
+        (
+          LOWER(source_pipeline) LIKE '%claude_code%' OR LOWER(source_file) LIKE '%claude_code%' OR
+          LOWER(source_pipeline) LIKE '%codex%' OR LOWER(source_file) LIKE '%codex%' OR
+          LOWER(source_pipeline) LIKE '%github%' OR LOWER(source_file) LIKE '%github%'
+        )
+        """
+
+    # Add date filter for partitioned tables (required for entity_unified)
+    # Try to find any date range that has data
+    date_filter = ""
+    if 'entity_unified' in table_name:
+        # First, try to find what dates have data
+        check_query = f"""
+        SELECT
+          MIN(content_date) as min_date,
+          MAX(content_date) as max_date,
+          COUNT(*) as total_rows
+        FROM `{table_name}`
+        WHERE level = 5
+        """
+        try:
+            check_job = client.query(check_query)
+            check_results = list(check_job.result())
+            if check_results and check_results[0].total_rows > 0:
+                # Use the date range that exists
+                min_date = check_results[0].min_date
+                max_date = check_results[0].max_date
+                date_filter = f"AND content_date >= DATE('{min_date}') AND content_date <= DATE('{max_date}')"
+                print(f"📅 Found data from {min_date} to {max_date} ({check_results[0].total_rows:,} total rows)\n")
+            else:
+                date_filter = "AND content_date >= DATE('2024-01-01')"  # Fallback
+        except Exception as e:
+            # If we can't check, use a wide date range
+            date_filter = "AND content_date >= DATE('2024-01-01')"
+
+    query = f"""
+    SELECT
+      {source_col} as source_name,
+      COUNT(*) as total_messages,
+      COUNT(CASE WHEN text LIKE '%  %' THEN 1 END) as double_space_count,
+      ROUND(COUNT(CASE WHEN text LIKE '%  %' THEN 1 END) * 100.0 / COUNT(*), 2) as double_space_pct,
+      COUNT(CASE WHEN text LIKE '%\\n\\n\\n%' THEN 1 END) as triple_newline_count,
+      COUNT(CASE WHEN text LIKE '%\\t%' THEN 1 END) as tab_count,
+      COUNT(CASE WHEN LENGTH(text) != LENGTH(TRIM(text)) THEN 1 END) as whitespace_trim_count,
+      ROUND(COUNT(CASE WHEN LENGTH(text) != LENGTH(TRIM(text)) THEN 1 END) * 100.0 / COUNT(*), 2) as whitespace_trim_pct,
+      AVG(LENGTH(text)) as avg_length,
+      MIN(LENGTH(text)) as min_length,
+      MAX(LENGTH(text)) as max_length,
+      COUNT(CASE WHEN text IS NULL OR LENGTH(TRIM(text)) = 0 THEN 1 END) as empty_text_count
+    FROM `{table_name}`
+    WHERE level = 5
+      AND {source_filter}
+      {date_filter}
+    GROUP BY source_name
+    ORDER BY source_name
+    """
+
+    query_job = client.query(query)
+    results = list(query_job.result())
+    return results
+
+def main():
+    try:
+        client = bigquery.Client(project=PROJECT_ID)
+
+        # Check which table exists
+        use_stage_0 = check_table_exists(client, STAGE_0_TABLE)
+        use_source = check_table_exists(client, SOURCE_TABLE)
+
+        if not use_stage_0 and not use_source:
+            print("❌ Neither Stage 0 table nor source table found.")
+            print(f"   Stage 0: {STAGE_0_TABLE}")
+            print(f"   Source: {SOURCE_TABLE}")
+            return 1
+
+        # Use Stage 0 if available, otherwise use source
+        if use_stage_0:
+            table_name = STAGE_0_TABLE
+            table_label = "Stage 0"
+            print(f"✅ Using Stage 0 table: {STAGE_0_TABLE}\n")
+        else:
+            table_name = SOURCE_TABLE
+            table_label = "Source (entity_unified)"
+            print(f"⚠️  Stage 0 table not found. Using source table: {SOURCE_TABLE}\n")
+
+        results = assess_from_table(client, table_name, table_label)
+
+        if not results:
+            print(f"❌ No data found in {table_label} table.")
+            return 1
+
+        print("\n" + "="*80)
+        print(f"TEXT QUALITY ASSESSMENT RESULTS ({table_label})")
+        print("="*80)
+
+        needs_normalization = False
+
+        for row in results:
+            print(f"\n📊 Source: {row.source_name}")
+            print(f"   Total Messages: {row.total_messages:,}")
+            print(f"\n   Whitespace Issues:")
+            print(f"   - Double Spaces: {row.double_space_count:,} ({row.double_space_pct}%)")
+            print(f"   - Triple Newlines: {row.triple_newline_count:,}")
+            print(f"   - Tabs: {row.tab_count:,}")
+            print(f"   - Leading/Trailing Whitespace: {row.whitespace_trim_count:,} ({row.whitespace_trim_pct}%)")
+            print(f"\n   Text Length:")
+            print(f"   - Average: {row.avg_length:.0f} chars")
+            print(f"   - Min: {row.min_length} chars")
+            print(f"   - Max: {row.max_length:,} chars")
+            print(f"   - Empty/Null: {row.empty_text_count:,}")
+
+            # Determine if normalization needed
+            issues = (
+                row.double_space_count > 0 or
+                row.triple_newline_count > 0 or
+                row.tab_count > 0 or
+                row.whitespace_trim_pct > 5.0
+            )
+
+            if issues:
+                needs_normalization = True
+                print(f"\n   ⚠️  RECOMMENDATION: Stage 2 (Normalization) is RECOMMENDED")
+            else:
+                print(f"\n   ✅ RECOMMENDATION: Stage 2 (Normalization) can be SKIPPED")
+
+        print("\n" + "="*80)
+        if needs_normalization:
+            print("OVERALL RECOMMENDATION: ⚠️  Implement Stage 2 (Text Normalization)")
+            print("\nReasons:")
+            if any(r.double_space_count > 0 for r in results):
+                print("  - Double spaces found")
+            if any(r.triple_newline_count > 0 for r in results):
+                print("  - Triple newlines found")
+            if any(r.tab_count > 0 for r in results):
+                print("  - Tabs found")
+            if any(r.whitespace_trim_pct > 5.0 for r in results):
+                print("  - High percentage of leading/trailing whitespace")
+        else:
+            print("OVERALL RECOMMENDATION: ✅ Skip Stage 2 (Text Normalization)")
+            print("\nText quality is good - no normalization needed.")
+        print("="*80 + "\n")
+
+        return 0
+
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return 1
+
+if __name__ == "__main__":
+    exit(main())
+from __future__ import annotations
+try:
+    from truth_forge.core import get_logger as _get_logger
+except Exception:
+    from src.services.central_services.core import get_logger as _get_logger
+_LOGGER = _get_logger(__name__)
+from __future__ import annotations
+
+#!/usr/bin/env python3
+"""Run text quality assessment on source data."""
+from __future__ import annotations
+
+from pathlib import Path
+
+# Add project root to path
+PROJECT_ROOT = Path(__file__).resolve().parents[5]
+sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
+
+from google.cloud import bigquery
+
+PROJECT_ID = "flash-clover-464719-g1"
+DATASET_ID = "spine"
+SOURCE_TABLE = f"{PROJECT_ID}.{DATASET_ID}.entity_unified"
+STAGE_0_TABLE = f"{PROJECT_ID}.{DATASET_ID}.claude_code_stage_0"
+
+# Try Stage 0 first, fall back to source table
+def check_table_exists(client, table_name):
+    """Check if table exists."""
+    try:
+        client.get_table(table_name)
+        return True
+    except Exception:
+        return False
+
+def assess_from_table(client, table_name, table_label):
+    """Assess text quality from a table."""
+    # Check if it's Stage 0 (has source_name) or source table (needs extraction)
+    if 'stage_0' in table_name:
+        source_col = "source_name"
+        source_filter = "LOWER(source_name) IN ('claude_code', 'codex', 'github')"
+    else:
+        # Extract source from source_pipeline or source_file
+        source_col = """
+        CASE
+          WHEN LOWER(source_pipeline) LIKE '%claude_code%' OR LOWER(source_file) LIKE '%claude_code%' THEN 'claude_code'
+          WHEN LOWER(source_pipeline) LIKE '%codex%' OR LOWER(source_file) LIKE '%codex%' THEN 'codex'
+          WHEN LOWER(source_pipeline) LIKE '%github%' OR LOWER(source_file) LIKE '%github%' THEN 'github'
+          ELSE 'unknown'
+        END
+        """
+        source_filter = """
+        (
+          LOWER(source_pipeline) LIKE '%claude_code%' OR LOWER(source_file) LIKE '%claude_code%' OR
+          LOWER(source_pipeline) LIKE '%codex%' OR LOWER(source_file) LIKE '%codex%' OR
+          LOWER(source_pipeline) LIKE '%github%' OR LOWER(source_file) LIKE '%github%'
+        )
+        """
+
+    # Add date filter for partitioned tables (required for entity_unified)
+    # Try to find any date range that has data
+    date_filter = ""
+    if 'entity_unified' in table_name:
+        # First, try to find what dates have data
+        check_query = f"""
+        SELECT
+          MIN(content_date) as min_date,
+          MAX(content_date) as max_date,
+          COUNT(*) as total_rows
+        FROM `{table_name}`
+        WHERE level = 5
+        """
+        try:
+            check_job = client.query(check_query)
+            check_results = list(check_job.result())
+            if check_results and check_results[0].total_rows > 0:
+                # Use the date range that exists
+                min_date = check_results[0].min_date
+                max_date = check_results[0].max_date
+                date_filter = f"AND content_date >= DATE('{min_date}') AND content_date <= DATE('{max_date}')"
+                print(f"📅 Found data from {min_date} to {max_date} ({check_results[0].total_rows:,} total rows)\n")
+            else:
+                date_filter = "AND content_date >= DATE('2024-01-01')"  # Fallback
+        except Exception as e:
+            # If we can't check, use a wide date range
+            date_filter = "AND content_date >= DATE('2024-01-01')"
+
+    query = f"""
+    SELECT
+      {source_col} as source_name,
+      COUNT(*) as total_messages,
+      COUNT(CASE WHEN text LIKE '%  %' THEN 1 END) as double_space_count,
+      ROUND(COUNT(CASE WHEN text LIKE '%  %' THEN 1 END) * 100.0 / COUNT(*), 2) as double_space_pct,
+      COUNT(CASE WHEN text LIKE '%\\n\\n\\n%' THEN 1 END) as triple_newline_count,
+      COUNT(CASE WHEN text LIKE '%\\t%' THEN 1 END) as tab_count,
+      COUNT(CASE WHEN LENGTH(text) != LENGTH(TRIM(text)) THEN 1 END) as whitespace_trim_count,
+      ROUND(COUNT(CASE WHEN LENGTH(text) != LENGTH(TRIM(text)) THEN 1 END) * 100.0 / COUNT(*), 2) as whitespace_trim_pct,
+      AVG(LENGTH(text)) as avg_length,
+      MIN(LENGTH(text)) as min_length,
+      MAX(LENGTH(text)) as max_length,
+      COUNT(CASE WHEN text IS NULL OR LENGTH(TRIM(text)) = 0 THEN 1 END) as empty_text_count
+    FROM `{table_name}`
+    WHERE level = 5
+      AND {source_filter}
+      {date_filter}
+    GROUP BY source_name
+    ORDER BY source_name
+    """
+
+    query_job = client.query(query)
+    results = list(query_job.result())
+    return results
+
+def main():
+    try:
+        client = bigquery.Client(project=PROJECT_ID)
+
+        # Check which table exists
+        use_stage_0 = check_table_exists(client, STAGE_0_TABLE)
+        use_source = check_table_exists(client, SOURCE_TABLE)
+
+        if not use_stage_0 and not use_source:
+            print("❌ Neither Stage 0 table nor source table found.")
+            print(f"   Stage 0: {STAGE_0_TABLE}")
+            print(f"   Source: {SOURCE_TABLE}")
+            return 1
+
+        # Use Stage 0 if available, otherwise use source
+        if use_stage_0:
+            table_name = STAGE_0_TABLE
+            table_label = "Stage 0"
+            print(f"✅ Using Stage 0 table: {STAGE_0_TABLE}\n")
+        else:
+            table_name = SOURCE_TABLE
+            table_label = "Source (entity_unified)"
+            print(f"⚠️  Stage 0 table not found. Using source table: {SOURCE_TABLE}\n")
+
+        results = assess_from_table(client, table_name, table_label)
+
+        if not results:
+            print(f"❌ No data found in {table_label} table.")
+            return 1
+
+        print("\n" + "="*80)
+        print(f"TEXT QUALITY ASSESSMENT RESULTS ({table_label})")
+        print("="*80)
+
+        needs_normalization = False
+
+        for row in results:
+            print(f"\n📊 Source: {row.source_name}")
+            print(f"   Total Messages: {row.total_messages:,}")
+            print(f"\n   Whitespace Issues:")
+            print(f"   - Double Spaces: {row.double_space_count:,} ({row.double_space_pct}%)")
+            print(f"   - Triple Newlines: {row.triple_newline_count:,}")
+            print(f"   - Tabs: {row.tab_count:,}")
+            print(f"   - Leading/Trailing Whitespace: {row.whitespace_trim_count:,} ({row.whitespace_trim_pct}%)")
+            print(f"\n   Text Length:")
+            print(f"   - Average: {row.avg_length:.0f} chars")
+            print(f"   - Min: {row.min_length} chars")
+            print(f"   - Max: {row.max_length:,} chars")
+            print(f"   - Empty/Null: {row.empty_text_count:,}")
+
+            # Determine if normalization needed
+            issues = (
+                row.double_space_count > 0 or
+                row.triple_newline_count > 0 or
+                row.tab_count > 0 or
+                row.whitespace_trim_pct > 5.0
+            )
+
+            if issues:
+                needs_normalization = True
+                print(f"\n   ⚠️  RECOMMENDATION: Stage 2 (Normalization) is RECOMMENDED")
+            else:
+                print(f"\n   ✅ RECOMMENDATION: Stage 2 (Normalization) can be SKIPPED")
+
+        print("\n" + "="*80)
+        if needs_normalization:
+            print("OVERALL RECOMMENDATION: ⚠️  Implement Stage 2 (Text Normalization)")
+            print("\nReasons:")
+            if any(r.double_space_count > 0 for r in results):
+                print("  - Double spaces found")
+            if any(r.triple_newline_count > 0 for r in results):
+                print("  - Triple newlines found")
+            if any(r.tab_count > 0 for r in results):
+                print("  - Tabs found")
+            if any(r.whitespace_trim_pct > 5.0 for r in results):
+                print("  - High percentage of leading/trailing whitespace")
+        else:
+            print("OVERALL RECOMMENDATION: ✅ Skip Stage 2 (Text Normalization)")
+            print("\nText quality is good - no normalization needed.")
+        print("="*80 + "\n")
+
+        return 0
+
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return 1
+
+if __name__ == "__main__":
+    exit(main())
+
+try:
+    from truth_forge.core import get_logger as _get_logger
+except Exception:
+    from src.services.central_services.core import get_logger as _get_logger
+_LOGGER = _get_logger(__name__)
+script_id = "pipelines.claude_code.scripts.assessment.run_assessment.py"
+
+import sys
+from pathlib import Path
+
+# Add project root to path
+PROJECT_ROOT = Path(__file__).resolve().parents[5]
+sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
+
+from google.cloud import bigquery
+
+PROJECT_ID = "flash-clover-464719-g1"
+DATASET_ID = "spine"
+SOURCE_TABLE = f"{PROJECT_ID}.{DATASET_ID}.entity_unified"
+STAGE_0_TABLE = f"{PROJECT_ID}.{DATASET_ID}.claude_code_stage_0"
+
+# Try Stage 0 first, fall back to source table
+def check_table_exists(client, table_name):
+    """Check if table exists."""
+    try:
+        client.get_table(table_name)
+        return True
+    except Exception:
+        return False
+
+def assess_from_table(client, table_name, table_label):
+    """Assess text quality from a table."""
+    # Check if it's Stage 0 (has source_name) or source table (needs extraction)
+    if 'stage_0' in table_name:
+        source_col = "source_name"
+        source_filter = "LOWER(source_name) IN ('claude_code', 'codex', 'github')"
+    else:
+        # Extract source from source_pipeline or source_file
+        source_col = """
+        CASE
+          WHEN LOWER(source_pipeline) LIKE '%claude_code%' OR LOWER(source_file) LIKE '%claude_code%' THEN 'claude_code'
+          WHEN LOWER(source_pipeline) LIKE '%codex%' OR LOWER(source_file) LIKE '%codex%' THEN 'codex'
+          WHEN LOWER(source_pipeline) LIKE '%github%' OR LOWER(source_file) LIKE '%github%' THEN 'github'
+          ELSE 'unknown'
+        END
+        """
+        source_filter = """
+        (
+          LOWER(source_pipeline) LIKE '%claude_code%' OR LOWER(source_file) LIKE '%claude_code%' OR
+          LOWER(source_pipeline) LIKE '%codex%' OR LOWER(source_file) LIKE '%codex%' OR
+          LOWER(source_pipeline) LIKE '%github%' OR LOWER(source_file) LIKE '%github%'
+        )
+        """
+
+    # Add date filter for partitioned tables (required for entity_unified)
+    # Try to find any date range that has data
+    date_filter = ""
+    if 'entity_unified' in table_name:
+        # First, try to find what dates have data
+        check_query = f"""
+        SELECT
+          MIN(content_date) as min_date,
+          MAX(content_date) as max_date,
+          COUNT(*) as total_rows
+        FROM `{table_name}`
+        WHERE level = 5
+        """
+        try:
+            check_job = client.query(check_query)
+            check_results = list(check_job.result())
+            if check_results and check_results[0].total_rows > 0:
+                # Use the date range that exists
+                min_date = check_results[0].min_date
+                max_date = check_results[0].max_date
+                date_filter = f"AND content_date >= DATE('{min_date}') AND content_date <= DATE('{max_date}')"
+                print(f"📅 Found data from {min_date} to {max_date} ({check_results[0].total_rows:,} total rows)\n")
+            else:
+                date_filter = "AND content_date >= DATE('2024-01-01')"  # Fallback
+        except Exception as e:
+            # If we can't check, use a wide date range
+            date_filter = "AND content_date >= DATE('2024-01-01')"
+
+    query = f"""
+    SELECT
+      {source_col} as source_name,
+      COUNT(*) as total_messages,
+      COUNT(CASE WHEN text LIKE '%  %' THEN 1 END) as double_space_count,
+      ROUND(COUNT(CASE WHEN text LIKE '%  %' THEN 1 END) * 100.0 / COUNT(*), 2) as double_space_pct,
+      COUNT(CASE WHEN text LIKE '%\\n\\n\\n%' THEN 1 END) as triple_newline_count,
+      COUNT(CASE WHEN text LIKE '%\\t%' THEN 1 END) as tab_count,
+      COUNT(CASE WHEN LENGTH(text) != LENGTH(TRIM(text)) THEN 1 END) as whitespace_trim_count,
+      ROUND(COUNT(CASE WHEN LENGTH(text) != LENGTH(TRIM(text)) THEN 1 END) * 100.0 / COUNT(*), 2) as whitespace_trim_pct,
+      AVG(LENGTH(text)) as avg_length,
+      MIN(LENGTH(text)) as min_length,
+      MAX(LENGTH(text)) as max_length,
+      COUNT(CASE WHEN text IS NULL OR LENGTH(TRIM(text)) = 0 THEN 1 END) as empty_text_count
+    FROM `{table_name}`
+    WHERE level = 5
+      AND {source_filter}
+      {date_filter}
+    GROUP BY source_name
+    ORDER BY source_name
+    """
+
+    query_job = client.query(query)
+    results = list(query_job.result())
+    return results
+
+def main():
+    try:
+        client = bigquery.Client(project=PROJECT_ID)
+
+        # Check which table exists
+        use_stage_0 = check_table_exists(client, STAGE_0_TABLE)
+        use_source = check_table_exists(client, SOURCE_TABLE)
+
+        if not use_stage_0 and not use_source:
+            print("❌ Neither Stage 0 table nor source table found.")
+            print(f"   Stage 0: {STAGE_0_TABLE}")
+            print(f"   Source: {SOURCE_TABLE}")
+            return 1
+
+        # Use Stage 0 if available, otherwise use source
+        if use_stage_0:
+            table_name = STAGE_0_TABLE
+            table_label = "Stage 0"
+            print(f"✅ Using Stage 0 table: {STAGE_0_TABLE}\n")
+        else:
+            table_name = SOURCE_TABLE
+            table_label = "Source (entity_unified)"
+            print(f"⚠️  Stage 0 table not found. Using source table: {SOURCE_TABLE}\n")
+
+        results = assess_from_table(client, table_name, table_label)
+
+        if not results:
+            print(f"❌ No data found in {table_label} table.")
+            return 1
+
+        print("\n" + "="*80)
+        print(f"TEXT QUALITY ASSESSMENT RESULTS ({table_label})")
+        print("="*80)
+
+        needs_normalization = False
+
+        for row in results:
+            print(f"\n📊 Source: {row.source_name}")
+            print(f"   Total Messages: {row.total_messages:,}")
+            print(f"\n   Whitespace Issues:")
+            print(f"   - Double Spaces: {row.double_space_count:,} ({row.double_space_pct}%)")
+            print(f"   - Triple Newlines: {row.triple_newline_count:,}")
+            print(f"   - Tabs: {row.tab_count:,}")
+            print(f"   - Leading/Trailing Whitespace: {row.whitespace_trim_count:,} ({row.whitespace_trim_pct}%)")
+            print(f"\n   Text Length:")
+            print(f"   - Average: {row.avg_length:.0f} chars")
+            print(f"   - Min: {row.min_length} chars")
+            print(f"   - Max: {row.max_length:,} chars")
+            print(f"   - Empty/Null: {row.empty_text_count:,}")
+
+            # Determine if normalization needed
+            issues = (
+                row.double_space_count > 0 or
+                row.triple_newline_count > 0 or
+                row.tab_count > 0 or
+                row.whitespace_trim_pct > 5.0
+            )
+
+            if issues:
+                needs_normalization = True
+                print(f"\n   ⚠️  RECOMMENDATION: Stage 2 (Normalization) is RECOMMENDED")
+            else:
+                print(f"\n   ✅ RECOMMENDATION: Stage 2 (Normalization) can be SKIPPED")
+
+        print("\n" + "="*80)
+        if needs_normalization:
+            print("OVERALL RECOMMENDATION: ⚠️  Implement Stage 2 (Text Normalization)")
+            print("\nReasons:")
+            if any(r.double_space_count > 0 for r in results):
+                print("  - Double spaces found")
+            if any(r.triple_newline_count > 0 for r in results):
+                print("  - Triple newlines found")
+            if any(r.tab_count > 0 for r in results):
+                print("  - Tabs found")
+            if any(r.whitespace_trim_pct > 5.0 for r in results):
+                print("  - High percentage of leading/trailing whitespace")
+        else:
+            print("OVERALL RECOMMENDATION: ✅ Skip Stage 2 (Text Normalization)")
+            print("\nText quality is good - no normalization needed.")
+        print("="*80 + "\n")
+
+        return 0
+
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return 1
+
+if __name__ == "__main__":
+    exit(main())
+try:
+    from truth_forge.core import get_logger as _get_logger
+except Exception:
+    from src.services.central_services.core import get_logger as _get_logger
+_LOGGER = _get_logger(__name__)

@@ -1,0 +1,36 @@
+-- Stage 5 Table: claude_codex_github_stage_5
+-- Purpose: Store ready messages for NLP processing
+-- Pattern: Universal Pipeline Pattern - Stage 5 (Ready Messages)
+
+CREATE TABLE IF NOT EXISTS `flash-clover-464719-g1.spine.claude_codex_github_stage_5` (
+  -- Entity Identifiers
+  entity_id STRING NOT NULL,         -- Entity ID from Stage 3
+  source_name STRING,                -- Source identifier (claude_code, codex, github)
+
+  -- Corrected Text (Ready for NLP)
+  text STRING NOT NULL,              -- Corrected text (ready for NLP processing)
+  original_text STRING,              -- Original text from Stage 3 (for reference)
+
+  -- Audit Fields
+  run_id STRING NOT NULL,           -- Run ID for traceability
+  created_at TIMESTAMP NOT NULL,    -- Creation timestamp
+)
+PARTITION BY DATE(created_at)
+CLUSTER BY source_name, entity_id
+OPTIONS(
+  description="Stage 5: Ready messages for NLP processing. Only includes messages with is_ready=true and length >= 10 characters. Contains corrected text ready for downstream NLP analysis."
+);
+
+-- Labels for cost tracking and governance
+ALTER TABLE `flash-clover-464719-g1.spine.claude_codex_github_stage_5`
+SET OPTIONS (
+  labels=[
+    ("pipeline", "claude_codex_github"),
+    ("stage", "5"),
+    ("purpose", "ready_messages"),
+    ("table_type", "run_table"),
+    ("data_quality", "corrected"),
+    ("workstream", "w1_truth_service"),
+    ("backup_enabled", "true")
+  ]
+);

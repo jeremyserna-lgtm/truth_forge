@@ -1,0 +1,58 @@
+# Description: Extract all scripts and MD documents from record
+# Tool: Bash
+
+python3 << 'EOF'
+import json
+import os
+
+filepath = "/Users/jeremyserna/.claude/projects/-Users-jeremyserna-Truth-Engine/0a66b5ca-ed1d-4b9d-b183-9011912c7abc.jsonl"
+output_dir = "/Users/jeremyserna/PrimitiveEngine/docs/exercises/transcript_extraction_exercise_2025-12-24/extracted_from_record"
+
+os.makedirs(output_dir, exist_ok=True)
+
+script_count = 0
+write_count = 0
+
+with open(filepath, 'r') as f:
+    for line in f:
+        obj = json.loads(line)
+        if obj.get('type') == 'assistant':
+            content = obj.get('message', {}).get('content', [])
+            for item in content:
+                if isinstance(item, dict) and item.get('type') == 'tool_use':
+                    tool_name = item.get('name', '')
+                    tool_input = item.get('input', {})
+
+                    # Extract Bash scripts with Python
+                    if tool_name == 'Bash':
+                        cmd = tool_input.get('command', '')
+                        if 'python3' in cmd and 'json' in cmd:
+                            script_count += 1
+                            outfile = f"{output_dir}/bash_script_{script_count:02d}.txt"
+                            with open(outfile, 'w') as out:
+                                out.write(f"# Description: {tool_input.get('description', 'no description')}\n")
+                                out.write(f"# Tool: Bash\n\n")
+                                out.write(cmd)
+                            print(f"Extracted: bash_script_{script_count:02d}.txt - {tool_input.get('description', '')[:50]}")
+
+                    # Extract Write tool content (MD documents)
+                    elif tool_name == 'Write':
+                        file_path = tool_input.get('file_path', '')
+                        content_written = tool_input.get('content', '')
+                        if 'PERSON_DOCUMENT' in file_path or 'TRANSCRIPT' in file_path or 'META_REFLECTION' in file_path or 'SEEING_THE' in file_path:
+                            write_count += 1
+                            # Get just the filename
+                            original_name = file_path.split('/')[-1]
+                            outfile = f"{output_dir}/write_{write_count:02d}_{original_name}"
+                            with open(outfile, 'w') as out:
+                                out.write(f"<!-- \n")
+                                out.write(f"EXTRACTED FROM CONVERSATION RECORD\n")
+                                out.write(f"Original path: {file_path}\n")
+                                out.write(f"Tool: Write\n")
+                                out.write(f"-->\n\n")
+                                out.write(content_written)
+                            print(f"Extracted: write_{write_count:02d}_{original_name}")
+
+print(f"\nTotal scripts: {script_count}")
+print(f"Total Write documents: {write_count}")
+EOF

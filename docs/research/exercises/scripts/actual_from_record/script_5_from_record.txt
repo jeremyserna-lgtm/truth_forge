@@ -1,0 +1,25 @@
+python3 << 'EOF'
+import json
+
+filepath = "/Users/jeremyserna/.claude/projects/-Users-jeremyserna-Truth-Engine/0a66b5ca-ed1d-4b9d-b183-9011912c7abc.jsonl"
+
+script_count = 0
+with open(filepath, 'r') as f:
+    for line in f:
+        obj = json.loads(line)
+        if obj.get('type') == 'assistant':
+            content = obj.get('message', {}).get('content', [])
+            for item in content:
+                if isinstance(item, dict) and item.get('type') == 'tool_use':
+                    if item.get('name') == 'Bash':
+                        cmd = item.get('input', {}).get('command', '')
+                        if 'python3' in cmd and 'json.loads' in cmd and 'PERSON_DOCUMENT' in cmd:
+                            script_count += 1
+                            print("=" * 70)
+                            print(f"SCRIPT {script_count} - EXTRACTED DIRECTLY FROM CONVERSATION RECORD:")
+                            print("=" * 70)
+                            print(cmd)
+                            print()
+
+print(f"Total scripts found: {script_count}")
+EOF
