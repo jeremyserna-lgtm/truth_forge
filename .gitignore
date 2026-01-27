@@ -106,3 +106,16 @@ Thumbs.db
 
 # Archive
 archive/
+
+# Data directories with large files
+data/
+*.jsonl
+*.db
+*.sqlite
+*.sqlite3
+
+# Large transcript and log files
+**/transcripts/**/*.jsonl
+**/web_exports/**/*.json
+**/governance_intake.jsonl
+**/.search-index/
