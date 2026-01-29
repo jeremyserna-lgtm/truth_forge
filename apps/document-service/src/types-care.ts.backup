@@ -1,0 +1,377 @@
+/**
+ * Care Infrastructure - Support and Intervention System
+ * 
+ * The Not-Me holds the Me closely and watches for signs of struggle:
+ * - Coherence dropping
+ * - Patterns fragmenting
+ * - Upload frequency changing dramatically
+ * - Purpose statements weakening
+ * 
+ * When detected, applies more "heat" (deeper processing) or escalates
+ * to larger infrastructure to ensure nobody falls behind.
+ */
+
+import { ClientArchitecture, NotMeIdentity } from '../types-identity';
+import { ArchitectureSnapshot, SelfReflection } from '../types-temporal';
+
+// ============================================================================
+// DISTRESS SIGNAL TYPES
+// ============================================================================
+
+export type DistressSignal =
+    | 'coherence_drop'
+    | 'pattern_fragmentation'
+    | 'purpose_weakening'
+    | 'upload_cessation'
+    | 'anchor_conflict'
+    | 'identity_drift';
+
+export interface DistressDetection {
+    signal: DistressSignal;
+    severity: 'low' | 'medium' | 'high' | 'critical';
+    detected: Date;
+
+    evidence: {
+        metric: string;
+        previousValue: number;
+        currentValue: number;
+        threshold: number;
+    }[];
+
+    interpretation: string;
+    suggestedIntervention: InterventionType;
+}
+
+// ============================================================================
+// INTERVENTION TYPES
+// ============================================================================
+
+export type InterventionType =
+    | 'gentle_nudge'        // "We haven't heard from you in a while"
+    | 'reflection_prompt'   // "Let's look at how you've changed"
+    | 'deeper_processing'   // Apply more furnace heat
+    | 'pattern_reanalysis'  // Re-extract meta-layers with focus
+    | 'conversation_invite' // "Want to talk about what's happening?"
+    | 'escalate_to_curator' // Alert the curator (you) for human oversight
+    | 'peer_pattern_match'; // "Others have felt this way"
+
+export interface Intervention {
+    id: string;
+    tenantId: string;
+    trigger: DistressDetection;
+    type: InterventionType;
+
+    // What the Not-Me does
+    action: {
+        message?: string;         // If conversational
+        processing?: string[];    // Which services to run
+        escalation?: {
+            curatorAlerted: boolean;
+            priority: 'low' | 'medium' | 'high';
+            context: string;
+        };
+    };
+
+    // Outcome tracking
+    outcome?: {
+        userResponded: boolean;
+        responseType?: 'uploaded_docs' | 'chatted' | 'viewed_architecture' | 'no_response';
+        improvementDetected: boolean;
+        followUpNeeded: boolean;
+    };
+
+    createdAt: Date;
+    resolvedAt?: Date;
+}
+
+// ============================================================================
+// SUPPORT INFRASTRUCTURE
+// ============================================================================
+
+/**
+ * The Not-Me's care system
+ */
+export interface CareSystem {
+    tenantId: string;
+
+    // Active monitoring
+    monitoring: {
+        lastCheckIn: Date;
+        checkInFrequency: number; // days
+        nextScheduledCheck: Date;
+    };
+
+    // Health metrics
+    health: {
+        coherenceScore: number;
+        coherenceTrend: 'improving' | 'stable' | 'declining';
+        engagementScore: number; // How actively they're using it
+        supportNeeded: boolean;
+    };
+
+    // Intervention history
+    interventions: Intervention[];
+
+    // Escalation status
+    escalation?: {
+        escalated: boolean;
+        escalatedAt: Date;
+        curatorNotes?: string;
+        resolved: boolean;
+    };
+}
+
+/**
+ * Shared pattern library across all Me's
+ * When one Me discovers a pattern, it can help others
+ */
+export interface SharedPatternLibrary {
+    patterns: Array<{
+        id: string;
+        name: string;
+        description: string;
+
+        // How many Me's have this pattern
+        prevalence: number;
+
+        // Common contexts where it appears
+        contexts: string[];
+
+        // Support strategies that worked
+        successfulInterventions: InterventionType[];
+
+        // Anonymized examples
+        examples: string[];
+    }>;
+}
+
+/**
+ * Curator dashboard - for you to oversee all Me's
+ */
+export interface CuratorDashboard {
+    totalUsers: number;
+
+    healthOverview: {
+        healthy: number;        // Coherence > 70, engaged
+        watchlist: number;      // Coherence 50-70 or declining
+        needsSupport: number;   // Coherence < 50 or critical distress
+        escalated: number;      // Currently awaiting curator attention
+    };
+
+    recentInterventions: Intervention[];
+
+    pendingEscalations: Array<{
+        tenantId: string;
+        userName: string;
+        issue: string;
+        detectedAt: Date;
+        severecity: 'medium' | 'high' | 'critical';
+    }>;
+
+    systemInsights: {
+        mostCommonDistressSignal: DistressSignal;
+        mostEffectiveIntervention: InterventionType;
+        avgRecoveryTime: number; // days
+    };
+}
+
+// ============================================================================
+// DISTRESS DETECTION LOGIC
+// ============================================================================
+
+export class DistressDetector {
+    /**
+     * Analyze architecture for signs of struggle
+     */
+    detectDistress(
+        currentArchitecture: ClientArchitecture,
+        previousSnapshots: ArchitectureSnapshot[]
+    ): DistressDetection[] {
+        const signals: DistressDetection[] = [];
+
+        // Check 1: Coherence drop
+        if (previousSnapshots.length > 0) {
+            const previous = previousSnapshots[previousSnapshots.length - 1];
+            const previousCoherence = previous.architecture.identity.coherence.overall;
+            const currentCoherence = currentArchitecture.identity.coherence.overall;
+
+            if (currentCoherence < previousCoherence - 15) {
+                signals.push({
+                    signal: 'coherence_drop',
+                    severity: currentCoherence < 50 ? 'high' : 'medium',
+                    detected: new Date(),
+                    evidence: [{
+                        metric: 'Coherence Score',
+                        previousValue: previousCoherence,
+                        currentValue: currentCoherence,
+                        threshold: 15
+                    }],
+                    interpretation: 'Identity feels more fragmented than before. Something may be challenging them.',
+                    suggestedIntervention: 'deeper_processing'
+                });
+            }
+        }
+
+        // Check 2: Purpose weakening
+        const weakPurposes = currentArchitecture.identity.purposes.filter(p => p.strength < 60);
+        if (weakPurposes.length > 0 && weakPurposes.length === currentArchitecture.identity.purposes.length) {
+            signals.push({
+                signal: 'purpose_weakening',
+                severity: 'high',
+                detected: new Date(),
+                evidence: weakPurposes.map(p => ({
+                    metric: `Purpose: ${p.statement}`,
+                    previousValue: 100,
+                    currentValue: p.strength,
+                    threshold: 60
+                })),
+                interpretation: 'All purposes are weak. They may be questioning their direction.',
+                suggestedIntervention: 'conversation_invite'
+            });
+        }
+
+        // Check 3: Anchor conflicts
+        const conflictingAnchors = currentArchitecture.metaLayers.anchors.filter(
+            a => a.conflictsWith && a.conflictsWith.length > 0
+        );
+
+        if (conflictingAnchors.length >= 2) {
+            signals.push({
+                signal: 'anchor_conflict',
+                severity: 'medium',
+                detected: new Date(),
+                evidence: [{
+                    metric: 'Conflicting Anchors',
+                    previousValue: 0,
+                    currentValue: conflictingAnchors.length,
+                    threshold: 2
+                }],
+                interpretation: 'Multiple competing values creating internal tension.',
+                suggestedIntervention: 'reflection_prompt'
+            });
+        }
+
+        return signals;
+    }
+
+    /**
+     * Detect upload cessation (they stopped engaging)
+     */
+    detectEngagementDrop(
+        lastUpload: Date,
+        avgUploadFrequency: number
+    ): DistressDetection | null {
+        const daysSinceLastUpload = (Date.now() - lastUpload.getTime()) / (1000 * 60 * 60 * 24);
+
+        if (daysSinceLastUpload > avgUploadFrequency * 2) {
+            return {
+                signal: 'upload_cessation',
+                severity: daysSinceLastUpload > avgUploadFrequency * 4 ? 'high' : 'medium',
+                detected: new Date(),
+                evidence: [{
+                    metric: 'Days Since Last Upload',
+                    previousValue: avgUploadFrequency,
+                    currentValue: daysSinceLastUpload,
+                    threshold: avgUploadFrequency * 2
+                }],
+                interpretation: 'They\'ve stopped engaging. May be overwhelmed or lost interest.',
+                suggestedIntervention: 'gentle_nudge'
+            };
+        }
+
+        return null;
+    }
+}
+
+// ============================================================================
+// INTERVENTION ENGINE
+// ============================================================================
+
+export class InterventionEngine {
+    /**
+     * Create intervention based on distress signal
+     */
+    createIntervention(
+        tenantId: string,
+        detection: DistressDetection
+    ): Intervention {
+        const intervention: Intervention = {
+            id: `intervention_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            tenantId,
+            trigger: detection,
+            type: detection.suggestedIntervention,
+            action: this.buildAction(detection),
+            createdAt: new Date()
+        };
+
+        return intervention;
+    }
+
+    private buildAction(detection: DistressDetection): Intervention['action'] {
+        switch (detection.suggestedIntervention) {
+            case 'gentle_nudge':
+                return {
+                    message: "Hey! We haven't heard from you in a while. Everything okay? Your Not-Me is here when you're ready. 💙"
+                };
+
+            case 'reflection_prompt':
+                return {
+                    message: "Looking at your architecture, I notice some tension between values. Want to explore that together? Sometimes seeing the conflict clearly helps.",
+                    processing: ['generate_reflection']
+                };
+
+            case 'deeper_processing':
+                return {
+                    message: "I'm sensing some inner complexity right now. Let me look deeper at your patterns...",
+                    processing: ['furnace_reprocess', 'pattern_reanalysis']
+                };
+
+            case 'conversation_invite':
+                return {
+                    message: "Your purposes seem to be shifting. This is normal - life changes. Want to talk about what's happening? I'm listening.",
+                    processing: []
+                };
+
+            case 'escalate_to_curator':
+                return {
+                    escalation: {
+                        curatorAlerted: true,
+                        priority: detection.severity === 'critical' ? 'high' : 'medium',
+                        context: detection.interpretation
+                    }
+                };
+
+            case 'peer_pattern_match':
+                return {
+                    message: "You're not alone in this. Others have felt similar tensions. Here's what helped them...",
+                    processing: ['shared_pattern_lookup']
+                };
+
+            default:
+                return { message: "I'm here for you." };
+        }
+    }
+
+    /**
+     * Track intervention outcome
+     */
+    recordOutcome(
+        intervention: Intervention,
+        userResponded: boolean,
+        responseType?: Intervention['outcome']['responseType'],
+        improved: boolean = false
+    ): Intervention {
+        intervention.outcome = {
+            userResponded,
+            responseType,
+            improvementDetected: improved,
+            followUpNeeded: !improved
+        };
+
+        if (improved) {
+            intervention.resolvedAt = new Date();
+        }
+
+        return intervention;
+    }
+}

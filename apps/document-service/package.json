@@ -1,0 +1,41 @@
+{
+    "name": "@truth-forge/document-service",
+    "version": "1.0.0",
+    "description": "Multi-tenant document management and knowledge atomization service",
+    "main": "dist/index.js",
+    "scripts": {
+        "dev": "tsx watch src/index.ts",
+        "build": "tsc",
+        "start": "node dist/index.js",
+        "test": "jest",
+        "test:integration": "jest --testPathPattern=tests/integration",
+        "test:tenancy": "jest --testPathPattern=tests/tenancy"
+    },
+    "dependencies": {
+        "@google-cloud/bigquery": "^7.9.4",
+        "@google-cloud/secret-manager": "^6.1.1",
+        "@google-cloud/storage": "^7.7.0",
+        "@google-cloud/vision": "^4.0.2",
+        "@google/generative-ai": "^0.24.1",
+        "cors": "^2.8.5",
+        "dotenv": "^16.3.1",
+        "express": "^4.18.2",
+        "jsonwebtoken": "^9.0.2",
+        "multer": "^1.4.5-lts.1",
+        "pg": "^8.11.3",
+        "sharp": "^0.33.1",
+        "tesseract.js": "^5.0.4",
+        "zod": "^3.22.4"
+    },
+    "devDependencies": {
+        "@types/cors": "^2.8.17",
+        "@types/express": "^4.17.21",
+        "@types/jest": "^29.5.11",
+        "@types/jsonwebtoken": "^9.0.5",
+        "@types/multer": "^1.4.11",
+        "@types/node": "^20.10.6",
+        "jest": "^29.7.0",
+        "tsx": "^4.7.0",
+        "typescript": "^5.3.3"
+    }
+}

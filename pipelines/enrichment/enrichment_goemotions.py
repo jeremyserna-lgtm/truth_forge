@@ -134,7 +134,8 @@ class GoEmotionsEnrichment(BaseEnrichment):
 
             # Get scores
             scores = {
-                label: float(prob.item()) for label, prob in zip(emotion_labels, probabilities)
+                label: float(prob.item())
+                for label, prob in zip(emotion_labels, probabilities, strict=True)
             }
 
             # Get top emotions (top 3)

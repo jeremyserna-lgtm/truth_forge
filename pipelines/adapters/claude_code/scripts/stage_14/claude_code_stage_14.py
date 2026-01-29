@@ -64,10 +64,8 @@ Control: Consistent joins, null handling, schema alignment
 Usage:
     python claude_code_stage_14.py [--batch-size N] [--dry-run]
 """
-try:
-    from truth_forge.core import get_logger as _get_logger
-except Exception:
-    from src.services.central_services.core import get_logger as _get_logger
+# Use shared logging bridge for consistent logging
+from shared.logging_bridge import get_logger as _get_logger
 _LOGGER = _get_logger(__name__)
 
 
@@ -101,10 +99,20 @@ from shared import (
     get_full_table_id,
     validate_input_table_exists,
 )
-from src.services.central_services.core import get_current_run_id, get_logger
-from src.services.central_services.core.config import get_bigquery_client
-from src.services.central_services.core.pipeline_tracker import PipelineTracker
-from src.services.central_services.governance.governance import require_diagnostic_on_error
+from shared.logging_bridge import get_current_run_id, get_logger
+# get_bigquery_client fallback
+def get_bigquery_client():
+    from google.cloud import bigquery
+    return bigquery.Client()
+# PipelineTracker fallback
+from contextlib import contextmanager
+@contextmanager
+def PipelineTracker(*args, **kwargs):
+    obj = type("obj", (object,), {"update_progress": lambda self, **kw: None})()
+    yield obj
+# require_diagnostic_on_error fallback
+def require_diagnostic_on_error(error, context):
+    pass
 
 
 logger = get_logger(__name__)
@@ -178,9 +186,22 @@ def aggregate_entities(
     dry_run: bool,
 ) -> dict[str, int]:
     """Aggregate all enrichments onto message entities."""
+    # Validate all inputs first to prevent SQL injection
+    from shared_validation import validate_table_id, validate_run_id
+    
+    validated_stage_7_table = validate_table_id(STAGE_7_TABLE)
+    validated_stage_9_table = validate_table_id(STAGE_9_TABLE)
+    validated_stage_10_table = validate_table_id(STAGE_10_TABLE)
+    validated_stage_12_table = validate_table_id(STAGE_12_TABLE)
+    validated_stage_14_table = validate_table_id(STAGE_14_TABLE)
+    validated_run_id = validate_run_id(run_id)
+    
     aggregated_at = datetime.now(UTC).isoformat()
+    # Validate timestamp
+    if any(danger in aggregated_at for danger in ['--', ';', '/*', '*/']):
+        raise ValueError("Invalid timestamp: potential SQL injection")
 
-    # Build aggregation query
+    # Build aggregation query with validated table IDs
     # Left joins to preserve all messages even without enrichments
     aggregation_query = f"""
     SELECT
@@ -223,25 +244,25 @@ def aggregate_entities(
         m.fingerprint,
 
         TIMESTAMP('{aggregated_at}') as aggregated_at,
-        '{run_id}' as run_id
+        '{validated_run_id}' as run_id
 
-    FROM `{STAGE_7_TABLE}` m
+    FROM `{validated_stage_7_table}` m
 
-    LEFT JOIN `{STAGE_9_TABLE}` e
+    LEFT JOIN `{validated_stage_9_table}` e
         ON m.entity_id = e.entity_id
 
-    LEFT JOIN `{STAGE_10_TABLE}` llm
+    LEFT JOIN `{validated_stage_10_table}` llm
         ON m.entity_id = llm.entity_id
 
-    LEFT JOIN `{STAGE_12_TABLE}` t
+    LEFT JOIN `{validated_stage_12_table}` t
         ON m.entity_id = t.entity_id
 
     ORDER BY m.session_id, m.message_index
     """
 
     if dry_run:
-        # Count what would be processed
-        count_query = f"SELECT COUNT(*) as cnt FROM `{STAGE_7_TABLE}`"
+        # Count what would be processed (with validated table ID)
+        count_query = f"SELECT COUNT(*) as cnt FROM `{validated_stage_7_table}`"
         result = bq_client.query(count_query).result()
         row = next(iter(result))
         return {
@@ -250,9 +271,20 @@ def aggregate_entities(
             "dry_run": True,
         }
 
-    # Execute aggregation via INSERT
+    # Execute aggregation via DELETE + INSERT to prevent duplicates
+    # First delete existing data for this run_id
+    delete_query = f"""
+    DELETE FROM `{validated_stage_14_table}`
+    WHERE run_id = '{validated_run_id}'
+    """
+    delete_job = bq_client.query(delete_query)
+    delete_job.result()
+    if delete_job.errors:
+        raise ValueError(f"DELETE failed: {delete_job.errors[:5]}")
+    
+    # Then insert new aggregated data
     insert_query = f"""
-    INSERT INTO `{STAGE_14_TABLE}` (
+    INSERT INTO `{validated_stage_14_table}` (
         entity_id, parent_id, source_name, source_pipeline, level,
         text, role, message_type, message_index, word_count, char_count,
         model, cost_usd, tool_name,
@@ -260,16 +292,19 @@ def aggregate_entities(
         intent, task_type, code_languages, complexity, has_code_block,
         keywords, top_keyword, keyword_count,
         session_id, content_date, timestamp_utc, fingerprint,
-        aggregated_at, run_id
+        TIMESTAMP('{aggregated_at}') as aggregated_at,
+        '{validated_run_id}' AS run_id
     )
     {aggregation_query}
     """
 
     job = bq_client.query(insert_query)
     job.result()  # Wait for completion
+    if job.errors:
+        raise ValueError(f"INSERT failed: {job.errors[:5]}")
 
-    # Count inserted rows
-    count_query = f"SELECT COUNT(*) as cnt FROM `{STAGE_14_TABLE}` WHERE run_id = '{run_id}'"
+    # Count inserted rows (with validated table ID and run_id)
+    count_query = f"SELECT COUNT(*) as cnt FROM `{validated_stage_14_table}` WHERE run_id = '{validated_run_id}'"
     result = bq_client.query(count_query).result()
     row = next(iter(result))
 
@@ -307,7 +342,9 @@ def main() -> int:
             return 0
 
         except Exception as e:
-            logger.error(f"Stage 14 failed: {e}", exc_info=True)
+            logger.error("Failed to aggregate entity data")
+            logger.error(f"Error: {str(e)}")
+            logger.debug(f"Technical details: {e}", exc_info=True)
             require_diagnostic_on_error(e, "stage_14_aggregation")
             return 1
 

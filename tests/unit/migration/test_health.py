@@ -7,10 +7,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 from truth_forge.migration.health import (
     check_all_services_health,
@@ -189,18 +186,25 @@ class TestCheckAllServicesHealth:
         __import__("truth_forge.migration.health", fromlist=["check_service_health"]),
         "check_service_health",
     )
-    def test_all_services_healthy(
-        self, mock_check: MagicMock, mock_root: MagicMock
-    ) -> None:
+    def test_all_services_healthy(self, mock_check: MagicMock, mock_root: MagicMock) -> None:
         """Test when all services are healthy."""
         with TemporaryDirectory() as tmpdir:
             base = Path(tmpdir)
 
             # Create all expected service directories
             services = [
-                "identity", "knowledge", "analytics", "quality",
-                "pipeline", "hold", "run", "builder", "federation",
-                "frontmatter", "model_gateway", "stage_awareness",
+                "identity",
+                "knowledge",
+                "analytics",
+                "quality",
+                "pipeline",
+                "hold",
+                "run",
+                "builder",
+                "federation",
+                "frontmatter",
+                "model_gateway",
+                "stage_awareness",
             ]
             for svc in services:
                 (base / svc).mkdir()
@@ -234,9 +238,7 @@ class TestVerifyHoldSync:
 
     @patch("truth_forge.core.paths.get_intake_file")
     @patch("truth_forge.core.paths.get_duckdb_file")
-    def test_both_empty_ok(
-        self, mock_duckdb: MagicMock, mock_intake: MagicMock
-    ) -> None:
+    def test_both_empty_ok(self, mock_duckdb: MagicMock, mock_intake: MagicMock) -> None:
         """Test sync is OK when both hold1 and hold2 are empty."""
         with TemporaryDirectory() as tmpdir:
             base = Path(tmpdir)

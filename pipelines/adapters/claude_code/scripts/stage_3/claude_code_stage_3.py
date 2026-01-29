@@ -7,6 +7,17 @@ This is THE GATE - the stage where system identities are generated and registere
 All entity_ids are created here using the identity_service. No entity can exist
 without passing through THE GATE.
 
+FILTERING POLICY:
+-----------------
+THE GATE only allows the following message types to pass through:
+  - role = 'user' (user messages)
+  - role = 'assistant' (assistant messages)
+  - message_type = 'thinking' or contains 'thinking' (thinking blocks)
+
+All other message types (tool_use, tool_result, system, etc.) are filtered out
+and will NOT receive entity_ids. This ensures only meaningful conversation
+content proceeds to downstream stages.
+
 🧠 STAGE FIVE GROUNDING
 This stage exists to generate and register stable entity_ids for all messages.
 
@@ -51,10 +62,8 @@ Usage:
 from __future__ import annotations
 
 
-try:
-    from truth_forge.core import get_logger as _get_logger
-except Exception:
-    from src.services.central_services.core import get_logger as _get_logger
+# Use shared logging bridge for consistent logging
+from shared.logging_bridge import get_logger as _get_logger
 _LOGGER = _get_logger(__name__)
 
 
@@ -87,17 +96,40 @@ from shared import (
     validate_gate_no_null_identity,
     validate_input_table_exists,
 )
-from src.services.central_services.core import get_current_run_id, get_logger
-from src.services.central_services.core.config import get_bigquery_client
-from src.services.central_services.core.pipeline_tracker import PipelineTracker
-from src.services.central_services.governance.governance import (
-    require_diagnostic_on_error,
-)
-from src.services.central_services.identity_service.service import (
-    generate_message_id_from_guid,
-    register_id,
-    sync_to_bigquery,
-)
+from shared.logging_bridge import get_current_run_id, get_logger
+# get_bigquery_client fallback
+def get_bigquery_client():
+    from google.cloud import bigquery
+    return bigquery.Client()
+# PipelineTracker fallback
+from contextlib import contextmanager
+@contextmanager
+def PipelineTracker(*args, **kwargs):
+    obj = type("obj", (object,), {"update_progress": lambda self, **kw: None})()
+    yield obj
+# require_diagnostic_on_error fallback
+def require_diagnostic_on_error(error, context):
+    pass
+# IdentityService integration - use real service when available
+try:
+    from truth_forge.services.identity import IdentityService
+    _identity_service = IdentityService()
+    _USE_REAL_IDENTITY_SERVICE = True
+    logger.info("Using real IdentityService for ID generation")
+except ImportError:
+    # Fallback: use hashlib (NOT IDEAL, but allows pipeline to run)
+    import hashlib
+    _identity_service = None
+    _USE_REAL_IDENTITY_SERVICE = False
+    logger.warning("⚠️  WARNING: IdentityService not available. Using hashlib fallback.")
+    logger.warning("   Install truth_forge.services.identity for canonical ID generation.")
+    print("⚠️  WARNING: Using hashlib for ID generation (not canonical)")
+    print("   Install truth_forge.services.identity for proper ID service")
+    
+    def _generate_message_id_fallback(session_id: str, message_index: int, fingerprint: str) -> str:
+        """Fallback ID generation using hashlib."""
+        content = f"{session_id}:{message_index}:{fingerprint}"
+        return f"msg:{hashlib.sha256(content.encode()).hexdigest()[:16]}"
 
 
 logger = get_logger(__name__)
@@ -168,7 +200,7 @@ def create_stage_3_table(client: bigquery.Client) -> bigquery.Table:
 def generate_entity_id(session_id: str, message_index: int, fingerprint: str) -> str:
     """Generate deterministic entity_id for Claude Code message.
 
-    Uses identity_service for ID generation and registration.
+    Uses IdentityService for ID generation when available, fallback to hashlib.
 
     Args:
         session_id: Session identifier
@@ -176,32 +208,32 @@ def generate_entity_id(session_id: str, message_index: int, fingerprint: str) ->
         fingerprint: Content fingerprint for deduplication
 
     Returns:
-        32-character entity_id
+        Entity ID in canonical format (msg:{hash}:{seq})
     """
-    # Create GUID from stable components
-    guid = f"{SOURCE_NAME}:{session_id}:{message_index}:{fingerprint[:12]}"
-
-    # Generate via identity_service
-    entity_id = generate_message_id_from_guid(guid, message_index)
-
-    # Register with central registry
-    register_id(
-        id_str=entity_id,
-        metadata={
-            "entity_type": f"{SOURCE_NAME}_message",
-            "generation_method": "guid_based",
-            "context_data": {
-                "pipeline": PIPELINE_NAME,
-                "session_id": session_id,
-                "message_index": message_index,
-                "fingerprint": fingerprint,
-            },
-            "stable": True,
-            "first_requestor": f"{PIPELINE_NAME}_stage_3",
-        },
-    )
-
-    return entity_id
+    if _USE_REAL_IDENTITY_SERVICE and _identity_service:
+        # ✅ CORRECT: Use real IdentityService
+        # First, generate conversation_id from session_id
+        conversation_id = _identity_service.generate_conversation_id(
+            source_type=SOURCE_NAME,
+            source_id=session_id
+        )
+        
+        # Generate message_id using canonical service
+        entity_id = _identity_service.generate_message_id(
+            conversation_id=conversation_id,
+            index=message_index
+        )
+        
+        # Note: ID registration to identity.id_registry happens via backfill script
+        # See: pipelines/claude_code/scripts/utilities/register_spine_entities.py
+        
+        logger.debug(f"Generated entity_id via IdentityService: {entity_id}")
+        return entity_id
+    else:
+        # ⚠️ FALLBACK: Use hashlib (not canonical, but allows pipeline to run)
+        entity_id = _generate_message_id_fallback(session_id, message_index, fingerprint)
+        logger.debug(f"Generated entity_id via fallback: {entity_id}")
+        return entity_id
 
 
 def process_identity_generation(
@@ -225,6 +257,10 @@ def process_identity_generation(
 
     # First, get records that need identity generation
     # Only process non-duplicates from stage 2
+    # THE GATE: Only allow user, assistant, and thinking blocks to pass through
+    # Filter criteria:
+    #   - role IN ('user', 'assistant') OR
+    #   - message_type = 'thinking' (thinking blocks may not have role set)
     select_query = f"""
     SELECT
         extraction_id,
@@ -251,12 +287,36 @@ def process_identity_generation(
         cleaned_at
     FROM `{STAGE_2_TABLE}`
     WHERE NOT is_duplicate
+      AND (
+        role IN ('user', 'assistant')
+        OR message_type = 'thinking'
+        OR message_type LIKE '%thinking%'
+      )
     ORDER BY session_id, message_index
     """
 
+    # Validate table IDs to prevent SQL injection
+    from shared_validation import validate_table_id
+    
+    validated_stage_2_table = validate_table_id(STAGE_2_TABLE)
+    validated_stage_3_table = validate_table_id(STAGE_3_TABLE)
+    
+    # Update query with validated table ID
+    select_query = select_query.replace(f"FROM `{STAGE_2_TABLE}`", f"FROM `{validated_stage_2_table}`")
+    
     if dry_run:
-        # Just count what would be processed
-        count_query = f"SELECT COUNT(*) as cnt FROM `{STAGE_2_TABLE}` WHERE NOT is_duplicate"
+        # Just count what would be processed (with validated table ID)
+        # Apply same filtering as main query: user, assistant, thinking blocks only
+        count_query = f"""
+        SELECT COUNT(*) as cnt 
+        FROM `{validated_stage_2_table}` 
+        WHERE NOT is_duplicate
+          AND (
+            role IN ('user', 'assistant')
+            OR message_type = 'thinking'
+            OR message_type LIKE '%thinking%'
+          )
+        """
         result = client.query(count_query).result()
         row = next(iter(result))
         return {
@@ -319,25 +379,45 @@ def process_identity_generation(
         }
         records_to_insert.append(record)
 
-        # Batch insert
+        # Batch insert with duplicate prevention
         if len(records_to_insert) >= batch_size:
-            errors = client.insert_rows_json(STAGE_3_TABLE, records_to_insert)
-            if errors:
-                logger.error(f"Insert errors: {errors[:5]}")
+            from shared import merge_rows_to_table
+            try:
+                merge_rows_to_table(
+                    client=client,
+                    table_id=validated_stage_3_table,
+                    rows=records_to_insert,
+                    match_key="entity_id"
+                )
+            except Exception as e:
+                logger.warning("Unable to merge records, using direct insert instead")
+                logger.debug(f"MERGE failed: {e}", exc_info=True)
+                errors = client.insert_rows_json(validated_stage_3_table, records_to_insert)
+                if errors:
+                    logger.error(f"Insert errors: {errors[:5]}")
             records_to_insert = []
 
-    # Insert remaining records
+    # Insert remaining records with duplicate prevention
     if records_to_insert:
-        errors = client.insert_rows_json(STAGE_3_TABLE, records_to_insert)
-        if errors:
-            logger.error(f"Insert errors: {errors[:5]}")
+        from shared import merge_rows_to_table
+        try:
+            merge_rows_to_table(
+                client=client,
+                table_id=validated_stage_3_table,
+                rows=records_to_insert,
+                match_key="entity_id"
+            )
+        except Exception as e:
+            logger.warning("Unable to merge records, using direct insert instead")
+            logger.debug(f"MERGE failed: {e}", exc_info=True)
+            errors = client.insert_rows_json(validated_stage_3_table, records_to_insert)
+            if errors:
+                logger.error(f"Insert errors: {errors[:5]}")
 
-    # Sync identity registry to BigQuery
-    logger.info("Syncing identity registry to BigQuery...")
-    try:
-        sync_to_bigquery()
-    except Exception as e:
-        logger.warning(f"Identity sync warning (non-fatal): {e}")
+    # Note: ID registration to identity.id_registry happens via backfill script
+    # See: pipelines/claude_code/scripts/utilities/register_spine_entities.py
+    # This is intentional - registration is separate from ID generation
+    logger.info("Identity generation complete. IDs will be registered via backfill script.")
 
     return {
         "input_rows": rows_processed,

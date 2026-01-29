@@ -435,9 +435,7 @@ class TestCreateEvent:
         assert event.metadata.run_id == "context-run-id"
 
     @patch("truth_forge.observability.context.get_run_id")
-    def test_explicit_run_id_overrides_context(
-        self, mock_get_run_id: MagicMock
-    ) -> None:
+    def test_explicit_run_id_overrides_context(self, mock_get_run_id: MagicMock) -> None:
         """Test explicit run_id overrides context."""
         mock_get_run_id.return_value = "context-run-id"
 

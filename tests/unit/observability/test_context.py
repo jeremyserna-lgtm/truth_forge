@@ -7,8 +7,6 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 import truth_forge.observability.context as ctx_module
 from truth_forge.observability.context import (
     CorrelationContext,
@@ -318,4 +316,3 @@ class TestSetCausationId:
         """Test set_causation_id sets the value."""
         set_causation_id("new-cause")
         assert ctx_module._causation_id.get() == "new-cause"
-

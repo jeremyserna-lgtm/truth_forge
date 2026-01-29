@@ -8,8 +8,6 @@ from __future__ import annotations
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-import pytest
-
 from truth_forge.organism.lifecycle.manager import (
     Lifecycle,
     LifecycleEvent,

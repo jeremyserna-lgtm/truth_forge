@@ -9,8 +9,6 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
-import pytest
-
 import truth_forge.mind.integration as integration_module
 from truth_forge.mind.integration import (
     IntegratedMind,
@@ -149,9 +147,7 @@ class TestUnifiedState:
     def test_summary_with_layers(self) -> None:
         """Test summary with layers."""
         layers = {
-            "perception": LayerContribution(
-                layer=LayerType.PERCEPTION, status="active", health=0.8
-            )
+            "perception": LayerContribution(layer=LayerType.PERCEPTION, status="active", health=0.8)
         }
         state = UnifiedState(layers=layers)
         summary = state.summary()
@@ -194,7 +190,7 @@ class TestIntegratedMind:
             path = Path(tmpdir) / "states.jsonl"
             mind = IntegratedMind(storage_path=path)
 
-            state = mind.unified_state()
+            mind.unified_state()
 
             assert len(mind._layers) == len(LayerType)
             for layer_type in LayerType:
@@ -209,9 +205,7 @@ class TestIntegratedMind:
                 "perception": LayerContribution(
                     layer=LayerType.PERCEPTION, status="active", health=0.8
                 ),
-                "memory": LayerContribution(
-                    layer=LayerType.MEMORY, status="active", health=0.6
-                ),
+                "memory": LayerContribution(layer=LayerType.MEMORY, status="active", health=0.6),
             }
 
             state = mind.unified_state()
@@ -481,4 +475,3 @@ class TestReflectFunction:
             result = reflect("Test question")
 
             assert "Test question" in result
-

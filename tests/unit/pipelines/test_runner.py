@@ -5,18 +5,17 @@ Tests the pipeline execution runner.
 
 from __future__ import annotations
 
+# Add pipelines to path for imports
+import sys
 from pathlib import Path
 from typing import Any
 
-import pytest
 
-# Add pipelines to path for imports
-import sys
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 from pipelines.core.config import PipelineConfig, StageConfig
 from pipelines.core.runner import PipelineResult, PipelineRunner
-from pipelines.core.stage import Stage, StageResult
+from pipelines.core.stage import Stage
 
 
 class TestPipelineResult:

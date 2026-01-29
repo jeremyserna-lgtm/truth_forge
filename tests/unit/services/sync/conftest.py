@@ -8,30 +8,32 @@ Provides comprehensive mocks for:
 - Local database
 """
 
-from typing import Dict, Any, Optional
-from unittest.mock import Mock, MagicMock, patch
-import pytest
 from datetime import datetime
+from typing import Any
+from unittest.mock import Mock
+
+import pytest
+
 
 # Mock BigQuery client
 @pytest.fixture
 def mock_bq_client() -> Mock:
     """Mock BigQuery client."""
     client = Mock()
-    
+
     # Mock query execution
     query_result = Mock()
     query_result.result.return_value = []
     query_job = Mock()
     query_job.result.return_value = []
     client.query.return_value = query_job
-    
+
     # Mock table operations
     table = Mock()
     table.schema = []
     client.get_table.return_value = table
     client.insert_rows_json.return_value = []
-    
+
     return client
 
 
@@ -40,7 +42,7 @@ def mock_bq_client() -> Mock:
 def mock_supabase_client() -> Mock:
     """Mock Supabase client."""
     client = Mock()
-    
+
     # Mock table operations
     table = Mock()
     table.select.return_value = table
@@ -49,9 +51,9 @@ def mock_supabase_client() -> Mock:
     table.update.return_value = table
     table.upsert.return_value = table
     table.execute.return_value = Mock(data=[])
-    
+
     client.table.return_value = table
-    
+
     return client
 
 
@@ -60,7 +62,7 @@ def mock_supabase_client() -> Mock:
 def mock_twenty_crm_client() -> Mock:
     """Mock Twenty CRM API client."""
     client = Mock()
-    
+
     # Mock contact operations
     client.get_contact.return_value = {
         "id": "crm_123",
@@ -86,16 +88,16 @@ def mock_twenty_crm_client() -> Mock:
         "id": "crm_123",
         "name": {"firstName": "Test", "lastName": "User"},
     }
-    
+
     # Mock company operations
     client.get_company.return_value = {"id": "company_123", "name": "Test Company"}
     client.list_companies.return_value = [{"id": "company_123", "name": "Test Company"}]
     client.create_company.return_value = {"id": "company_new_123", "name": "New Company"}
-    
+
     # Mock custom fields
     client.list_custom_fields.return_value = []
     client.create_custom_field.return_value = {"id": "field_123", "name": "test_field"}
-    
+
     return client
 
 
@@ -127,7 +129,7 @@ def mock_local_db() -> Mock:
 
 # Sample contact data
 @pytest.fixture
-def sample_contact() -> Dict[str, Any]:
+def sample_contact() -> dict[str, Any]:
     """Sample contact data from BigQuery."""
     return {
         "contact_id": "contact_mac_123",
@@ -155,7 +157,7 @@ def sample_contact() -> Dict[str, Any]:
 
 # Sample CRM contact data
 @pytest.fixture
-def sample_crm_contact() -> Dict[str, Any]:
+def sample_crm_contact() -> dict[str, Any]:
     """Sample contact data from Twenty CRM."""
     return {
         "id": "crm_123",
@@ -177,7 +179,7 @@ def sample_crm_contact() -> Dict[str, Any]:
 
 # Sample business data
 @pytest.fixture
-def sample_business() -> Dict[str, Any]:
+def sample_business() -> dict[str, Any]:
     """Sample business data."""
     return {
         "business_id": "business_123",
@@ -201,35 +203,35 @@ def mock_settings(monkeypatch: pytest.MonkeyPatch) -> None:
 
 # Mock requests for HTTP calls
 @pytest.fixture
-def mock_requests(monkeypatch: pytest.MonkeyPatch) -> Dict[str, Mock]:
+def mock_requests(monkeypatch: pytest.MonkeyPatch) -> dict[str, Mock]:
     """Mock requests library.
-    
+
     Returns a dict with 'get', 'post', 'patch', 'put', 'delete' mocks
     that can be configured in tests.
     """
     import requests as requests_module
-    
+
     # Create individual mocks for each method
     get_mock = Mock()
     post_mock = Mock()
     patch_mock = Mock()
     put_mock = Mock()
     delete_mock = Mock()
-    
+
     # Create default response
     default_response = Mock()
     default_response.status_code = 200
     default_response.json.return_value = {"data": {"createPerson": {"id": "crm_123"}}}
     default_response.raise_for_status.return_value = None
     default_response.text = "{}"
-    
+
     # Set defaults
     get_mock.return_value = default_response
     post_mock.return_value = default_response
     patch_mock.return_value = default_response
     put_mock.return_value = default_response
     delete_mock.return_value = default_response
-    
+
     # Create mock module
     class MockRequestsModule:
         def __init__(self) -> None:
@@ -239,10 +241,10 @@ def mock_requests(monkeypatch: pytest.MonkeyPatch) -> Dict[str, Mock]:
             self.patch = patch_mock
             self.put = put_mock
             self.delete = delete_mock
-    
+
     mock_module = MockRequestsModule()
     monkeypatch.setattr("truth_forge.services.sync.twenty_crm_client.requests", mock_module)
-    
+
     return {
         "get": get_mock,
         "post": post_mock,

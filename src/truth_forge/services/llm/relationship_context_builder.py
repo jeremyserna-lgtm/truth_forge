@@ -3,42 +3,41 @@
 Builds rich context from people-to-people relationships for LLM prompts.
 """
 
-from typing import Dict, Any, Optional
 import logging
+from typing import Any
+
 
 logger = logging.getLogger(__name__)
 
 
 class RelationshipContextBuilder:
     """Builds LLM prompts from people-to-people relationship data.
-    
+
     Transforms rich relationship data into structured context strings
     optimized for LLM model calls.
     """
 
     def __init__(self, relationship_fetcher: Any) -> None:
         """Initialize relationship context builder.
-        
+
         Args:
             relationship_fetcher: Service to fetch relationships (from any source)
         """
         self.relationship_fetcher = relationship_fetcher
 
-    def build_relationship_context(self, relationship: Dict[str, Any]) -> str:
+    def build_relationship_context(self, relationship: dict[str, Any]) -> str:
         """Build rich context string for LLM prompts.
-        
+
         Args:
             relationship: Relationship record (canonical format)
-            
+
         Returns:
             Formatted context string
         """
         parts = []
 
         # Basic Info
-        parts.append(
-            f"**Relationship Type**: {relationship.get('relationship_type', 'Unknown')}"
-        )
+        parts.append(f"**Relationship Type**: {relationship.get('relationship_type', 'Unknown')}")
         if relationship.get("relationship_subtype"):
             parts.append(f"**Subtype**: {relationship['relationship_subtype']}")
 
@@ -101,9 +100,7 @@ class RelationshipContextBuilder:
             parts.append(f"**Shared Interests**: {', '.join(interests)}")
         if social_ctx.get("shared_groups"):
             groups = (
-                social_ctx["shared_groups"]
-                if isinstance(social_ctx["shared_groups"], list)
-                else []
+                social_ctx["shared_groups"] if isinstance(social_ctx["shared_groups"], list) else []
             )
             parts.append(f"**Shared Groups**: {', '.join(groups)}")
 
@@ -135,17 +132,11 @@ class RelationshipContextBuilder:
                 llm_ctx = {}
 
         if llm_ctx.get("key_dynamics"):
-            dynamics = (
-                llm_ctx["key_dynamics"]
-                if isinstance(llm_ctx["key_dynamics"], list)
-                else []
-            )
+            dynamics = llm_ctx["key_dynamics"] if isinstance(llm_ctx["key_dynamics"], list) else []
             parts.append(f"**Key Dynamics**: {', '.join(dynamics)}")
         if llm_ctx.get("recommendations"):
             recommendations = (
-                llm_ctx["recommendations"]
-                if isinstance(llm_ctx["recommendations"], list)
-                else []
+                llm_ctx["recommendations"] if isinstance(llm_ctx["recommendations"], list) else []
             )
             parts.append(f"**Recommendations**: {', '.join(recommendations)}")
 
@@ -161,9 +152,7 @@ class RelationshipContextBuilder:
 
         if evolution.get("milestones"):
             milestones = (
-                evolution["milestones"]
-                if isinstance(evolution["milestones"], list)
-                else []
+                evolution["milestones"] if isinstance(evolution["milestones"], list) else []
             )
             if milestones:
                 parts.append(f"**Recent Milestones**: {len(milestones)} milestones")
@@ -174,22 +163,18 @@ class RelationshipContextBuilder:
         self, base_prompt: str, relationship_id: str, source: str = "bigquery"
     ) -> str:
         """Build full prompt with relationship context.
-        
+
         Args:
             base_prompt: Base prompt text
             relationship_id: Relationship ID to fetch
             source: Source system (bigquery, supabase, local)
-            
+
         Returns:
             Full prompt with relationship context
         """
-        relationship = self.relationship_fetcher.fetch_relationship(
-            relationship_id, source
-        )
+        relationship = self.relationship_fetcher.fetch_relationship(relationship_id, source)
         if not relationship:
-            logger.warning(
-                f"Relationship {relationship_id} not found in {source}"
-            )
+            logger.warning(f"Relationship {relationship_id} not found in {source}")
             return base_prompt
 
         relationship_context = self.build_relationship_context(relationship)
@@ -204,12 +189,12 @@ class RelationshipContextBuilder:
         self, person_id: str, max_depth: int = 2, source: str = "bigquery"
     ) -> str:
         """Build context for person's social graph.
-        
+
         Args:
             person_id: Person ID
             max_depth: Maximum relationship depth to include
             source: Source system
-            
+
         Returns:
             Social graph context string
         """
@@ -224,7 +209,7 @@ class RelationshipContextBuilder:
         parts.append(f"**Total Relationships**: {len(relationships)}")
 
         # Group by relationship type
-        by_type = {}
+        by_type: dict[str, list[Any]] = {}
         for rel in relationships:
             rel_type = rel.get("relationship_type", "unknown")
             if rel_type not in by_type:
@@ -235,9 +220,7 @@ class RelationshipContextBuilder:
             parts.append(f"\n**{rel_type.title()}**: {len(rels)} relationships")
             for rel in rels[:5]:  # Show first 5 of each type
                 other_person = (
-                    rel["person_2_id"]
-                    if rel["person_1_id"] == person_id
-                    else rel["person_1_id"]
+                    rel["person_2_id"] if rel["person_1_id"] == person_id else rel["person_1_id"]
                 )
                 parts.append(f"  - {other_person} ({rel.get('relationship_subtype', '')})")
 

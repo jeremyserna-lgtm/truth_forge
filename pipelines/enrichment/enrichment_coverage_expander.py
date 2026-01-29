@@ -64,7 +64,7 @@ def expand_coverage(
         SELECT COUNT(DISTINCT entity_id) as enriched_entities
         FROM `{BQ_PROJECT_ID}.{BQ_DATASET_ID}.{ENRICHMENTS_TABLE}`
     )
-    SELECT 
+    SELECT
         t.total_entities,
         e.enriched_entities,
         e.enriched_entities / t.total_entities * 100 as current_coverage_pct
@@ -130,7 +130,7 @@ def expand_coverage(
       AND e.source_platform IN ({sources_str})
       AND e.text IS NOT NULL
       AND LENGTH(e.text) > 10
-    ORDER BY 
+    ORDER BY
         e.level DESC,
         priority_date DESC
     LIMIT {needed}

@@ -99,7 +99,9 @@ class TestPerceptionService:
 
     @patch.object(PerceptionService, "logger", new_callable=lambda: MagicMock())
     @patch("truth_forge.services.perception.service.requests.Session")
-    def test_scrape_website_error(self, mock_session_class: MagicMock, mock_logger: MagicMock) -> None:
+    def test_scrape_website_error(
+        self, mock_session_class: MagicMock, mock_logger: MagicMock
+    ) -> None:
         """Test scrape_website handles errors."""
         import requests
 
@@ -137,7 +139,9 @@ class TestPerceptionService:
 
     @patch.object(PerceptionService, "logger", new_callable=lambda: MagicMock())
     @patch("truth_forge.services.perception.service.requests.Session")
-    def test_process_scrape_website(self, mock_session_class: MagicMock, mock_logger: MagicMock) -> None:
+    def test_process_scrape_website(
+        self, mock_session_class: MagicMock, mock_logger: MagicMock
+    ) -> None:
         """Test process with scrape_website type."""
         mock_session = MagicMock()
         mock_response = MagicMock()
@@ -177,7 +181,9 @@ class TestPerceptionService:
 
     @patch.object(PerceptionService, "logger", new_callable=lambda: MagicMock())
     @patch("truth_forge.services.perception.service.requests.Session")
-    def test_process_handles_exception(self, mock_session_class: MagicMock, mock_logger: MagicMock) -> None:
+    def test_process_handles_exception(
+        self, mock_session_class: MagicMock, mock_logger: MagicMock
+    ) -> None:
         """Test process handles exceptions gracefully."""
         import requests
 

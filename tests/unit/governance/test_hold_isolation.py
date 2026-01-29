@@ -216,9 +216,7 @@ class TestHoldIsolation:
         """Test invalid operation type is denied."""
         isolation = HoldIsolation()
 
-        allowed, reason = isolation.check_with_reason(
-            "invalid_op", "agent", "hold2"
-        )
+        allowed, reason = isolation.check_with_reason("invalid_op", "agent", "hold2")
 
         assert allowed is False
         assert "Unknown operation type" in reason
@@ -227,9 +225,7 @@ class TestHoldIsolation:
         """Test invalid hold layer is denied."""
         isolation = HoldIsolation()
 
-        allowed, reason = isolation.check_with_reason(
-            "write", "agent", "invalid_layer"
-        )
+        allowed, reason = isolation.check_with_reason("write", "agent", "invalid_layer")
 
         assert allowed is False
         assert "Unknown HOLD layer" in reason
@@ -250,9 +246,7 @@ class TestHoldIsolation:
         isolation = HoldIsolation()
         test_context = {"user": "test", "action": "write"}
 
-        isolation.check(
-            "write", "external", "hold2", context=test_context
-        )
+        isolation.check("write", "external", "hold2", context=test_context)
 
         violations = isolation.get_violations()
         assert len(violations) == 1

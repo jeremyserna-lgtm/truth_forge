@@ -1,0 +1,5 @@
+{
+  "name": "Knowledge Atomizer",
+  "description": "Distill documents into single-sentence truths (Knowledge Atoms) and interact with them via an advanced AI interface featuring dynamic, context-aware command generation.",
+  "requestFramePermissions": []
+}

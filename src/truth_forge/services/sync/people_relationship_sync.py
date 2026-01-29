@@ -4,17 +4,18 @@ Syncs relationships between people across all systems.
 Builds rich social graph with full tracking.
 """
 
-from typing import Dict, Any, Optional
-from datetime import datetime
 import logging
 import traceback
+from datetime import datetime
+from typing import Any
+
 
 logger = logging.getLogger(__name__)
 
 
 class PeopleRelationshipSyncService:
     """Syncs people-to-people relationships across all systems.
-    
+
     All errors are reported transparently - nothing hidden.
     """
 
@@ -27,7 +28,7 @@ class PeopleRelationshipSyncService:
         error_reporter: Any,
     ) -> None:
         """Initialize people relationship sync service.
-        
+
         Args:
             bq_client: BigQuery client
             supabase_client: Supabase client
@@ -41,12 +42,12 @@ class PeopleRelationshipSyncService:
         self.crm_twenty = crm_twenty_client
         self.error_reporter = error_reporter
 
-    def sync_relationship_to_all(self, relationship_id: str) -> Dict[str, Any]:
+    def sync_relationship_to_all(self, relationship_id: str) -> dict[str, Any]:
         """Sync a relationship from BigQuery to all systems.
-        
+
         Args:
             relationship_id: Relationship ID in BigQuery
-            
+
         Returns:
             Dict with sync results for each system
         """
@@ -61,9 +62,7 @@ class PeopleRelationshipSyncService:
                     "not_found",
                     f"Relationship {relationship_id} not found in BigQuery",
                 )
-                return {
-                    "error": f"Relationship {relationship_id} not found in BigQuery"
-                }
+                return {"error": f"Relationship {relationship_id} not found in BigQuery"}
 
             # 2. Sync to Supabase
             supabase_result = self._sync_relationship_to_supabase(relationship)
@@ -110,14 +109,12 @@ class PeopleRelationshipSyncService:
             )
             raise
 
-    def _fetch_relationship_from_bigquery(
-        self, relationship_id: str
-    ) -> Optional[Dict[str, Any]]:
+    def _fetch_relationship_from_bigquery(self, relationship_id: str) -> dict[str, Any] | None:
         """Fetch relationship from BigQuery.
-        
+
         Args:
             relationship_id: Relationship ID
-            
+
         Returns:
             Relationship record or None
         """
@@ -128,11 +125,7 @@ class PeopleRelationshipSyncService:
             LIMIT 1
             """
 
-            job_config = {
-                "query_parameters": [
-                    ("relationship_id", "INT64", int(relationship_id))
-                ]
-            }
+            job_config = {"query_parameters": [("relationship_id", "INT64", int(relationship_id))]}
 
             query_job = self.bq_client.query(query, job_config=job_config)
             results = list(query_job.result())
@@ -152,14 +145,12 @@ class PeopleRelationshipSyncService:
             )
             raise
 
-    def _sync_relationship_to_supabase(
-        self, relationship: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _sync_relationship_to_supabase(self, relationship: dict[str, Any]) -> dict[str, Any]:
         """Sync relationship to Supabase.
-        
+
         Args:
             relationship: Relationship record from BigQuery
-            
+
         Returns:
             Sync result
         """
@@ -185,14 +176,12 @@ class PeopleRelationshipSyncService:
             )
             return {"status": "error", "error": error_msg}
 
-    def _sync_relationship_to_local(
-        self, relationship: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _sync_relationship_to_local(self, relationship: dict[str, Any]) -> dict[str, Any]:
         """Sync relationship to local database.
-        
+
         Args:
             relationship: Relationship record from BigQuery
-            
+
         Returns:
             Sync result
         """
@@ -239,14 +228,12 @@ class PeopleRelationshipSyncService:
             )
             return {"status": "error", "error": error_msg}
 
-    def _sync_relationship_to_crm_twenty(
-        self, relationship: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _sync_relationship_to_crm_twenty(self, relationship: dict[str, Any]) -> dict[str, Any]:
         """Sync relationship to CRM Twenty.
-        
+
         Args:
             relationship: Relationship record from BigQuery
-            
+
         Returns:
             Sync result
         """
@@ -266,9 +253,7 @@ class PeopleRelationshipSyncService:
             )
             return {"status": "error", "error": error_msg}
 
-    def _transform_bq_to_supabase(
-        self, relationship: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _transform_bq_to_supabase(self, relationship: dict[str, Any]) -> dict[str, Any]:
         """Transform BigQuery relationship to Supabase format."""
         import json
 
@@ -284,9 +269,7 @@ class PeopleRelationshipSyncService:
             "end_date": relationship.get("end_date"),
             "is_current": relationship.get("is_current", True),
             "relationship_status": relationship.get("relationship_status"),
-            "relationship_context": json.dumps(
-                relationship.get("relationship_context", {})
-            ),
+            "relationship_context": json.dumps(relationship.get("relationship_context", {})),
             "social_context": json.dumps(relationship.get("social_context", {})),
             "tracking": json.dumps(relationship.get("tracking", {})),
             "evolution": json.dumps(relationship.get("evolution", {})),
@@ -294,7 +277,7 @@ class PeopleRelationshipSyncService:
             "sync_metadata": json.dumps(relationship.get("sync_metadata", {})),
         }
 
-    def _transform_bq_to_local(self, relationship: Dict[str, Any]) -> Dict[str, Any]:
+    def _transform_bq_to_local(self, relationship: dict[str, Any]) -> dict[str, Any]:
         """Transform BigQuery relationship to local format."""
         return {
             "relationship_id": str(relationship["relationship_id"]),
@@ -306,9 +289,7 @@ class PeopleRelationshipSyncService:
             "sync_metadata": relationship.get("sync_metadata", {}),
         }
 
-    def _transform_bq_to_crm_twenty(
-        self, relationship: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _transform_bq_to_crm_twenty(self, relationship: dict[str, Any]) -> dict[str, Any]:
         """Transform BigQuery relationship to CRM Twenty format."""
         import json
 
@@ -319,9 +300,7 @@ class PeopleRelationshipSyncService:
             "customFields": {
                 "relationship_id": str(relationship["relationship_id"]),
                 "relationship_subtype": relationship.get("relationship_subtype"),
-                "relationship_context": json.dumps(
-                    relationship.get("relationship_context", {})
-                ),
+                "relationship_context": json.dumps(relationship.get("relationship_context", {})),
                 "social_context": json.dumps(relationship.get("social_context", {})),
             },
         }

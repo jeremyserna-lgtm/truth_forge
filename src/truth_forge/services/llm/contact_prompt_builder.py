@@ -1,32 +1,33 @@
 """Contact prompt builder for LLM dynamic prompting system."""
 
-from typing import Dict, Any, Optional
 import logging
+from typing import Any
+
 
 logger = logging.getLogger(__name__)
 
 
 class ContactPromptBuilder:
     """Builds LLM prompts from contact data.
-    
+
     Transforms rich contact data into structured context strings
     optimized for LLM model calls.
     """
 
     def __init__(self, contact_fetcher: Any) -> None:
         """Initialize prompt builder.
-        
+
         Args:
             contact_fetcher: Service to fetch contacts (from any source)
         """
         self.contact_fetcher = contact_fetcher
 
-    def build_contact_context(self, contact: Dict[str, Any]) -> str:
+    def build_contact_context(self, contact: dict[str, Any]) -> str:
         """Build rich context string for LLM prompts.
-        
+
         Args:
             contact: Contact record (canonical format)
-            
+
         Returns:
             Formatted context string
         """
@@ -50,6 +51,7 @@ class ContactPromptBuilder:
         llm_ctx = contact.get("llm_context", {})
         if isinstance(llm_ctx, str):
             import json
+
             try:
                 llm_ctx = json.loads(llm_ctx)
             except json.JSONDecodeError:
@@ -61,9 +63,7 @@ class ContactPromptBuilder:
             parts.append(f"**Communication Style**: {llm_ctx['communication_style']}")
         if llm_ctx.get("key_interests"):
             interests = (
-                llm_ctx["key_interests"]
-                if isinstance(llm_ctx["key_interests"], list)
-                else []
+                llm_ctx["key_interests"] if isinstance(llm_ctx["key_interests"], list) else []
             )
             parts.append(f"**Interests**: {', '.join(interests)}")
         if llm_ctx.get("current_state"):
@@ -77,6 +77,7 @@ class ContactPromptBuilder:
         comm_stats = contact.get("communication_stats", {})
         if isinstance(comm_stats, str):
             import json
+
             try:
                 comm_stats = json.loads(comm_stats)
             except json.JSONDecodeError:
@@ -93,6 +94,7 @@ class ContactPromptBuilder:
         ai_insights = contact.get("ai_insights", {})
         if isinstance(ai_insights, str):
             import json
+
             try:
                 ai_insights = json.loads(ai_insights)
             except json.JSONDecodeError:
@@ -113,6 +115,7 @@ class ContactPromptBuilder:
         recommendations = contact.get("recommendations", {})
         if isinstance(recommendations, str):
             import json
+
             try:
                 recommendations = json.loads(recommendations)
             except json.JSONDecodeError:
@@ -132,17 +135,14 @@ class ContactPromptBuilder:
         social_network = contact.get("social_network", {})
         if isinstance(social_network, str):
             import json
+
             try:
                 social_network = json.loads(social_network)
             except json.JSONDecodeError:
                 social_network = {}
 
         if social_network.get("groups"):
-            groups = (
-                social_network["groups"]
-                if isinstance(social_network["groups"], list)
-                else []
-            )
+            groups = social_network["groups"] if isinstance(social_network["groups"], list) else []
             parts.append(f"**Groups**: {', '.join(groups)}")
 
         return "\n".join(parts)
@@ -151,12 +151,12 @@ class ContactPromptBuilder:
         self, base_prompt: str, contact_id: str, source: str = "bigquery"
     ) -> str:
         """Build full prompt with contact context.
-        
+
         Args:
             base_prompt: Base prompt text
             contact_id: Contact ID to fetch
             source: Source system (bigquery, supabase, local)
-            
+
         Returns:
             Full prompt with contact context
         """
@@ -173,15 +173,13 @@ class ContactPromptBuilder:
 {contact_context}
 """
 
-    def build_multi_contact_context(
-        self, contact_ids: list[str], source: str = "bigquery"
-    ) -> str:
+    def build_multi_contact_context(self, contact_ids: list[str], source: str = "bigquery") -> str:
         """Build context for multiple contacts.
-        
+
         Args:
             contact_ids: List of contact IDs
             source: Source system
-            
+
         Returns:
             Combined context string
         """

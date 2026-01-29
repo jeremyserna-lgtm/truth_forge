@@ -9,8 +9,6 @@ import json
 from typing import Any
 from unittest.mock import MagicMock
 
-import pytest
-
 from truth_forge.furnace.engine import (
     BaseFurnaceEngine,
     CorpusTruth,
@@ -219,10 +217,7 @@ class TestInMemoryCorpusRetriever:
 
     def test_retrieve_respects_max_results(self) -> None:
         """Test retrieve respects max_results limit."""
-        corpus = [
-            CorpusTruth(entity_id=str(i), text=f"python {i}", source="s")
-            for i in range(20)
-        ]
+        corpus = [CorpusTruth(entity_id=str(i), text=f"python {i}", source="s") for i in range(20)]
         retriever = InMemoryCorpusRetriever(corpus=corpus)
 
         truths = [Truth(category="test", statement="python")]
@@ -475,10 +470,14 @@ class TestFurnaceEngine:
         mock_client = MagicMock()
 
         # Return extraction then synthesis
-        responses = iter([
-            json.dumps({"truths": [{"category": "test", "statement": "Truth", "evidence": ""}]}),
-            json.dumps({"enriched_narrative": "Enriched", "synthesis": [{"insight": "New"}]}),
-        ])
+        responses = iter(
+            [
+                json.dumps(
+                    {"truths": [{"category": "test", "statement": "Truth", "evidence": ""}]}
+                ),
+                json.dumps({"enriched_narrative": "Enriched", "synthesis": [{"insight": "New"}]}),
+            ]
+        )
         mock_client.generate.side_effect = lambda *a, **k: next(responses)
 
         engine = FurnaceEngine(llm_client=mock_client)
@@ -493,10 +492,14 @@ class TestFurnaceEngine:
     def test_forge_narrative_with_corpus_retriever(self) -> None:
         """Test forge_narrative uses corpus retriever."""
         mock_client = MagicMock()
-        responses = iter([
-            json.dumps({"truths": [{"category": "test", "statement": "find python", "evidence": ""}]}),
-            json.dumps({"enriched_narrative": "Enriched", "synthesis": []}),
-        ])
+        responses = iter(
+            [
+                json.dumps(
+                    {"truths": [{"category": "test", "statement": "find python", "evidence": ""}]}
+                ),
+                json.dumps({"enriched_narrative": "Enriched", "synthesis": []}),
+            ]
+        )
         mock_client.generate.side_effect = lambda *a, **k: next(responses)
 
         corpus = [

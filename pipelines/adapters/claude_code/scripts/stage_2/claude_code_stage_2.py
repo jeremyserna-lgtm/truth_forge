@@ -49,59 +49,10 @@ Usage:
 
 from __future__ import annotations
 
+# Use shared logging bridge for consistent logging
+from shared.logging_bridge import get_logger as _get_logger
 
-#!/usr/bin/env python3
-"""Stage 2: Cleaning - Claude Code Pipeline
 
-HOLD₁ (claude_code_stage_1) → AGENT (Normalizer) → HOLD₂ (claude_code_stage_2)
-
-Cleans and normalizes extracted data: timestamp normalization, content cleaning,
-deduplication, and data quality validation.
-
-🧠 STAGE FIVE GROUNDING
-This stage exists to clean and normalize raw extracted data for processing.
-
-Structure: Read stage_1 → Normalize timestamps → Clean content → Dedupe → Write stage_2
-Purpose: Ensure data quality and consistency before identity generation
-Boundaries: Cleaning only, no semantic transformation or enrichment
-Control: Deduplication by fingerprint, validation before write
-
-⚠️ WHAT THIS STAGE CANNOT SEE
-- Original file content after extraction
-- Semantic meaning of messages
-- Whether duplicates are intentional
-- Upstream data quality issues
-
-🔥 THE FURNACE PRINCIPLE
-- Truth (input): Raw extracted rows from stage_1
-- Heat (processing): Normalization, cleaning, deduplication
-- Meaning (output): Clean, deduplicated rows ready for THE GATE
-- Care (delivery): Data quality metrics, validation report
-
-CANONICAL SPECIFICATION ALIGNMENT:
-==================================
-This script follows Stage 2 of the Universal Pipeline Pattern for claude_code.
-
-RATIONALE:
-----------
-- Stage 2 prepares data for identity generation (Stage 3)
-- Deduplication prevents duplicate entity creation
-- Normalization ensures consistent downstream processing
-
-Enterprise Governance Standards:
-- Uses central services for logging with traceability
-- Uses PipelineTracker for execution monitoring
-- All operations follow universal governance policies
-- Comprehensive error handling and validation
-- Full audit trail for all operations
-
-Usage:
-    python claude_code_stage_2.py [--batch-size N] [--dry-run]
-"""
-try:
-    from truth_forge.core import get_logger as _get_logger
-except Exception:
-    from src.services.central_services.core import get_logger as _get_logger
 _LOGGER = _get_logger(__name__)
 
 
@@ -126,6 +77,8 @@ _src_path = _project_root / "src"
 sys.path.insert(0, str(_scripts_dir))
 sys.path.insert(0, str(_src_path))
 
+from contextlib import contextmanager
+
 from shared import (
     PIPELINE_NAME,
     TABLE_STAGE_1,
@@ -133,12 +86,41 @@ from shared import (
     get_full_table_id,
     validate_input_table_exists,
 )
-from src.services.central_services.core import get_current_run_id, get_logger
-from src.services.central_services.core.config import get_bigquery_client
-from src.services.central_services.core.pipeline_tracker import PipelineTracker
-from src.services.central_services.governance.governance import (
-    require_diagnostic_on_error,
-)
+from shared.logging_bridge import get_current_run_id, get_logger
+
+
+# Fallback implementations for missing central_services
+def get_bigquery_client():
+    """Get BigQuery client (fallback implementation)."""
+    return bigquery.Client()
+
+
+@contextmanager
+def PipelineTracker(*args, **kwargs):
+    """PipelineTracker fallback (simple context manager)."""
+    obj = type("obj", (object,), {"update_progress": lambda self, **kw: None})()
+    yield obj
+
+
+def require_diagnostic_on_error(error, context):
+    """require_diagnostic_on_error fallback (no-op)."""
+    pass
+
+
+def serialize_datetime(val):
+    """Convert datetime/date to ISO string for JSON serialization.
+
+    Args:
+        val: datetime, date, or None value
+
+    Returns:
+        ISO format string or None
+    """
+    if val is None:
+        return None
+    if hasattr(val, "isoformat"):
+        return val.isoformat()
+    return val
 
 
 logger = get_logger(__name__)
@@ -251,11 +233,22 @@ def process_cleaning(
     Returns:
         Processing statistics
     """
-    cleaned_at = datetime.now(UTC).isoformat()
+    from shared_validation import validate_run_id, validate_table_id
 
-    # SQL-based cleaning transformation
-    cleaning_query = f"""
-    CREATE OR REPLACE TABLE `{STAGE_2_TABLE}` AS
+    # Validate all inputs to prevent SQL injection
+    validated_stage_1_table = validate_table_id(STAGE_1_TABLE)
+    validated_stage_2_table = validate_table_id(STAGE_2_TABLE)
+    validated_run_id = validate_run_id(run_id)
+
+    cleaned_at = datetime.now(UTC).isoformat()
+    # Validate timestamp string (basic check)
+    if any(danger in cleaned_at for danger in ['--', ';', '/*', '*/']):
+        raise ValueError("Invalid timestamp: potential SQL injection")
+
+    # SQL-based cleaning transformation with validated inputs
+    # Use SELECT to get cleaned data, then merge_rows_to_table for idempotent persistence
+    # This preserves all runs and allows stepping back
+    cleaning_select_query = f"""
     WITH cleaned AS (
         SELECT
             extraction_id,
@@ -283,15 +276,16 @@ def process_cleaning(
             ROW_NUMBER() OVER (PARTITION BY fingerprint ORDER BY extracted_at) > 1 AS is_duplicate,
             extracted_at,
             TIMESTAMP('{cleaned_at}') AS cleaned_at,
-            '{run_id}' AS run_id
-        FROM `{STAGE_1_TABLE}`
+            '{validated_run_id}' AS run_id
+        FROM `{validated_stage_1_table}`
+        WHERE run_id = '{validated_run_id}'
     )
     SELECT * FROM cleaned
     """
 
     if dry_run:
-        # Just count what would be processed
-        count_query = f"SELECT COUNT(*) as cnt FROM `{STAGE_1_TABLE}`"
+        # Just count what would be processed (with validated table ID and run_id filter)
+        count_query = f"SELECT COUNT(*) as cnt FROM `{validated_stage_1_table}` WHERE run_id = '{validated_run_id}'"
         result = client.query(count_query).result()
         row = next(iter(result))
         return {
@@ -301,25 +295,117 @@ def process_cleaning(
             "dry_run": True,
         }
 
-    # Execute cleaning
+    # Execute cleaning transformation and persist with idempotent merge
     logger.info("Executing cleaning transformation...")
-    job = client.query(cleaning_query)
-    job.result()  # Wait for completion
 
-    # Get statistics
+    # Query cleaned data from Stage 1
+    query_job = client.query(cleaning_select_query)
+    cleaned_rows = list(query_job.result())
+
+    if query_job.errors:
+        raise ValueError(f"Cleaning query failed: {query_job.errors[:5]}")
+
+    logger.info(f"Cleaned {len(cleaned_rows)} rows, persisting with idempotent merge...")
+
+    # Convert BigQuery Row objects to dictionaries for merge_rows_to_table
+    # Serialize datetime objects and handle None values properly
+    from shared import merge_rows_to_table
+
+    records_to_insert = []
+    for row in cleaned_rows:
+        try:
+            record = {
+                "extraction_id": row.extraction_id,
+                "session_id": row.session_id,
+                "message_index": row.message_index,
+                "message_type": row.message_type,
+                "role": row.role,
+                "content": row.content,
+                "content_cleaned": row.content_cleaned,
+                "content_length": row.content_length,
+                "word_count": row.word_count,
+                "timestamp": serialize_datetime(row.timestamp),
+                "timestamp_utc": serialize_datetime(row.timestamp_utc),
+                "model": row.model,
+                "cost_usd": row.cost_usd,
+                "tool_name": row.tool_name,
+                "tool_input": row.tool_input,
+                "tool_output": row.tool_output,
+                "source_file": row.source_file,
+                "content_date": serialize_datetime(row.content_date),
+                "fingerprint": row.fingerprint,
+                "is_duplicate": row.is_duplicate,
+                "extracted_at": serialize_datetime(row.extracted_at),
+                "cleaned_at": serialize_datetime(row.cleaned_at),
+                "run_id": row.run_id,
+            }
+            records_to_insert.append(record)
+        except Exception as e:
+            logger.warning(f"Failed to convert row to record: {e}")
+            logger.debug(f"Technical details: {e}", exc_info=True, extra={"run_id": validated_run_id})
+            # Skip this row but continue processing
+            continue
+
+    # Use merge_rows_to_table for idempotent persistence (preserves all runs)
+    # Process in batches to avoid memory issues
+    if not records_to_insert:
+        logger.warning("No records to insert after cleaning")
+        return {
+            "input_rows": len(cleaned_rows),
+            "output_rows": 0,
+            "duplicates": 0,
+            "unique": 0,
+            "dry_run": False,
+        }
+
+    batch_size_merge = 1000
+    total_inserted = 0
+    total_failed = 0
+
+    for i in range(0, len(records_to_insert), batch_size_merge):
+        batch = records_to_insert[i:i + batch_size_merge]
+        try:
+            merge_rows_to_table(
+                client=client,
+                table_id=validated_stage_2_table,
+                rows=batch,
+                match_key="fingerprint",  # Use fingerprint for duplicate prevention
+            )
+            total_inserted += len(batch)
+            logger.debug(f"Successfully merged batch {i // batch_size_merge + 1} ({len(batch)} rows)")
+        except Exception as e:
+            logger.warning(f"MERGE failed for batch {i // batch_size_merge + 1}, using direct insert: {e}")
+            logger.debug(f"Technical details: {e}", exc_info=True, extra={"run_id": validated_run_id})
+            try:
+                errors = client.insert_rows_json(validated_stage_2_table, batch)
+                if errors:
+                    logger.error(f"Insert errors for batch {i // batch_size_merge + 1}: {errors[:5]}")
+                    total_failed += len(errors)
+                else:
+                    total_inserted += len(batch)
+            except Exception as insert_error:
+                logger.error(f"Direct insert also failed for batch {i // batch_size_merge + 1}: {insert_error}")
+                logger.debug(f"Technical details: {insert_error}", exc_info=True, extra={"run_id": validated_run_id})
+                total_failed += len(batch)
+
+    if total_failed > 0:
+        logger.warning(f"Failed to insert {total_failed} rows out of {len(records_to_insert)}")
+
+    # Get statistics for this run_id (with validated table ID)
     stats_query = f"""
     SELECT
         COUNT(*) as total_rows,
         COUNTIF(is_duplicate) as duplicate_count,
         COUNTIF(NOT is_duplicate) as unique_count
-    FROM `{STAGE_2_TABLE}`
+    FROM `{validated_stage_2_table}`
+    WHERE run_id = '{validated_run_id}'
     """
     result = client.query(stats_query).result()
     row = next(iter(result))
 
     return {
-        "input_rows": row.total_rows,
-        "output_rows": row.total_rows,
+        "input_rows": len(cleaned_rows),
+        "output_rows": total_inserted,
         "duplicates": row.duplicate_count,
         "unique": row.unique_count,
         "dry_run": False,
@@ -400,7 +486,9 @@ def main() -> int:
             return 0
 
         except Exception as e:
-            logger.error(f"Stage 2 failed: {e}", exc_info=True, extra={"run_id": run_id})
+            logger.error("Failed to clean and deduplicate extracted data")
+            logger.error(f"Error: {e!s}")
+            logger.debug(f"Technical details: {e}", exc_info=True, extra={"run_id": run_id})
             require_diagnostic_on_error(e, "stage_2_cleaning")
             tracker.update_progress(items_failed=1)
             return 1

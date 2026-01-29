@@ -1,16 +1,17 @@
 """Conflict resolution service for multi-source contact sync."""
 
-from datetime import datetime
-from typing import Dict, Any, Optional
-from uuid import uuid4
 import logging
+from datetime import datetime
+from typing import Any
+from uuid import uuid4
+
 
 logger = logging.getLogger(__name__)
 
 
 class ConflictResolver:
     """Resolves conflicts between contact records from different sources.
-    
+
     Uses last-write-wins strategy with version control:
     1. Higher version wins
     2. If versions equal, later timestamp wins
@@ -19,21 +20,21 @@ class ConflictResolver:
 
     def __init__(self, bq_client: Any) -> None:
         """Initialize conflict resolver.
-        
+
         Args:
             bq_client: BigQuery client for storing conflicts
         """
         self.bq_client = bq_client
 
     def resolve_conflict(
-        self, source_record: Dict[str, Any], target_record: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, source_record: dict[str, Any], target_record: dict[str, Any]
+    ) -> dict[str, Any]:
         """Resolve conflict between two records.
-        
+
         Args:
             source_record: Record from source system
             target_record: Record from target system
-            
+
         Returns:
             Dict with 'winner', 'reason', and optional 'conflict_id'
         """
@@ -83,15 +84,13 @@ class ConflictResolver:
             "conflict_id": self._store_conflict(source_record, target_record),
         }
 
-    def _store_conflict(
-        self, source: Dict[str, Any], target: Dict[str, Any]
-    ) -> str:
+    def _store_conflict(self, source: dict[str, Any], target: dict[str, Any]) -> str:
         """Store conflict for manual resolution.
-        
+
         Args:
             source: Source record
             target: Target record
-            
+
         Returns:
             Conflict ID
         """
@@ -105,8 +104,12 @@ class ConflictResolver:
                     "conflict_id": conflict_id,
                     "source_record": str(source),
                     "target_record": str(target),
-                    "source_system": source.get("sync_metadata", {}).get("last_updated_by", "unknown"),
-                    "target_system": target.get("sync_metadata", {}).get("last_updated_by", "unknown"),
+                    "source_system": source.get("sync_metadata", {}).get(
+                        "last_updated_by", "unknown"
+                    ),
+                    "target_system": target.get("sync_metadata", {}).get(
+                        "last_updated_by", "unknown"
+                    ),
                     "created_at": datetime.utcnow().isoformat(),
                     "status": "pending",
                 }
@@ -118,16 +121,16 @@ class ConflictResolver:
 
         return conflict_id
 
-    def get_conflicts(self, status: str = "pending") -> list[Dict[str, Any]]:
+    def get_conflicts(self, status: str = "pending") -> list[dict[str, Any]]:
         """Get conflicts by status.
-        
+
         Args:
             status: Conflict status (pending, resolved, ignored)
-            
+
         Returns:
             List of conflict records
         """
-        query = f"""
+        query = """
         SELECT * FROM `identity.sync_conflicts`
         WHERE status = @status
         ORDER BY created_at DESC

@@ -7,8 +7,6 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 import truth_forge.observability.setup as obs_setup
 from truth_forge.observability.setup import (
     get_logger,
@@ -330,4 +328,3 @@ class TestServiceContext:
         result = obs_setup._add_service_context(None, "info", event_dict)  # type: ignore[arg-type]
 
         assert result["service"] == "test-service"
-

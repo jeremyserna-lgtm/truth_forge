@@ -9,11 +9,9 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from truth_forge.migration.checkpoints import (
-    CheckpointResult,
     VALIDATORS,
+    CheckpointResult,
     _check_command,
     _check_directory_exists,
     _check_file_exists,
@@ -157,10 +155,11 @@ class TestValidatePhase0:
             pyproject.write_text('[project]\nname = "test"')
 
             # Patch paths at the point where they're imported
-            with patch("truth_forge.core.paths.PROJECT_ROOT", base), patch(
-                "truth_forge.core.paths.DATA_ROOT", data_dir
-            ), patch("truth_forge.core.paths.SERVICES_ROOT", services_dir), patch(
-                "truth_forge.core.paths.FRAMEWORK_ROOT", framework_dir
+            with (
+                patch("truth_forge.core.paths.PROJECT_ROOT", base),
+                patch("truth_forge.core.paths.DATA_ROOT", data_dir),
+                patch("truth_forge.core.paths.SERVICES_ROOT", services_dir),
+                patch("truth_forge.core.paths.FRAMEWORK_ROOT", framework_dir),
             ):
                 from truth_forge.migration.checkpoints import validate_phase_0
 

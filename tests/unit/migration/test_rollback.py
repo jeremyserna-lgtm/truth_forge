@@ -8,7 +8,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -35,9 +35,10 @@ class TestCreateBackup:
             (services / "test_service" / "data.json").write_text("{}")
 
             # Patch at truth_forge.core.paths since imports happen inside the function
-            with patch(
-                "truth_forge.core.paths.PROJECT_ROOT", base
-            ), patch("truth_forge.core.paths.DATA_ROOT", base / "data"):
+            with (
+                patch("truth_forge.core.paths.PROJECT_ROOT", base),
+                patch("truth_forge.core.paths.DATA_ROOT", base / "data"),
+            ):
                 result = create_backup("test")
 
                 assert result.exists()
@@ -54,9 +55,10 @@ class TestCreateBackup:
             services.mkdir(parents=True)
             (services / "test.txt").write_text("test content")
 
-            with patch(
-                "truth_forge.core.paths.PROJECT_ROOT", base
-            ), patch("truth_forge.core.paths.DATA_ROOT", base / "data"):
+            with (
+                patch("truth_forge.core.paths.PROJECT_ROOT", base),
+                patch("truth_forge.core.paths.DATA_ROOT", base / "data"),
+            ):
                 result = create_backup("test")
 
                 backup_services = result / "services"
@@ -68,9 +70,10 @@ class TestCreateBackup:
         with TemporaryDirectory() as tmpdir:
             base = Path(tmpdir)
 
-            with patch(
-                "truth_forge.core.paths.PROJECT_ROOT", base
-            ), patch("truth_forge.core.paths.DATA_ROOT", base / "data"):
+            with (
+                patch("truth_forge.core.paths.PROJECT_ROOT", base),
+                patch("truth_forge.core.paths.DATA_ROOT", base / "data"),
+            ):
                 result = create_backup("manifest_test")
 
                 manifest_path = result / "manifest.json"
@@ -122,9 +125,10 @@ class TestRollbackToBackup:
             current_services.mkdir(parents=True)
             (current_services / "current.txt").write_text("current content")
 
-            with patch(
-                "truth_forge.core.paths.PROJECT_ROOT", base
-            ), patch("truth_forge.core.paths.DATA_ROOT", base / "data"):
+            with (
+                patch("truth_forge.core.paths.PROJECT_ROOT", base),
+                patch("truth_forge.core.paths.DATA_ROOT", base / "data"),
+            ):
                 rollback_to_backup(backup_dir, restore_git=False)
 
                 # Check restored
@@ -157,15 +161,11 @@ class TestListBackups:
 
             backup1 = backups_dir / "backup1"
             backup1.mkdir()
-            (backup1 / "manifest.json").write_text(
-                '{"name": "backup1", "timestamp": "2024-01-01"}'
-            )
+            (backup1 / "manifest.json").write_text('{"name": "backup1", "timestamp": "2024-01-01"}')
 
             backup2 = backups_dir / "backup2"
             backup2.mkdir()
-            (backup2 / "manifest.json").write_text(
-                '{"name": "backup2", "timestamp": "2024-01-02"}'
-            )
+            (backup2 / "manifest.json").write_text('{"name": "backup2", "timestamp": "2024-01-02"}')
 
             with patch("truth_forge.core.paths.PROJECT_ROOT", base):
                 result = list_backups()

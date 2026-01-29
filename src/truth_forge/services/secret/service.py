@@ -83,17 +83,17 @@ class SecretService(BaseService):
         except Exception as e:
             self.logger.error("secret_fetch_unexpected_error", secret_id=secret_id, error=str(e))
             raise
-    
+
     def get_secret_with_variants(self, secret_id: str, variants: list[str] | None = None) -> str:
         """Retrieves a secret trying multiple name variations.
-        
+
         Args:
             secret_id: Primary secret ID to try first
             variants: List of alternative secret IDs to try if primary fails
-            
+
         Returns:
             Secret value from first successful retrieval
-            
+
         Raises:
             SecretNotFoundError: If none of the variants are found
         """
@@ -102,7 +102,7 @@ class SecretService(BaseService):
             return self.get_secret(secret_id)
         except SecretNotFoundError:
             pass
-        
+
         # Try variants if provided
         if variants:
             for variant in variants:
@@ -110,12 +110,10 @@ class SecretService(BaseService):
                     return self.get_secret(variant)
                 except SecretNotFoundError:
                     continue
-        
+
         # If all failed, raise error with helpful message
         all_names = [secret_id] + (variants or [])
-        raise SecretNotFoundError(
-            f"Secret not found. Tried: {', '.join(all_names)}"
-        )
+        raise SecretNotFoundError(f"Secret not found. Tried: {', '.join(all_names)}")
 
     def process(self, record: dict[str, Any]) -> dict[str, Any]:
         """This service does not process records."""

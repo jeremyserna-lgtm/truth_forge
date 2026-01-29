@@ -7,12 +7,11 @@ from __future__ import annotations
 
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
-import pytest
 from typer.testing import CliRunner
 
-from truth_forge.molt.__main__ import app, status, history
+from truth_forge.molt.__main__ import app
 
 
 runner = CliRunner()

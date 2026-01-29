@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Document Management</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f7fafc;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #2d3748;
+            margin-bottom: 32px;
+        }
+
+        .upload-section {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 32px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .document-list {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .document-item {
+            padding: 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        button {
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #5a67d8;
+        }
+
+        button.process {
+            background: #48bb78;
+        }
+
+        button.process:hover {
+            background: #38a169;
+        }
+
+        input[type="file"] {
+            margin-bottom: 16px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card h3 {
+            color: #718096;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .value {
+            color: #2d3748;
+            font-size: 32px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>📄 Document Management</h1>
+
+        <!-- Stats -->
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <h3>Documents</h3>
+                <div class="value" id="docCount">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Atoms (Memory)</h3>
+                <div class="value" id="atomCount">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Atoms (BigQuery)</h3>
+                <div class="value" id="bqCount">0</div>
+            </div>
+        </div>
+
+        <!-- Upload -->
+        <div class="upload-section">
+            <h2 style="margin-bottom: 16px;">Upload Document</h2>
+            <input type="file" id="fileInput" />
+            <button onclick="uploadDocument()">Upload</button>
+        </div>
+
+        <!-- Documents -->
+        <div class="document-list">
+            <h2 style="margin-bottom: 24px;">Documents</h2>
+            <div id="documentsList"></div>
+        </div>
+    </div>
+
+    <script>
+        async function loadStats() {
+            const res = await fetch('/admin/stats');
+            const data = await res.json();
+            document.getElementById('docCount').textContent = data.documents;
+            document.getElementById('atomCount').textContent = data.atomsInMemory;
+            document.getElementById('bqCount').textContent = data.atomsInBigQuery;
+        }
+
+        async function loadDocuments() {
+            const res = await fetch('/admin/documents');
+            const data = await res.json();
+            const list = document.getElementById('documentsList');
+
+            list.innerHTML = data.documents.map(doc => `
+                <div class="document-item">
+                    <div>
+                        <strong>${doc.name}</strong><br/>
+                        <small>${new Date(doc.uploadedAt).toLocaleString()}</small>
+                    </div>
+                    <button class="process" onclick="processDocument('${doc.id}')">
+                        ⚡ Process to Atoms
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        async function uploadDocument() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            if (!file) return alert('Please select a file');
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const res = await fetch('/admin/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (res.ok) {
+                alert('Document uploaded!');
+                fileInput.value = '';
+                loadDocuments();
+                loadStats();
+            }
+        }
+
+        async function processDocument(docId) {
+            if (!confirm('Process this document to atoms and export to BigQuery?')) return;
+
+            const button = event.target;
+            button.disabled = true;
+            button.textContent = '⏳ Processing...';
+
+            try {
+                const res = await fetch(`/admin/process/${docId}`, { method: 'POST' });
+                const data = await res.json();
+
+                alert(`✅ Success! Created ${data.atomsCreated} atoms`);
+                loadStats();
+            } catch (error) {
+                alert('❌ Processing failed');
+            } finally {
+                button.disabled = false;
+                button.textContent = '⚡ Process to Atoms';
+            }
+        }
+
+        // Load on start
+        loadStats();
+        loadDocuments();
+
+        // Refresh every 30 seconds
+        setInterval(loadStats, 30000);
+    </script>
+</body>
+
+</html>

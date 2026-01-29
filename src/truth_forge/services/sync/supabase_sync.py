@@ -1,22 +1,23 @@
 """Supabase sync service - syncs from Supabase to BigQuery (canonical)."""
 
-from typing import Dict, Any, Optional
-from datetime import datetime
-import logging
 import json
+import logging
+from datetime import datetime
+from typing import Any
+
 
 logger = logging.getLogger(__name__)
 
 
 class SupabaseSyncService:
     """Syncs contacts from Supabase to BigQuery (canonical).
-    
+
     Changes in Supabase flow to BigQuery first, then propagate to all systems.
     """
 
     def __init__(self, supabase_client: Any, bq_client: Any, bq_sync: Any) -> None:
         """Initialize Supabase sync service.
-        
+
         Args:
             supabase_client: Supabase client
             bq_client: BigQuery client
@@ -26,14 +27,12 @@ class SupabaseSyncService:
         self.bq_client = bq_client
         self.bq_sync = bq_sync
 
-    def sync_from_supabase_to_bigquery(
-        self, supabase_contact_id: str
-    ) -> Dict[str, Any]:
+    def sync_from_supabase_to_bigquery(self, supabase_contact_id: str) -> dict[str, Any]:
         """Sync a contact from Supabase to BigQuery.
-        
+
         Args:
             supabase_contact_id: Contact ID in Supabase (UUID)
-            
+
         Returns:
             Sync result
         """
@@ -64,19 +63,18 @@ class SupabaseSyncService:
 
         return bq_result
 
-    def sync_all_from_supabase(
-        self, last_sync_time: Optional[datetime] = None
-    ) -> Dict[str, Any]:
+    def sync_all_from_supabase(self, last_sync_time: datetime | None = None) -> dict[str, Any]:
         """Sync all contacts modified since last sync.
-        
+
         Args:
             last_sync_time: Last sync timestamp
-            
+
         Returns:
             Sync summary
         """
         if not last_sync_time:
             from datetime import timedelta
+
             last_sync_time = datetime.utcnow() - timedelta(hours=24)
 
         result = (
@@ -93,19 +91,18 @@ class SupabaseSyncService:
 
         return {"synced": len(results), "results": results}
 
-    def _transform_supabase_to_canonical(
-        self, supabase_contact: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _transform_supabase_to_canonical(self, supabase_contact: dict[str, Any]) -> dict[str, Any]:
         """Transform Supabase contact to canonical format.
-        
+
         Aligns with existing identity.contacts_master structure.
-        
+
         Args:
             supabase_contact: Contact from Supabase
-            
+
         Returns:
             Canonical contact format (matches identity.contacts_master)
         """
+
         # Parse JSONB fields - ALL metadata fields
         # Handle both JSONB (dict) and string formats gracefully
         def parse_json_field(value: Any, default: Any = None) -> Any:
@@ -135,16 +132,16 @@ class SupabaseSyncService:
                 "last_updated_by": "supabase",
                 "version": sync_metadata.get("version", 0) + 1,
                 "sync_status": "synced",
-                "source_systems": list(
-                    set(sync_metadata.get("source_systems", []) + ["supabase"])
-                ),
+                "source_systems": list({*sync_metadata.get("source_systems", []), "supabase"}),
             }
         )
 
         # Use canonical_name or derive from full_name
-        canonical_name = supabase_contact.get("canonical_name") or \
-            supabase_contact.get("full_name") or \
-            f"{supabase_contact.get('first_name', '')} {supabase_contact.get('last_name', '')}".strip()
+        canonical_name = (
+            supabase_contact.get("canonical_name")
+            or supabase_contact.get("full_name")
+            or f"{supabase_contact.get('first_name', '')} {supabase_contact.get('last_name', '')}".strip()
+        )
 
         # Get contact_id (TEXT) - convert to INT64 for BigQuery
         contact_id_str = supabase_contact.get("contact_id")
@@ -187,12 +184,12 @@ class SupabaseSyncService:
             "updated_at": datetime.utcnow().isoformat(),
         }
 
-    def _upsert_to_bigquery(self, contact: Dict[str, Any]) -> Dict[str, Any]:
+    def _upsert_to_bigquery(self, contact: dict[str, Any]) -> dict[str, Any]:
         """Upsert contact to BigQuery with conflict resolution.
-        
+
         Args:
             contact: Canonical contact format
-            
+
         Returns:
             Upsert result
         """
@@ -203,9 +200,7 @@ class SupabaseSyncService:
             WHERE contact_id = @contact_id
             LIMIT 1
             """
-            job_config = {
-                "query_parameters": [("contact_id", "INT64", contact["contact_id"])]
-            }
+            job_config = {"query_parameters": [("contact_id", "INT64", contact["contact_id"])]}
             query_job = self.bq_client.query(query, job_config=job_config)
             existing = list(query_job.result())
 

@@ -4,29 +4,29 @@ Handles all interactions with Twenty CRM API.
 Uses API key from secrets manager.
 """
 
-from typing import Dict, Any, Optional, List
-from datetime import datetime
 import logging
-import json
+from datetime import datetime
+from typing import Any, cast
 
 import requests
 
 from truth_forge.core.settings import settings
 from truth_forge.services.secret.service import SecretService
 
+
 logger = logging.getLogger(__name__)
 
 
 class TwentyCRMClient:
     """Client for Twenty CRM API.
-    
+
     Handles contacts, companies (businesses), and relationships.
     Uses API key from secrets manager.
     """
 
-    def __init__(self, secret_service: Optional[SecretService] = None) -> None:
+    def __init__(self, secret_service: SecretService | None = None) -> None:
         """Initialize Twenty CRM client.
-        
+
         Args:
             secret_service: SecretService instance (optional, will create if not provided)
         """
@@ -41,36 +41,33 @@ class TwentyCRMClient:
 
     def _get_api_key(self) -> str:
         """Get Twenty CRM API key from secrets manager.
-        
+
         Uses SecretService with multiple name variations for maximum compatibility.
-        
+
         Returns:
             API key string
-            
+
         Raises:
             ValueError: If API key cannot be retrieved
         """
         # Primary secret name (actual GCP secret name)
         primary_secret = "Twenty_CRM"
-        
+
         # Alternative secret name variations (fallbacks)
         secret_variants = [
-            "twenty-crm-api-key",   # Hyphen format
-            "twenty_crm_api_key",   # Snake case
-            "twenty_api_key",       # Short version
-            "TWENTY_CRM_API_KEY",   # Uppercase
-            "TWENTY_API_KEY",       # Uppercase short
-            "twenty-api-key",       # Alternative hyphen
+            "twenty-crm-api-key",  # Hyphen format
+            "twenty_crm_api_key",  # Snake case
+            "twenty_api_key",  # Short version
+            "TWENTY_CRM_API_KEY",  # Uppercase
+            "TWENTY_API_KEY",  # Uppercase short
+            "twenty-api-key",  # Alternative hyphen
         ]
 
         # Try using SecretService with variants
         try:
-            api_key = self.secret_service.get_secret_with_variants(
-                primary_secret,
-                secret_variants
-            )
+            api_key = self.secret_service.get_secret_with_variants(primary_secret, secret_variants)
             if api_key and not api_key.startswith("mock_"):
-                logger.info(f"✅ Retrieved Twenty CRM API key from secrets manager")
+                logger.info("✅ Retrieved Twenty CRM API key from secrets manager")
                 return api_key
             elif api_key and api_key.startswith("mock_"):
                 logger.warning("Secret service returned mock value (GCP_PROJECT_ID may not be set)")
@@ -79,13 +76,14 @@ class TwentyCRMClient:
 
         # Fallback to environment variable
         import os
+
         env_key = os.getenv("TWENTY_CRM_API_KEY") or os.getenv("TWENTY_API_KEY")
         if env_key:
             logger.info("✅ Using Twenty CRM API key from environment variable")
             return env_key
 
         # Provide helpful error message
-        all_names = [primary_secret] + secret_variants
+        all_names = [primary_secret, *secret_variants]
         error_msg = (
             "Twenty CRM API key not found in secrets manager or environment variables.\n"
             f"Tried secret names: {', '.join(all_names)}\n"
@@ -104,12 +102,12 @@ class TwentyCRMClient:
     # CONTACTS
     # ============================================================================
 
-    def get_contact(self, contact_id: str) -> Dict[str, Any]:
+    def get_contact(self, contact_id: str) -> dict[str, Any]:
         """Get a contact by ID.
-        
+
         Args:
             contact_id: Twenty CRM contact ID
-            
+
         Returns:
             Contact record
         """
@@ -120,21 +118,21 @@ class TwentyCRMClient:
             timeout=self.timeout,
         )
         response.raise_for_status()
-        return response.json()
+        return cast("dict[str, Any]", response.json())
 
     def list_contacts(
-        self, updated_since: Optional[datetime] = None, limit: int = 100
-    ) -> List[Dict[str, Any]]:
+        self, updated_since: datetime | None = None, limit: int = 100
+    ) -> list[dict[str, Any]]:
         """List contacts.
-        
+
         Args:
             updated_since: Only return contacts updated since this time
             limit: Maximum number of contacts to return
-            
+
         Returns:
             List of contact records
         """
-        params = {"limit": limit}
+        params: dict[str, Any] = {"limit": limit}
         if updated_since:
             params["updatedAfter"] = updated_since.isoformat()
 
@@ -147,14 +145,20 @@ class TwentyCRMClient:
         )
         response.raise_for_status()
         result = response.json()
-        
+
         # Handle different response formats
         if isinstance(result, list):
             # Ensure all items are dicts
             return [item if isinstance(item, dict) else {} for item in result]
         elif isinstance(result, dict):
             # Try common keys (people, data, results, items)
-            data = result.get("people") or result.get("data") or result.get("results") or result.get("items") or []
+            data = (
+                result.get("people")
+                or result.get("data")
+                or result.get("results")
+                or result.get("items")
+                or []
+            )
             if isinstance(data, list):
                 # Ensure all items are dicts
                 return [item if isinstance(item, dict) else {} for item in data]
@@ -168,12 +172,12 @@ class TwentyCRMClient:
             logger.warning(f"Unexpected response type: {type(result)}")
             return []
 
-    def create_contact(self, contact_data: Dict[str, Any]) -> Dict[str, Any]:
+    def create_contact(self, contact_data: dict[str, Any]) -> dict[str, Any]:
         """Create a new contact.
-        
+
         Args:
             contact_data: Contact data in Twenty CRM format
-            
+
         Returns:
             Created contact record
         """
@@ -181,12 +185,12 @@ class TwentyCRMClient:
         # Note: Twenty uses /rest/ or /graphql/ endpoints, but may also support /api/
         # Adjust endpoint if needed based on your Twenty instance
         endpoint = f"{self.base_url}/rest/people"
-        
+
         logger.debug(f"Creating contact in CRM: {contact_data.get('name')}")
         logger.debug(f"POST {endpoint}")
         logger.debug(f"Request data keys: {list(contact_data.keys())}")
         logger.debug(f"CustomFields count: {len(contact_data.get('customFields', {}))}")
-        
+
         try:
             response = requests.post(
                 endpoint,
@@ -196,21 +200,25 @@ class TwentyCRMClient:
             )
             response.raise_for_status()
             result = response.json()
-            
+
             # Handle GraphQL-style response: {"data": {"createPerson": {...}}}
             if isinstance(result, dict) and "data" in result:
                 create_person = result.get("data", {}).get("createPerson")
                 if create_person:
                     result = create_person
-            
+
             # Extract ID from nested structure if needed
             contact_id = result.get("id")
             if not contact_id and isinstance(result, dict):
                 # Try nested paths
-                contact_id = result.get("data", {}).get("id") or result.get("createPerson", {}).get("id")
-            
-            logger.info(f"✅ Created contact in CRM: {contact_id} - {contact_data.get('name', {}).get('firstName', 'Unknown')}")
-            return result
+                contact_id = result.get("data", {}).get("id") or result.get("createPerson", {}).get(
+                    "id"
+                )
+
+            logger.info(
+                f"✅ Created contact in CRM: {contact_id} - {contact_data.get('name', {}).get('firstName', 'Unknown')}"
+            )
+            return cast("dict[str, Any]", result)
         except requests.exceptions.HTTPError as e:
             logger.error(f"❌ HTTP error creating contact: {e}")
             logger.error(f"Response status: {response.status_code}")
@@ -220,15 +228,13 @@ class TwentyCRMClient:
             logger.error(f"❌ Error creating contact: {e}", exc_info=True)
             raise
 
-    def update_contact(
-        self, contact_id: str, contact_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def update_contact(self, contact_id: str, contact_data: dict[str, Any]) -> dict[str, Any]:
         """Update an existing contact.
-        
+
         Args:
             contact_id: Twenty CRM contact ID
             contact_data: Updated contact data
-            
+
         Returns:
             Updated contact record
         """
@@ -240,17 +246,17 @@ class TwentyCRMClient:
             timeout=self.timeout,
         )
         response.raise_for_status()
-        return response.json()
+        return cast("dict[str, Any]", response.json())
 
-    def upsert_contact(self, contact_data: Dict[str, Any]) -> Dict[str, Any]:
+    def upsert_contact(self, contact_data: dict[str, Any]) -> dict[str, Any]:
         """Upsert a contact (create or update).
-        
+
         Uses customFields.contact_id to find existing contact.
         Also syncs email and phone from contact_data.
-        
+
         Args:
             contact_data: Contact data in Twenty CRM format
-            
+
         Returns:
             Contact record (created or updated)
         """
@@ -273,22 +279,24 @@ class TwentyCRMClient:
         # Create new contact
         logger.info(f"Creating new contact in CRM (contact_id: {contact_id})")
         result = self.create_contact(contact_data)
-        
+
         # Verify contact was created - handle GraphQL response format
         contact_id = result.get("id")
         if not contact_id and isinstance(result, dict):
             # Try nested paths for GraphQL responses
-            contact_id = result.get("data", {}).get("createPerson", {}).get("id") or result.get("data", {}).get("id")
-        
+            contact_id = result.get("data", {}).get("createPerson", {}).get("id") or result.get(
+                "data", {}
+            ).get("id")
+
         if not contact_id:
             raise ValueError(f"Contact creation failed - no ID returned: {result}")
-        
+
         # Ensure result has id at top level for consistency
         if not result.get("id"):
             result["id"] = contact_id
-        
+
         logger.info(f"✅ Contact created successfully: {result.get('id')}")
-        
+
         # Update email/phone if provided
         if contact_data.get("email") or contact_data.get("phone"):
             self._update_contact_identifiers(
@@ -299,10 +307,10 @@ class TwentyCRMClient:
         return result
 
     def _update_contact_identifiers(
-        self, crm_contact_id: str, email: Optional[str] = None, phone: Optional[str] = None
+        self, crm_contact_id: str, email: str | None = None, phone: str | None = None
     ) -> None:
         """Update contact email and phone identifiers.
-        
+
         Args:
             crm_contact_id: Twenty CRM contact ID
             email: Email address
@@ -321,12 +329,12 @@ class TwentyCRMClient:
                 # Non-critical - identifiers may not be updatable separately
                 logger.debug(f"Failed to update contact identifiers (may not be supported): {e}")
 
-    def _find_contact_by_custom_id(self, contact_id: str) -> Optional[Dict[str, Any]]:
+    def _find_contact_by_custom_id(self, contact_id: str) -> dict[str, Any] | None:
         """Find contact by customFields.contact_id.
-        
+
         Args:
             contact_id: Our canonical contact_id
-            
+
         Returns:
             Contact record or None
         """
@@ -344,7 +352,10 @@ class TwentyCRMClient:
                 if not isinstance(contact, dict):
                     continue
                 custom_fields = contact.get("customFields", {})
-                if isinstance(custom_fields, dict) and custom_fields.get("contact_id") == contact_id:
+                if (
+                    isinstance(custom_fields, dict)
+                    and custom_fields.get("contact_id") == contact_id
+                ):
                     return contact
             return None
 
@@ -352,12 +363,12 @@ class TwentyCRMClient:
     # COMPANIES (BUSINESSES)
     # ============================================================================
 
-    def get_company(self, company_id: str) -> Dict[str, Any]:
+    def get_company(self, company_id: str) -> dict[str, Any]:
         """Get a company by ID.
-        
+
         Args:
             company_id: Twenty CRM company ID
-            
+
         Returns:
             Company record
         """
@@ -368,40 +379,44 @@ class TwentyCRMClient:
             timeout=self.timeout,
         )
         response.raise_for_status()
-        return response.json()
+        return cast("dict[str, Any]", response.json())
 
     def list_companies(
-        self, updated_since: Optional[datetime] = None, limit: int = 100
-    ) -> List[Dict[str, Any]]:
+        self, updated_since: datetime | None = None, limit: int = 100
+    ) -> list[dict[str, Any]]:
         """List companies.
-        
+
         Args:
             updated_since: Only return companies updated since this time
             limit: Maximum number of companies to return
-            
+
         Returns:
             List of company records
         """
-        params = {"limit": limit}
+        params_dict: dict[str, Any] = {"limit": limit}
         if updated_since:
-            params["updatedAfter"] = updated_since.isoformat()
+            params_dict["updatedAfter"] = updated_since.isoformat()
 
         endpoint = f"{self.base_url}/rest/companies"
         response = requests.get(
             endpoint,
             headers=self.headers,
-            params=params,
+            params=params_dict,
             timeout=self.timeout,
         )
         response.raise_for_status()
-        return response.json().get("data", [])
+        data = response.json()
+        return cast(
+            "list[dict[str, Any]]",
+            data.get("data", []) if isinstance(data, dict) else [],
+        )
 
-    def create_company(self, company_data: Dict[str, Any]) -> Dict[str, Any]:
+    def create_company(self, company_data: dict[str, Any]) -> dict[str, Any]:
         """Create a new company.
-        
+
         Args:
             company_data: Company data in Twenty CRM format
-            
+
         Returns:
             Created company record
         """
@@ -413,17 +428,15 @@ class TwentyCRMClient:
             timeout=self.timeout,
         )
         response.raise_for_status()
-        return response.json()
+        return cast("dict[str, Any]", response.json())
 
-    def update_company(
-        self, company_id: str, company_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def update_company(self, company_id: str, company_data: dict[str, Any]) -> dict[str, Any]:
         """Update an existing company.
-        
+
         Args:
             company_id: Twenty CRM company ID
             company_data: Updated company data
-            
+
         Returns:
             Updated company record
         """
@@ -435,16 +448,16 @@ class TwentyCRMClient:
             timeout=self.timeout,
         )
         response.raise_for_status()
-        return response.json()
+        return cast("dict[str, Any]", response.json())
 
-    def upsert_company(self, company_data: Dict[str, Any]) -> Dict[str, Any]:
+    def upsert_company(self, company_data: dict[str, Any]) -> dict[str, Any]:
         """Upsert a company (create or update).
-        
+
         Uses customFields.business_id to find existing company.
-        
+
         Args:
             company_data: Company data in Twenty CRM format
-            
+
         Returns:
             Company record (created or updated)
         """
@@ -456,14 +469,12 @@ class TwentyCRMClient:
 
         return self.create_company(company_data)
 
-    def _find_company_by_custom_id(
-        self, business_id: str
-    ) -> Optional[Dict[str, Any]]:
+    def _find_company_by_custom_id(self, business_id: str) -> dict[str, Any] | None:
         """Find company by customFields.business_id.
-        
+
         Args:
             business_id: Our canonical business_id
-            
+
         Returns:
             Company record or None
         """
@@ -480,12 +491,12 @@ class TwentyCRMClient:
     # RELATIONSHIPS
     # ============================================================================
 
-    def create_relationship(self, relationship_data: Dict[str, Any]) -> Dict[str, Any]:
+    def create_relationship(self, relationship_data: dict[str, Any]) -> dict[str, Any]:
         """Create a relationship between person and company.
-        
+
         Args:
             relationship_data: Relationship data in Twenty CRM format
-            
+
         Returns:
             Created relationship record
         """
@@ -497,16 +508,14 @@ class TwentyCRMClient:
             timeout=self.timeout,
         )
         response.raise_for_status()
-        return response.json()
+        return cast("dict[str, Any]", response.json())
 
-    def upsert_relationship(
-        self, relationship_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def upsert_relationship(self, relationship_data: dict[str, Any]) -> dict[str, Any]:
         """Upsert a relationship.
-        
+
         Args:
             relationship_data: Relationship data
-            
+
         Returns:
             Relationship record
         """
@@ -514,12 +523,12 @@ class TwentyCRMClient:
         # In production, you'd check for existing first
         return self.create_relationship(relationship_data)
 
-    def get_person_relationships(self, person_id: str) -> List[Dict[str, Any]]:
+    def get_person_relationships(self, person_id: str) -> list[dict[str, Any]]:
         """Get all relationships for a person.
-        
+
         Args:
             person_id: Twenty CRM person ID
-            
+
         Returns:
             List of relationship records
         """
@@ -530,21 +539,23 @@ class TwentyCRMClient:
             timeout=self.timeout,
         )
         response.raise_for_status()
-        return response.json().get("data", [])
+        data = response.json()
+        return cast(
+            "list[dict[str, Any]]",
+            data.get("data", []) if isinstance(data, dict) else [],
+        )
 
     # ============================================================================
     # CUSTOM FIELDS
     # ============================================================================
 
-    def create_custom_field(
-        self, object_type: str, field_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def create_custom_field(self, object_type: str, field_data: dict[str, Any]) -> dict[str, Any]:
         """Create a custom field in Twenty CRM.
-        
+
         Args:
             object_type: 'person' or 'company'
             field_data: Field definition
-            
+
         Returns:
             Created field record
         """
@@ -556,14 +567,14 @@ class TwentyCRMClient:
             timeout=self.timeout,
         )
         response.raise_for_status()
-        return response.json()
+        return cast("dict[str, Any]", response.json())
 
-    def list_custom_fields(self, object_type: str) -> List[Dict[str, Any]]:
+    def list_custom_fields(self, object_type: str) -> list[dict[str, Any]]:
         """List custom fields for an object type.
-        
+
         Args:
             object_type: 'person' or 'company'
-            
+
         Returns:
             List of custom field definitions
         """
@@ -574,11 +585,15 @@ class TwentyCRMClient:
             timeout=self.timeout,
         )
         response.raise_for_status()
-        return response.json().get("data", [])
+        data = response.json()
+        return cast(
+            "list[dict[str, Any]]",
+            data.get("data", []) if isinstance(data, dict) else [],
+        )
 
     def close(self) -> None:
         """Close the HTTP client.
-        
+
         Note: requests doesn't require explicit closing, but we keep
         this method for API consistency and future async support.
         """

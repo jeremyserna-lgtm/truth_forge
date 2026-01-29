@@ -88,6 +88,7 @@ from .utilities import (
     verify_row_counts,
     create_fingerprint,
     get_pipeline_hold2_path,
+    merge_rows_to_table,
 )
 
 __all__ = [
@@ -131,4 +132,5 @@ __all__ = [
     "verify_row_counts",
     "create_fingerprint",
     "get_pipeline_hold2_path",
+    "merge_rows_to_table",
 ]

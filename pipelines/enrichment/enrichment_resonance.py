@@ -128,7 +128,6 @@ class ResonanceEnrichment(BaseEnrichment):
         # Use clustering to find resonance groups
         try:
             from sklearn.cluster import DBSCAN
-            from sklearn.metrics.pairwise import cosine_similarity
 
             embeddings_array = np.array(embeddings)
 
@@ -169,7 +168,7 @@ class ResonanceEnrichment(BaseEnrichment):
         groups: dict[str, Any] = {}
         group_counter = 0
 
-        for i, embedding in enumerate(embeddings_array):
+        for _i, embedding in enumerate(embeddings_array):
             # Find existing group with high similarity
             assigned = False
             for group_id, centroid in groups.items():

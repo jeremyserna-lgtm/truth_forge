@@ -1,14 +1,15 @@
 """Alignment validation service for multi-source contact sync."""
 
-from typing import Dict, Any, List, Optional
 import logging
+from typing import Any
+
 
 logger = logging.getLogger(__name__)
 
 
 class AlignmentValidator:
     """Validates alignment between contact records across systems.
-    
+
     Ensures data consistency and identifies drift between systems.
     """
 
@@ -16,12 +17,12 @@ class AlignmentValidator:
         """Initialize alignment validator."""
         self.category_codes = {"A", "B", "C", "D", "E", "F", "G", "H", "X"}
 
-    def validate_contact(self, contact: Dict[str, Any]) -> Dict[str, Any]:
+    def validate_contact(self, contact: dict[str, Any]) -> dict[str, Any]:
         """Validate a contact record against alignment standards.
-        
+
         Args:
             contact: Contact record to validate
-            
+
         Returns:
             Validation result with errors and warnings
         """
@@ -45,9 +46,7 @@ class AlignmentValidator:
         subcategory_code = contact.get("subcategory_code")
         if subcategory_code:
             if not category_code:
-                warnings.append(
-                    "subcategory_code provided but category_code missing"
-                )
+                warnings.append("subcategory_code provided but category_code missing")
             elif not subcategory_code.startswith(category_code):
                 errors.append(
                     f"subcategory_code {subcategory_code} does not match category_code {category_code}"
@@ -73,14 +72,14 @@ class AlignmentValidator:
         }
 
     def compare_contacts(
-        self, contact1: Dict[str, Any], contact2: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        self, contact1: dict[str, Any], contact2: dict[str, Any]
+    ) -> dict[str, Any]:
         """Compare two contact records and identify differences.
-        
+
         Args:
             contact1: First contact record
             contact2: Second contact record
-            
+
         Returns:
             Comparison result with differences
         """
@@ -126,23 +125,23 @@ class AlignmentValidator:
 
     def validate_alignment(
         self,
-        bigquery_contact: Dict[str, Any],
-        supabase_contact: Optional[Dict[str, Any]] = None,
-        local_contact: Optional[Dict[str, Any]] = None,
-        crm_contact: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        bigquery_contact: dict[str, Any],
+        supabase_contact: dict[str, Any] | None = None,
+        local_contact: dict[str, Any] | None = None,
+        crm_contact: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """Validate alignment across all systems.
-        
+
         Args:
             bigquery_contact: Contact from BigQuery (canonical)
             supabase_contact: Contact from Supabase
             local_contact: Contact from local DB
             crm_contact: Contact from CRM Twenty
-            
+
         Returns:
             Alignment validation result
         """
-        results = {
+        results: dict[str, Any] = {
             "bigquery": self.validate_contact(bigquery_contact),
             "alignment": {},
         }
@@ -167,10 +166,7 @@ class AlignmentValidator:
             )
 
         # Overall alignment status
-        all_aligned = all(
-            comp.get("aligned", False)
-            for comp in results["alignment"].values()
-        )
+        all_aligned = all(comp.get("aligned", False) for comp in results["alignment"].values())
 
         results["overall_aligned"] = all_aligned
 

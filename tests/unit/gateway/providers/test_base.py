@@ -5,9 +5,6 @@ Tests the BaseProvider abstract class.
 
 from __future__ import annotations
 
-from collections.abc import Iterator
-from typing import Any
-
 import pytest
 
 from truth_forge.gateway.providers.base import BaseProvider

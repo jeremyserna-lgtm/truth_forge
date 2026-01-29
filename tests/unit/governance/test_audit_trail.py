@@ -5,11 +5,9 @@ Tests the audit trail recording and compliance functionality.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime
 from pathlib import Path
 from tempfile import TemporaryDirectory
-
-import pytest
 
 from truth_forge.governance.audit_trail import (
     AuditCategory,

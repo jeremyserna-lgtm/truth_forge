@@ -5,16 +5,15 @@ Tests the IdentityService class and helper functions.
 
 from __future__ import annotations
 
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from truth_forge.services.identity import (
     IdentityService,
+    _format_sequence,
     _generate_hash,
     _slugify,
-    _format_sequence,
 )
 
 
@@ -271,7 +270,6 @@ class TestIdentityService:
         # Mock ImportError for ULID
         with patch.dict("sys.modules", {"ulid": None}):
             # Need to trigger actual ImportError
-            import importlib
 
             original_import = __builtins__["__import__"]
 
@@ -320,9 +318,7 @@ class TestIdentityService:
         assert len(result.split(":")) == 2
 
     @patch.object(IdentityService, "logger", new_callable=lambda: MagicMock())
-    def test_generate_atom_id_with_source_name_only(
-        self, mock_logger: MagicMock
-    ) -> None:
+    def test_generate_atom_id_with_source_name_only(self, mock_logger: MagicMock) -> None:
         """Test generate_atom_id with source_name only."""
         service = IdentityService.__new__(IdentityService)
 
@@ -360,9 +356,7 @@ class TestIdentityService:
         assert result1 != result2
 
     @patch.object(IdentityService, "logger", new_callable=lambda: MagicMock())
-    def test_generate_atom_id_deterministic_with_content(
-        self, mock_logger: MagicMock
-    ) -> None:
+    def test_generate_atom_id_deterministic_with_content(self, mock_logger: MagicMock) -> None:
         """Test generate_atom_id is deterministic with same content."""
         service = IdentityService.__new__(IdentityService)
 

@@ -12,7 +12,7 @@ export default function Home() {
             A cognitive architecture company. A Not-Me factory.
             The first self-seeing system that creates other systems.
           </p>
-          <Link to="/preorder" className="cta-button">Preorder Your Not-Me</Link>
+          <Link to="/not-me" className="cta-button">Sign Up</Link>
         </div>
       </header>
 
@@ -144,8 +144,8 @@ export default function Home() {
       <section className="home-cta">
         <div className="container centered">
           <h2>Ready to Begin?</h2>
-          <p>One-time hardware purchase. No subscription required. The Not-Me takes a year to know you.</p>
-          <Link to="/preorder" className="cta-button">View Products</Link>
+          <p>Join the waitlist. Be among the first to meet your Not-Me.</p>
+          <Link to="/not-me" className="cta-button">Sign Up</Link>
         </div>
       </section>
 

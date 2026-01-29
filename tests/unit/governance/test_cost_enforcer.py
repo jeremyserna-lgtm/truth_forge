@@ -9,8 +9,6 @@ from decimal import Decimal
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-import pytest
-
 from truth_forge.governance.cost_enforcer import (
     BudgetConfig,
     CostAction,
@@ -136,9 +134,7 @@ class TestCostEnforcer:
             path = Path(tmpdir) / "cost.jsonl"
             enforcer = CostEnforcer(storage_path=path)
 
-            allowed, action, reason = enforcer.check_with_details(
-                "openai", "completion", 0.01
-            )
+            allowed, action, reason = enforcer.check_with_details("openai", "completion", 0.01)
 
             assert allowed is True
             assert action == CostAction.ALLOW
@@ -268,9 +264,7 @@ class TestCostEnforcer:
             enforcer.record("openai", "completion", 4.00)
 
             # Should still allow but warn (6.00 is 60% - above soft limit but below hard)
-            allowed, action, reason = enforcer.check_with_details(
-                "openai", "completion", 2.00
-            )
+            allowed, _action, _reason = enforcer.check_with_details("openai", "completion", 2.00)
 
             # Still allowed, soft limit warning
             assert allowed is True
@@ -371,9 +365,7 @@ class TestCostEnforcer:
             enforcer = CostEnforcer(config=config, storage_path=path)
 
             # Should be denied due to monthly budget
-            allowed, action, reason = enforcer.check_with_details(
-                "openai", "completion", 1.50
-            )
+            allowed, action, reason = enforcer.check_with_details("openai", "completion", 1.50)
 
             assert allowed is False
             assert action == CostAction.DENY

@@ -5,8 +5,6 @@ Tests the data structures for LLM operations.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
-
 import pytest
 
 from truth_forge.gateway.types import (

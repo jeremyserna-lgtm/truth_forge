@@ -10,7 +10,6 @@ import pytest
 
 from truth_forge.services.base import BaseService
 from truth_forge.services.factory import (
-    CircularDependencyError,
     ServiceFactory,
     ServiceNotFoundError,
     get_service,
@@ -186,9 +185,7 @@ class TestServiceFactoryUtilities:
 class TestServiceFactoryShutdown:
     """Tests for ServiceFactory shutdown."""
 
-    def test_shutdown_all(
-        self, temp_services_dir: Path, mock_mediator: MagicMock
-    ) -> None:
+    def test_shutdown_all(self, temp_services_dir: Path, mock_mediator: MagicMock) -> None:
         """Test shutdown_all shuts down all instances."""
         with (
             patch("truth_forge.core.paths.SERVICES_ROOT", temp_services_dir),

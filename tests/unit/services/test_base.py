@@ -87,9 +87,7 @@ class TestBaseServiceInit:
 class TestBaseServiceInhale:
     """Tests for BaseService.inhale()."""
 
-    def test_inhale_creates_event(
-        self, temp_services_dir: Path, mock_mediator: MagicMock
-    ) -> None:
+    def test_inhale_creates_event(self, temp_services_dir: Path, mock_mediator: MagicMock) -> None:
         """Test inhale creates event with proper structure."""
         with (
             patch("truth_forge.core.paths.SERVICES_ROOT", temp_services_dir),
@@ -146,9 +144,7 @@ class TestBaseServiceInhale:
 class TestBaseServiceSync:
     """Tests for BaseService.sync()."""
 
-    def test_sync_empty_hold1(
-        self, temp_services_dir: Path, mock_mediator: MagicMock
-    ) -> None:
+    def test_sync_empty_hold1(self, temp_services_dir: Path, mock_mediator: MagicMock) -> None:
         """Test sync with no intake file."""
         with (
             patch("truth_forge.core.paths.SERVICES_ROOT", temp_services_dir),
@@ -201,9 +197,7 @@ class TestBaseServiceSync:
             assert stats["failed"] == 1
             assert stats["processed"] == 1
 
-    def test_sync_writes_to_duckdb(
-        self, temp_services_dir: Path, mock_mediator: MagicMock
-    ) -> None:
+    def test_sync_writes_to_duckdb(self, temp_services_dir: Path, mock_mediator: MagicMock) -> None:
         """Test sync writes processed records to DuckDB."""
         import duckdb
 
@@ -235,9 +229,7 @@ class TestBaseServiceErrorHandling:
         """Test error signal writes to DLQ."""
         with patch("truth_forge.core.paths.SERVICES_ROOT", temp_services_dir):
             service = ConcreteTestService()
-            service._write_error_signal(
-                {"content": "failed record"}, ValueError("Test error")
-            )
+            service._write_error_signal({"content": "failed record"}, ValueError("Test error"))
 
             dlq_file = service._paths["staging"] / f"{service.service_name}_dlq.jsonl"
             assert dlq_file.exists()
@@ -267,18 +259,14 @@ class TestBaseServiceExhale:
             service = ConcreteTestService()
             service.exhale({"result": "test"})
 
-            staging_file = (
-                service._paths["staging"] / f"{service.service_name}_staged.jsonl"
-            )
+            staging_file = service._paths["staging"] / f"{service.service_name}_staged.jsonl"
             assert staging_file.exists()
 
 
 class TestBaseServiceLifecycle:
     """Tests for BaseService lifecycle."""
 
-    def test_shutdown(
-        self, temp_services_dir: Path, mock_mediator: MagicMock
-    ) -> None:
+    def test_shutdown(self, temp_services_dir: Path, mock_mediator: MagicMock) -> None:
         """Test shutdown changes state."""
         with (
             patch("truth_forge.core.paths.SERVICES_ROOT", temp_services_dir),

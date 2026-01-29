@@ -9,8 +9,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-import pytest
-
 from truth_forge.organism.seed.federation import (
     CE_TYPE_HEARTBEAT,
     CE_TYPE_LEARNING,
@@ -280,7 +278,7 @@ class TestFederationHub:
         """Test that init creates storage directory."""
         with TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "federation" / "hub"
-            hub = FederationHub(storage_path=path)
+            FederationHub(storage_path=path)
 
             assert path.exists()
 

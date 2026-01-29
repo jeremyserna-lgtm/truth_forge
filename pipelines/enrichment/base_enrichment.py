@@ -17,7 +17,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, ClassVar
+from typing import Any, ClassVar, cast
 
 from pipelines.enrichment.config import (
     BQ_DATASET_ID,
@@ -293,9 +293,12 @@ class BaseEnrichment(ABC):
             retry=retry_if_exception_type((ConnectionError, TimeoutError, OSError)),
             reraise=True,
         )
-        def _insert() -> list[dict[str, Any]]:
+        def _insert() -> list[Any]:
             table_ref = self.client.get_table(table_id)
-            return self.client.insert_rows_json(table_ref, rows_to_insert, skip_invalid_rows=True)
+            return cast(
+                "list[Any]",
+                self.client.insert_rows_json(table_ref, rows_to_insert, skip_invalid_rows=True),
+            )
 
         errors = _insert()
         n_err = len(errors) if errors else 0

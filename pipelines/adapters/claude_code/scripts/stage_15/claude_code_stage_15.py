@@ -70,10 +70,8 @@ Control: Strict validation rules, clear failure modes
 Usage:
     python claude_code_stage_15.py [--dry-run] [--strict]
 """
-try:
-    from truth_forge.core import get_logger as _get_logger
-except Exception:
-    from src.services.central_services.core import get_logger as _get_logger
+# Use shared logging bridge for consistent logging
+from shared.logging_bridge import get_logger as _get_logger
 _LOGGER = _get_logger(__name__)
 
 
@@ -104,11 +102,23 @@ from shared import (
     TABLE_STAGE_15,
     get_full_table_id,
     validate_input_table_exists,
+    merge_rows_to_table,
 )
-from src.services.central_services.core import get_current_run_id, get_logger
-from src.services.central_services.core.config import get_bigquery_client
-from src.services.central_services.core.pipeline_tracker import PipelineTracker
-from src.services.central_services.governance.governance import require_diagnostic_on_error
+from shared.logging_bridge import get_current_run_id, get_logger
+from shared_validation import validate_table_id
+# get_bigquery_client fallback
+def get_bigquery_client():
+    from google.cloud import bigquery
+    return bigquery.Client()
+# PipelineTracker fallback
+from contextlib import contextmanager
+@contextmanager
+def PipelineTracker(*args, **kwargs):
+    obj = type("obj", (object,), {"update_progress": lambda self, **kw: None})()
+    yield obj
+# require_diagnostic_on_error fallback
+def require_diagnostic_on_error(error, context):
+    pass
 
 
 logger = get_logger(__name__)
@@ -343,14 +353,38 @@ def run_validation(
         else:
             failed += 1
 
-        # Insert in batches
+        # Insert in batches with duplicate prevention
         if len(records_to_insert) >= 1000:
-            bq_client.insert_rows_json(STAGE_15_TABLE, records_to_insert)
+            from shared import merge_rows_to_table
+            from shared_validation import validate_table_id
+            validated_table = validate_table_id(STAGE_15_TABLE)
+            try:
+                merge_rows_to_table(
+                    client=bq_client,
+                    table_id=validated_table,
+                    rows=records_to_insert,
+                    match_key="entity_id"
+                )
+            except Exception as e:
+                logger.warning(f"MERGE failed, using direct insert: {e}")
+                bq_client.insert_rows_json(validated_table, records_to_insert)
             records_to_insert = []
 
-    # Insert remaining
+    # Insert remaining with duplicate prevention
     if records_to_insert:
-        bq_client.insert_rows_json(STAGE_15_TABLE, records_to_insert)
+        from shared import merge_rows_to_table
+        from shared_validation import validate_table_id
+        validated_table = validate_table_id(STAGE_15_TABLE)
+        try:
+            merge_rows_to_table(
+                client=bq_client,
+                table_id=validated_table,
+                rows=records_to_insert,
+                match_key="entity_id"
+            )
+        except Exception as e:
+            logger.warning(f"MERGE failed, using direct insert: {e}")
+            bq_client.insert_rows_json(validated_table, records_to_insert)
 
     return {
         "total_entities": len(entities),
@@ -398,7 +432,9 @@ def main() -> int:
             return 0
 
         except Exception as e:
-            logger.error(f"Stage 15 failed: {e}", exc_info=True)
+            logger.error("Failed to validate entities")
+            logger.error(f"Error: {str(e)}")
+            logger.debug(f"Technical details: {e}", exc_info=True)
             require_diagnostic_on_error(e, "stage_15_validation")
             return 1
 

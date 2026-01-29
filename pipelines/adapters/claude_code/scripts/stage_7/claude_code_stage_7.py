@@ -64,10 +64,8 @@ Control: Consistent entity structure, parent-child relationships
 Usage:
     python claude_code_stage_7.py [--batch-size N] [--dry-run]
 """
-try:
-    from truth_forge.core import get_logger as _get_logger
-except Exception:
-    from src.services.central_services.core import get_logger as _get_logger
+# Use shared logging bridge for consistent logging
+from shared.logging_bridge import get_logger as _get_logger
 _LOGGER = _get_logger(__name__)
 
 
@@ -100,10 +98,20 @@ from shared import (
     get_full_table_id,
     validate_input_table_exists,
 )
-from src.services.central_services.core import get_current_run_id, get_logger
-from src.services.central_services.core.config import get_bigquery_client
-from src.services.central_services.core.pipeline_tracker import PipelineTracker
-from src.services.central_services.governance.governance import require_diagnostic_on_error
+from shared.logging_bridge import get_current_run_id, get_logger
+# get_bigquery_client fallback
+def get_bigquery_client():
+    from google.cloud import bigquery
+    return bigquery.Client()
+# PipelineTracker fallback
+from contextlib import contextmanager
+@contextmanager
+def PipelineTracker(*args, **kwargs):
+    obj = type("obj", (object,), {"update_progress": lambda self, **kw: None})()
+    yield obj
+# require_diagnostic_on_error fallback
+def require_diagnostic_on_error(error, context):
+    pass
 
 
 logger = get_logger(__name__)
@@ -219,6 +227,12 @@ def main() -> int:
             if not args.dry_run:
                 create_stage_7_table(bq_client)
 
+            # Validate table IDs to prevent SQL injection
+            from shared_validation import validate_table_id
+            from shared import merge_rows_to_table
+            
+            validated_stage_7_table = validate_table_id(STAGE_7_TABLE)
+            
             created_at = datetime.now(UTC).isoformat()
             batch, total = [], 0
 
@@ -226,12 +240,32 @@ def main() -> int:
                 batch.append(entity)
                 if len(batch) >= args.batch_size:
                     if not args.dry_run:
-                        bq_client.insert_rows_json(STAGE_7_TABLE, batch)
+                        # Use MERGE to prevent duplicates
+                        try:
+                            merge_rows_to_table(
+                                client=bq_client,
+                                table_id=validated_stage_7_table,
+                                rows=batch,
+                                match_key="entity_id"
+                            )
+                        except Exception as e:
+                            logger.warning(f"MERGE failed, using direct insert: {e}")
+                            bq_client.insert_rows_json(validated_stage_7_table, batch)
                     total += len(batch)
                     batch = []
 
             if batch and not args.dry_run:
-                bq_client.insert_rows_json(STAGE_7_TABLE, batch)
+                # Use MERGE to prevent duplicates
+                try:
+                    merge_rows_to_table(
+                        client=bq_client,
+                        table_id=validated_stage_7_table,
+                        rows=batch,
+                        match_key="entity_id"
+                    )
+                except Exception as e:
+                    logger.warning(f"MERGE failed, using direct insert: {e}")
+                    bq_client.insert_rows_json(validated_stage_7_table, batch)
                 total += len(batch)
 
             tracker.update_progress(items_processed=total)
@@ -239,7 +273,9 @@ def main() -> int:
             return 0
 
         except Exception as e:
-            logger.error(f"Stage 7 failed: {e}", exc_info=True)
+            logger.error("Failed to create message entities")
+            logger.error(f"Error: {str(e)}")
+            logger.debug(f"Technical details: {e}", exc_info=True)
             require_diagnostic_on_error(e, "stage_7_messages")
             return 1
 

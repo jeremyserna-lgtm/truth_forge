@@ -125,7 +125,9 @@ class TestRelationshipService:
 
     @patch.object(RelationshipService, "logger", new_callable=lambda: MagicMock())
     @patch("duckdb.connect")
-    def test_get_partnership_not_found(self, mock_connect: MagicMock, mock_logger: MagicMock) -> None:
+    def test_get_partnership_not_found(
+        self, mock_connect: MagicMock, mock_logger: MagicMock
+    ) -> None:
         """Test get_partnership when partnership not found."""
         with TemporaryDirectory() as tmpdir:
             service = RelationshipService.__new__(RelationshipService)
@@ -424,4 +426,3 @@ class TestRelationshipService:
                     assert history_item["type"] == "test_type"
                     assert history_item["metadata"] == {"key": "value"}
                     assert "timestamp" in history_item
-

@@ -7,17 +7,15 @@ from __future__ import annotations
 
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
-import pytest
 from typer.testing import CliRunner
 
 from truth_forge.molt.service import (
-    app,
-    load_molt_config,
     SERVICE_TEMPLATE,
     _migrate_service,
+    app,
+    load_molt_config,
 )
 
 
@@ -31,7 +29,7 @@ class TestLoadMoltConfig:
         """Test loading config when molt.yaml is missing."""
         with TemporaryDirectory() as tmpdir:
             with patch("truth_forge.molt.service.PROJECT_ROOT", Path(tmpdir)):
-                result = runner.invoke(app, ["generate", "test"])
+                runner.invoke(app, ["generate", "test"])
                 # The command should fail since molt.yaml doesn't exist
                 # But generate doesn't use load_molt_config directly
                 pass
@@ -170,9 +168,9 @@ def helper_function():
         """Test analyze detects legacy import patterns."""
         with TemporaryDirectory() as tmpdir:
             test_file = Path(tmpdir) / "legacy.py"
-            test_file.write_text('''from Primitive.core import settings
+            test_file.write_text("""from Primitive.core import settings
 from central_services.analytics import Analytics
-''')
+""")
 
             result = runner.invoke(app, ["analyze", str(test_file)])
 
@@ -183,9 +181,9 @@ from central_services.analytics import Analytics
         """Test analyze detects hardcoded paths."""
         with TemporaryDirectory() as tmpdir:
             test_file = Path(tmpdir) / "paths.py"
-            test_file.write_text('''path = "/Users/jeremyserna/code"
+            test_file.write_text("""path = "/Users/jeremyserna/code"
 tmp_path = "/tmp/data.json"
-''')
+""")
 
             result = runner.invoke(app, ["analyze", str(test_file)])
 
@@ -196,10 +194,10 @@ tmp_path = "/tmp/data.json"
         """Test analyze detects environment variable usage."""
         with TemporaryDirectory() as tmpdir:
             test_file = Path(tmpdir) / "env.py"
-            test_file.write_text('''import os
+            test_file.write_text("""import os
 key = os.environ.get("API_KEY")
 project = os.environ["PROJECT_ID"]
-''')
+""")
 
             result = runner.invoke(app, ["analyze", str(test_file)])
 
@@ -324,7 +322,7 @@ class TestMigrateServiceHelper:
             source_dir.mkdir()
             (source_dir / "test_service.py").write_text("# test")
 
-            with patch("truth_forge.molt.service.typer") as mock_typer:
+            with patch("truth_forge.molt.service.typer"):
                 _migrate_service(
                     "test",
                     {"destination": "dst", "sources": [str(source_dir)]},

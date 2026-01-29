@@ -7,15 +7,14 @@ from __future__ import annotations
 
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
-import pytest
 from typer.testing import CliRunner
 
 from truth_forge.molt.code_cli import (
-    app,
     _load_transform_config,
     _print_result,
+    app,
 )
 from truth_forge.molt.code_molt import CodeMoltResult
 

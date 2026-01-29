@@ -15,27 +15,28 @@ Based on industry standards:
 - Idempotent event processing
 """
 
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
-import logging
 import json
-from dataclasses import dataclass, asdict
+import logging
+from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
+from typing import Any
 
 from google.cloud import bigquery
 
-from truth_forge.services.sync.twenty_crm_service import TwentyCRMService
-from truth_forge.services.sync.bigquery_sync import BigQuerySyncService
-from truth_forge.services.sync.supabase_sync import SupabaseSyncService
+from truth_forge.core.settings import settings
 from truth_forge.services.sync.crm_twenty_sync import CRMTwentySyncService
 from truth_forge.services.sync.error_reporter import ErrorReporter
-from truth_forge.core.settings import settings
+from truth_forge.services.sync.supabase_sync import SupabaseSyncService
+from truth_forge.services.sync.twenty_crm_service import TwentyCRMService
+
 
 logger = logging.getLogger(__name__)
 
 
 class ChangeType(Enum):
     """Type of data change."""
+
     INSERT = "INSERT"
     UPDATE = "UPDATE"
     DELETE = "DELETE"
@@ -44,9 +45,10 @@ class ChangeType(Enum):
 @dataclass
 class ChangeEvent:
     """CDC change event.
-    
+
     Represents a single change in a data source.
     """
+
     event_id: str
     source: str  # "bigquery", "crm_twenty", "supabase", "local"
     entity_type: str  # "contact", "business", "relationship"
@@ -54,10 +56,10 @@ class ChangeEvent:
     change_type: ChangeType
     timestamp: datetime
     version: int
-    data: Dict[str, Any]
-    metadata: Dict[str, Any]
-    
-    def to_dict(self) -> Dict[str, Any]:
+    data: dict[str, Any]
+    metadata: dict[str, Any]
+
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for storage."""
         return {
             "event_id": self.event_id,
@@ -74,7 +76,7 @@ class ChangeEvent:
 
 class CDCSyncService:
     """Change Data Capture (CDC) Sync Service.
-    
+
     Industry-standard implementation for multi-source data synchronization:
     - Tracks all changes in change tracking tables
     - Processes changes as events
@@ -82,16 +84,16 @@ class CDCSyncService:
     - Handles conflicts with versioning
     - Maintains event log for audit trail
     """
-    
+
     def __init__(self) -> None:
         """Initialize CDC sync service."""
         self.bq_client = bigquery.Client(project=settings.effective_gcp_project)
         self.service = TwentyCRMService()
         self.error_reporter = ErrorReporter(self.bq_client)
-        
+
         # Ensure change tracking tables exist
         self._ensure_change_tracking_tables()
-    
+
     def _ensure_change_tracking_tables(self) -> None:
         """Ensure change tracking tables exist in BigQuery."""
         try:
@@ -117,10 +119,10 @@ class CDCSyncService:
                 description="CDC change log for tracking all data changes across systems"
             )
             """
-            
+
             self.bq_client.query(query).result()
             logger.info("Change tracking table verified")
-            
+
             # Create processed events index table
             query = """
             CREATE TABLE IF NOT EXISTS `identity.sync_processed_events` (
@@ -137,25 +139,25 @@ class CDCSyncService:
                 description="Tracks which events have been processed to which destinations"
             )
             """
-            
+
             self.bq_client.query(query).result()
             logger.info("Processed events table verified")
-            
+
         except Exception as e:
             logger.warning(f"Change tracking tables may already exist: {e}")
-    
+
     def capture_change(
         self,
         source: str,
         entity_type: str,
         entity_id: str,
         change_type: ChangeType,
-        data: Dict[str, Any],
-        version: Optional[int] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        data: dict[str, Any],
+        version: int | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> ChangeEvent:
         """Capture a change event.
-        
+
         Args:
             source: Source system ("bigquery", "crm_twenty", "supabase", "local")
             entity_type: Type of entity ("contact", "business", "relationship")
@@ -164,15 +166,15 @@ class CDCSyncService:
             data: Entity data
             version: Entity version (for conflict resolution)
             metadata: Additional metadata
-            
+
         Returns:
             ChangeEvent object
         """
         event_id = f"{source}:{entity_type}:{entity_id}:{datetime.utcnow().isoformat()}"
-        
+
         if version is None:
             version = data.get("version", 1)
-        
+
         event = ChangeEvent(
             event_id=event_id,
             source=source,
@@ -184,15 +186,15 @@ class CDCSyncService:
             data=data,
             metadata=metadata or {},
         )
-        
+
         # Store event in change log
         self._store_change_event(event)
-        
+
         # Trigger immediate sync for this change
         self._process_change_event(event)
-        
+
         return event
-    
+
     def _store_change_event(self, event: ChangeEvent) -> None:
         """Store change event in BigQuery change log."""
         try:
@@ -206,7 +208,7 @@ class CDCSyncService:
                 @timestamp, @version, @data, @metadata, FALSE
             )
             """
-            
+
             job_config = bigquery.QueryJobConfig(
                 query_parameters=[
                     bigquery.ScalarQueryParameter("event_id", "STRING", event.event_id),
@@ -220,23 +222,24 @@ class CDCSyncService:
                     bigquery.ScalarQueryParameter("metadata", "JSON", json.dumps(event.metadata)),
                 ]
             )
-            
+
             self.bq_client.query(query, job_config=job_config).result()
             logger.debug(f"Stored change event: {event.event_id}")
-            
+
         except Exception as e:
             logger.error(f"Failed to store change event: {e}", exc_info=True)
             self.error_reporter.report_error(
-                entity_id=event.entity_id,
                 entity_type=event.entity_type,
+                entity_id=event.entity_id,
+                system="cdc",
                 error_type="CDC_STORAGE_ERROR",
                 error_message=str(e),
-                metadata={"event_id": event.event_id},
+                error_details={"event_id": event.event_id},
             )
-    
+
     def _process_change_event(self, event: ChangeEvent) -> None:
         """Process a change event - sync to all destinations.
-        
+
         Args:
             event: Change event to process
         """
@@ -245,7 +248,7 @@ class CDCSyncService:
             if self._is_event_processed(event.event_id):
                 logger.debug(f"Event {event.event_id} already processed, skipping")
                 return
-            
+
             # Determine sync direction based on source
             if event.source == "bigquery":
                 # BigQuery is canonical - sync to all
@@ -259,32 +262,33 @@ class CDCSyncService:
             elif event.source == "local":
                 # Local change - sync to BigQuery first, then all
                 self._sync_from_local(event)
-            
+
             # Mark as processed
             self._mark_event_processed(event.event_id, "success")
-            
+
         except Exception as e:
             logger.error(f"Failed to process change event: {e}", exc_info=True)
             self._mark_event_processed(event.event_id, "error", str(e))
             self.error_reporter.report_error(
-                entity_id=event.entity_id,
                 entity_type=event.entity_type,
+                entity_id=event.entity_id,
+                system="cdc",
                 error_type="CDC_PROCESSING_ERROR",
                 error_message=str(e),
-                metadata={"event_id": event.event_id},
+                error_details={"event_id": event.event_id},
             )
-    
+
     def _sync_from_canonical(self, event: ChangeEvent) -> None:
         """Sync from canonical (BigQuery) to all destinations."""
         if event.entity_type == "contact":
-            result = self.service.bq_sync.sync_contact_to_all(event.entity_id)
+            self.service.bq_sync.sync_contact_to_all(event.entity_id)
             logger.info(f"Synced contact {event.entity_id} from BigQuery to all systems")
         elif event.entity_type == "business":
-            result = self.service.business_sync.sync_business_to_all(event.entity_id)
+            self.service.business_sync.sync_business_to_all(event.entity_id)
             logger.info(f"Synced business {event.entity_id} from BigQuery to all systems")
         else:
             logger.warning(f"Unknown entity type: {event.entity_type}")
-    
+
     def _sync_from_crm(self, event: ChangeEvent) -> None:
         """Sync from CRM to BigQuery, then propagate."""
         if event.entity_type == "contact":
@@ -293,11 +297,11 @@ class CDCSyncService:
                 self.bq_client,
                 self.service.bq_sync,
             )
-            result = crm_sync.sync_from_crm_to_bigquery(event.entity_id)
+            crm_sync.sync_from_crm_to_bigquery(event.entity_id)
             logger.info(f"Synced contact {event.entity_id} from CRM to BigQuery")
         else:
             logger.warning(f"CRM sync not implemented for entity type: {event.entity_type}")
-    
+
     def _sync_from_supabase(self, event: ChangeEvent) -> None:
         """Sync from Supabase to BigQuery, then propagate."""
         if event.entity_type == "contact":
@@ -306,22 +310,22 @@ class CDCSyncService:
                 self.bq_client,
                 self.service.bq_sync,
             )
-            result = supabase_sync.sync_from_supabase_to_bigquery(event.entity_id)
+            supabase_sync.sync_from_supabase_to_bigquery(event.entity_id)
             logger.info(f"Synced contact {event.entity_id} from Supabase to BigQuery")
         else:
             logger.warning(f"Supabase sync not implemented for entity type: {event.entity_type}")
-    
+
     def _sync_from_local(self, event: ChangeEvent) -> None:
         """Sync from local DB to BigQuery, then propagate."""
         # TODO: Implement local DB sync
         logger.warning("Local DB sync not yet implemented")
-    
+
     def _is_event_processed(self, event_id: str) -> bool:
         """Check if event has been processed.
-        
+
         Args:
             event_id: Event ID to check
-            
+
         Returns:
             True if processed, False otherwise
         """
@@ -331,28 +335,28 @@ class CDCSyncService:
             FROM `identity.sync_processed_events`
             WHERE event_id = @event_id
             """
-            
+
             job_config = bigquery.QueryJobConfig(
                 query_parameters=[
                     bigquery.ScalarQueryParameter("event_id", "STRING", event_id),
                 ]
             )
-            
+
             result = list(self.bq_client.query(query, job_config=job_config).result())
-            return result[0].count > 0
-            
+            return bool(result[0].count > 0) if result else False
+
         except Exception as e:
             logger.warning(f"Failed to check if event processed: {e}")
             return False
-    
+
     def _mark_event_processed(
         self,
         event_id: str,
         status: str,
-        error_message: Optional[str] = None,
+        error_message: str | None = None,
     ) -> None:
         """Mark event as processed.
-        
+
         Args:
             event_id: Event ID
             status: "success" or "error"
@@ -366,15 +370,15 @@ class CDCSyncService:
                 processed_at = CURRENT_TIMESTAMP()
             WHERE event_id = @event_id
             """
-            
+
             job_config = bigquery.QueryJobConfig(
                 query_parameters=[
                     bigquery.ScalarQueryParameter("event_id", "STRING", event_id),
                 ]
             )
-            
+
             self.bq_client.query(query, job_config=job_config).result()
-            
+
             # Record in processed events table (for each destination)
             # For now, mark as processed to "all"
             query = """
@@ -385,7 +389,7 @@ class CDCSyncService:
                 @event_id, CURRENT_TIMESTAMP(), @destination, @status, @error_message
             )
             """
-            
+
             job_config = bigquery.QueryJobConfig(
                 query_parameters=[
                     bigquery.ScalarQueryParameter("event_id", "STRING", event_id),
@@ -394,18 +398,18 @@ class CDCSyncService:
                     bigquery.ScalarQueryParameter("error_message", "STRING", error_message),
                 ]
             )
-            
+
             self.bq_client.query(query, job_config=job_config).result()
-            
+
         except Exception as e:
             logger.error(f"Failed to mark event as processed: {e}", exc_info=True)
-    
+
     def process_pending_changes(self, limit: int = 100) -> int:
         """Process pending change events.
-        
+
         Args:
             limit: Maximum number of events to process
-            
+
         Returns:
             Number of events processed
         """
@@ -418,20 +422,20 @@ class CDCSyncService:
             ORDER BY timestamp ASC
             LIMIT @limit
             """
-            
+
             job_config = bigquery.QueryJobConfig(
                 query_parameters=[
                     bigquery.ScalarQueryParameter("limit", "INT64", limit),
                 ]
             )
-            
+
             results = list(self.bq_client.query(query, job_config=job_config).result())
-            
+
             if not results:
                 return 0
-            
+
             logger.info(f"Processing {len(results)} pending change events")
-            
+
             processed = 0
             for row in results:
                 try:
@@ -444,29 +448,31 @@ class CDCSyncService:
                         timestamp=row.timestamp,
                         version=row.version,
                         data=json.loads(row.data) if isinstance(row.data, str) else row.data,
-                        metadata=json.loads(row.metadata) if isinstance(row.metadata, str) else row.metadata,
+                        metadata=json.loads(row.metadata)
+                        if isinstance(row.metadata, str)
+                        else row.metadata,
                     )
-                    
+
                     self._process_change_event(event)
                     processed += 1
-                    
+
                 except Exception as e:
                     logger.error(f"Failed to process event {row.event_id}: {e}", exc_info=True)
-            
+
             logger.info(f"Processed {processed}/{len(results)} change events")
             return processed
-            
+
         except Exception as e:
             logger.error(f"Failed to process pending changes: {e}", exc_info=True)
             return 0
-    
-    def get_sync_status(self, entity_id: str, entity_type: str = "contact") -> Dict[str, Any]:
+
+    def get_sync_status(self, entity_id: str, entity_type: str = "contact") -> dict[str, Any]:
         """Get sync status for an entity.
-        
+
         Args:
             entity_id: Entity ID
             entity_type: Entity type
-            
+
         Returns:
             Sync status dictionary
         """
@@ -478,30 +484,29 @@ class CDCSyncService:
               AND entity_type = @entity_type
             GROUP BY source
             """
-            
+
             job_config = bigquery.QueryJobConfig(
                 query_parameters=[
                     bigquery.ScalarQueryParameter("entity_id", "STRING", entity_id),
                     bigquery.ScalarQueryParameter("entity_type", "STRING", entity_type),
                 ]
             )
-            
+
             results = list(self.bq_client.query(query, job_config=job_config).result())
-            
-            status = {
-                "entity_id": entity_id,
-                "entity_type": entity_type,
-                "sources": {},
-            }
-            
+
+            sources: dict[str, Any] = {}
             for row in results:
-                status["sources"][row.source] = {
+                sources[row.source] = {
                     "last_sync": row.last_sync.isoformat() if row.last_sync else None,
                     "change_count": row.change_count,
                 }
-            
+            status = {
+                "entity_id": entity_id,
+                "entity_type": entity_type,
+                "sources": sources,
+            }
             return status
-            
+
         except Exception as e:
             logger.error(f"Failed to get sync status: {e}", exc_info=True)
             return {"error": str(e)}

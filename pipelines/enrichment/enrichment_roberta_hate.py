@@ -99,7 +99,9 @@ class RoBERTaHateEnrichment(BaseEnrichment):
 
             # Labels: ["normal", "hate"]
             labels = ["normal", "hate"]
-            scores = {label: float(prob.item()) for label, prob in zip(labels, probabilities)}
+            scores = {
+                label: float(prob.item()) for label, prob in zip(labels, probabilities, strict=True)
+            }
 
             # Get hate score and label
             hate_score = scores.get("hate", 0.0)

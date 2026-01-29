@@ -1,7 +1,8 @@
 """Unit tests for the KnowledgeService."""
 
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 from truth_forge.services.knowledge.service import KnowledgeService
 from truth_forge.services.secret.service import SecretService
@@ -15,19 +16,19 @@ def mock_secret_service():
 
 @pytest.fixture
 def mock_anthropic_client():
-    with patch('anthropic.Anthropic') as mock:
+    with patch("anthropic.Anthropic") as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_gemini_client():
-    with patch('google.genai.Client') as mock:
+    with patch("google.genai.Client") as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_openai_client():
-    with patch('openai.OpenAI') as mock:
+    with patch("openai.OpenAI") as mock:
         yield mock
 
 
@@ -51,7 +52,9 @@ def test_knowledge_service_call_claude(mock_secret_service, mock_anthropic_clien
     mock_response.usage.output_tokens = 20
     mock_anthropic_client.return_value.messages.create.return_value = mock_response
 
-    with patch('truth_forge.services.knowledge.service.get_service', return_value=mock_secret_service):
+    with patch(
+        "truth_forge.services.knowledge.service.get_service", return_value=mock_secret_service
+    ):
         service = KnowledgeService(default_llm="claude-sonnet-4-20250514")
         result = service.call_llm("Test prompt")
 
@@ -73,7 +76,9 @@ def test_knowledge_service_call_gemini(mock_secret_service, mock_gemini_client):
     # New API: client.models.generate_content()
     mock_gemini_client.return_value.models.generate_content.return_value = mock_response
 
-    with patch('truth_forge.services.knowledge.service.get_service', return_value=mock_secret_service):
+    with patch(
+        "truth_forge.services.knowledge.service.get_service", return_value=mock_secret_service
+    ):
         service = KnowledgeService(default_llm="gemini-1.5-pro")
         result = service.call_llm("Test prompt")
 
@@ -94,7 +99,9 @@ def test_knowledge_service_call_openai(mock_secret_service, mock_openai_client):
     mock_response.usage.completion_tokens = 20
     mock_openai_client.return_value.chat.completions.create.return_value = mock_response
 
-    with patch('truth_forge.services.knowledge.service.get_service', return_value=mock_secret_service):
+    with patch(
+        "truth_forge.services.knowledge.service.get_service", return_value=mock_secret_service
+    ):
         service = KnowledgeService(default_llm="gpt-4-turbo")
         result = service.call_llm("Test prompt")
 
@@ -111,9 +118,11 @@ def test_process_record_creates_knowledge_atom(mock_secret_service):
     """Test that the process method creates a knowledge atom."""
     mock_secret_service.get_secret.return_value = "fake_claude_key"
 
-    with patch('truth_forge.services.knowledge.service.get_service', return_value=mock_secret_service):
+    with patch(
+        "truth_forge.services.knowledge.service.get_service", return_value=mock_secret_service
+    ):
         service = KnowledgeService()
-        with patch.object(service, 'call_llm') as mock_call_llm:
+        with patch.object(service, "call_llm") as mock_call_llm:
             mock_call_llm.return_value = {
                 "text": '{"summary": "Test summary"}',
                 "input_tokens": 10,

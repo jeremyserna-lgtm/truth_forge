@@ -5,7 +5,6 @@ Tests the GeminiProvider class.
 
 from __future__ import annotations
 
-from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -68,14 +67,16 @@ class TestGeminiProviderGetClient:
         """Test _get_client raises ProviderError when google-genai not installed."""
         provider = GeminiProvider(api_key="key")
 
-        with patch.dict("sys.modules", {"google": None, "google.genai": None}):
-            with patch(
+        with (
+            patch.dict("sys.modules", {"google": None, "google.genai": None}),
+            patch(
                 "builtins.__import__",
                 side_effect=ImportError("No module named 'google.genai'"),
-            ):
-                with pytest.raises(ProviderError) as exc_info:
-                    provider._get_client()
-                assert "google-genai package not installed" in str(exc_info.value)
+            ),
+        ):
+            with pytest.raises(ProviderError) as exc_info:
+                provider._get_client()
+            assert "google-genai package not installed" in str(exc_info.value)
 
     def test_get_client_cached(self) -> None:
         """Test _get_client returns cached client."""
@@ -102,9 +103,7 @@ class TestGeminiProviderComplete:
 
     @patch.object(GeminiProvider, "_get_client")
     @patch("truth_forge.gateway.providers.gemini.time.time")
-    def test_complete_success(
-        self, mock_time: MagicMock, mock_get_client: MagicMock
-    ) -> None:
+    def test_complete_success(self, mock_time: MagicMock, mock_get_client: MagicMock) -> None:
         """Test successful completion."""
         mock_time.side_effect = [0.0, 0.5]  # 500ms latency
 
@@ -205,9 +204,7 @@ class TestGeminiProviderStream:
         chunk3.text = None  # Some chunks might have no text
 
         mock_client = MagicMock()
-        mock_client.models.generate_content_stream.return_value = iter(
-            [chunk1, chunk2, chunk3]
-        )
+        mock_client.models.generate_content_stream.return_value = iter([chunk1, chunk2, chunk3])
         mock_get_client.return_value = mock_client
 
         provider = GeminiProvider(api_key="test-key")
@@ -243,9 +240,7 @@ class TestGeminiProviderStream:
     def test_stream_api_error(self, mock_get_client: MagicMock) -> None:
         """Test stream handles API errors."""
         mock_client = MagicMock()
-        mock_client.models.generate_content_stream.side_effect = Exception(
-            "Stream Error"
-        )
+        mock_client.models.generate_content_stream.side_effect = Exception("Stream Error")
         mock_get_client.return_value = mock_client
 
         provider = GeminiProvider(api_key="test-key")

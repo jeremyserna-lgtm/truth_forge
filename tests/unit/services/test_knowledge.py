@@ -38,7 +38,11 @@ def temp_services_dir(tmp_path: Path) -> Path:
 def mock_anthropic_response() -> MagicMock:
     """Create mock anthropic response."""
     mock_response = MagicMock()
-    mock_response.content = [MagicMock(text='{"summary": "Test summary", "key_facts": ["fact1"], "entities": ["entity1"], "topics": ["topic1"], "sentiment": "neutral", "confidence": 0.9}')]
+    mock_response.content = [
+        MagicMock(
+            text='{"summary": "Test summary", "key_facts": ["fact1"], "entities": ["entity1"], "topics": ["topic1"], "sentiment": "neutral", "confidence": 0.9}'
+        )
+    ]
     mock_response.usage.input_tokens = 100
     mock_response.usage.output_tokens = 50
     return mock_response
@@ -216,9 +220,7 @@ class TestKnowledgeServiceLLMCall:
             mock_client = MagicMock()
             mock_client.messages.create.return_value = mock_anthropic_response
 
-            with patch.object(
-                LLMClientFactory, "get_anthropic_client", return_value=mock_client
-            ):
+            with patch.object(LLMClientFactory, "get_anthropic_client", return_value=mock_client):
                 result = service.call_llm("Test prompt")
 
                 assert "text" in result
@@ -236,9 +238,7 @@ class TestKnowledgeServiceLLMCall:
             mock_client = MagicMock()
             mock_client.messages.create.return_value = mock_anthropic_response
 
-            with patch.object(
-                LLMClientFactory, "get_anthropic_client", return_value=mock_client
-            ):
+            with patch.object(LLMClientFactory, "get_anthropic_client", return_value=mock_client):
                 service.call_llm("Test prompt")
 
                 assert service._session_cost > 0
@@ -303,12 +303,14 @@ class TestKnowledgeServiceClient:
         mock_secret_service = MagicMock(spec=SecretService)
         mock_secret_service.get_secret.return_value = None
 
-        with patch(
-            "truth_forge.services.knowledge.service.get_service",
-            return_value=mock_secret_service,
+        with (
+            patch(
+                "truth_forge.services.knowledge.service.get_service",
+                return_value=mock_secret_service,
+            ),
+            pytest.raises(LLMError, match="ANTHROPIC_API_KEY not configured"),
         ):
-            with pytest.raises(LLMError, match="ANTHROPIC_API_KEY not configured"):
-                LLMClientFactory.get_anthropic_client()
+            LLMClientFactory.get_anthropic_client()
 
     def test_get_anthropic_client_with_key(self) -> None:
         """Test client initializes with API key."""
@@ -320,14 +322,16 @@ class TestKnowledgeServiceClient:
         mock_secret_service = MagicMock(spec=SecretService)
         mock_secret_service.get_secret.return_value = "test-api-key"
 
-        with patch(
-            "truth_forge.services.knowledge.service.get_service",
-            return_value=mock_secret_service,
+        with (
+            patch(
+                "truth_forge.services.knowledge.service.get_service",
+                return_value=mock_secret_service,
+            ),
+            patch("anthropic.Anthropic") as mock_anthropic,
         ):
-            with patch("anthropic.Anthropic") as mock_anthropic:
-                LLMClientFactory.get_anthropic_client()
+            LLMClientFactory.get_anthropic_client()
 
-                mock_anthropic.assert_called_once_with(api_key="test-api-key")
+            mock_anthropic.assert_called_once_with(api_key="test-api-key")
 
 
 class TestKnowledgeServiceRegistration:

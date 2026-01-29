@@ -32,7 +32,9 @@ class TestSecretService:
 
     @patch.object(SecretService, "logger", new_callable=lambda: MagicMock())
     @patch("truth_forge.services.secret.service.settings")
-    def test_init_mock_mode_no_project(self, mock_settings: MagicMock, mock_logger: MagicMock) -> None:
+    def test_init_mock_mode_no_project(
+        self, mock_settings: MagicMock, mock_logger: MagicMock
+    ) -> None:
         """Test init enters mock mode when no GCP project."""
         mock_settings.effective_gcp_project = None
 
@@ -260,4 +262,3 @@ class TestSecretService:
         result = service._get_client()
 
         assert result is existing_client
-

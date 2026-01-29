@@ -241,7 +241,7 @@ import os
             )
             engine = CodeMoltEngine(config)
 
-            changed, counts = engine.transform_file(
+            changed, _counts = engine.transform_file(
                 source_file=source,
                 dest_file=dest,
                 dry_run=False,

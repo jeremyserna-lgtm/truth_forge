@@ -7,12 +7,11 @@ from __future__ import annotations
 
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-import pytest
 from typer.testing import CliRunner
 
-from truth_forge.molt.verify_cli import app, _run_command
+from truth_forge.molt.verify_cli import _run_command, app
 
 
 runner = CliRunner()
@@ -31,20 +30,22 @@ class TestRunCommand:
     def test_run_command_failure(self) -> None:
         """Test running failing command."""
         with patch("truth_forge.molt.verify_cli.PROJECT_ROOT", Path("/")):
-            success, output = _run_command(["false"], "Test false")
+            success, _output = _run_command(["false"], "Test false")
             # 'false' command should return non-zero
             assert success is False
 
     def test_run_command_exception(self) -> None:
         """Test running command that raises exception."""
-        with patch("truth_forge.molt.verify_cli.PROJECT_ROOT", Path("/")):
-            with patch(
+        with (
+            patch("truth_forge.molt.verify_cli.PROJECT_ROOT", Path("/")),
+            patch(
                 "truth_forge.molt.verify_cli.subprocess.run",
                 side_effect=Exception("Command error"),
-            ):
-                success, output = _run_command(["test"], "Test")
-                assert success is False
-                assert "Command error" in output
+            ),
+        ):
+            success, output = _run_command(["test"], "Test")
+            assert success is False
+            assert "Command error" in output
 
 
 class TestTypesCommand:

@@ -70,34 +70,6 @@ def build_merge_statement(
     if not values_parts:
         return ""
 
-    # Build column list
-    all_columns = ["entity_id"] + columns + [f"{enrichment_name}_enriched_at"]
-
-    # Build SET clause
-    set_clauses = []
-    for col in columns:
-        set_clauses.append(f"{col} = source.{col}")
-    set_clauses.append(f"{enrichment_name}_enriched_at = source.{enrichment_name}_enriched_at")
-    set_clause = ", ".join(set_clauses)
-
-    merge_sql = f"""
-    MERGE `{table_id}` AS target
-    USING (
-        SELECT * FROM UNNEST([
-            STRUCT<{", ".join(f"{col} ANY TYPE" for col in all_columns)}>(
-                {", ".join("source." + col for col in all_columns)}
-            )
-        ]) AS source
-    ) AS source
-    ON target.entity_id = source.entity_id
-    WHEN MATCHED THEN
-        UPDATE SET {set_clause}
-    WHEN NOT MATCHED THEN
-        INSERT ({", ".join(all_columns)})
-        VALUES ({", ".join("source." + col for col in all_columns)})
-    """
-
-    # Actually, use a simpler approach with temp table
     return _build_simple_merge(table_id, source_data, columns, enrichment_name)
 
 

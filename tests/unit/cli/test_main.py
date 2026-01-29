@@ -9,11 +9,11 @@ import json
 from io import StringIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from truth_forge.cli.main import create_parser, cmd_status, cmd_seed, cmd_govern, main
+from truth_forge.cli.main import cmd_govern, cmd_seed, cmd_status, create_parser, main
 
 
 class TestCreateParser:
@@ -123,7 +123,7 @@ class TestMain:
 
     def test_unknown_command_exits_one(self) -> None:
         """Test main with unknown command exits with 1."""
-        parser = create_parser()
+        create_parser()
         # Mock the commands dict to simulate unknown command
         with patch("sys.stderr", new_callable=StringIO):
             with patch("truth_forge.cli.main.create_parser") as mock_parser:

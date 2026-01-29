@@ -159,4 +159,3 @@ class TestServiceMediator:
 
         mock_get_service.assert_called_with("governance")
         mock_governance.inhale.assert_called_once_with({"event": "test"})
-

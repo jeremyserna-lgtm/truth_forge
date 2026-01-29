@@ -1,16 +1,17 @@
 """Business sync service - syncs businesses across all systems."""
 
-from typing import Dict, Any, Optional
-from datetime import datetime
 import logging
 import traceback
+from datetime import datetime
+from typing import Any
+
 
 logger = logging.getLogger(__name__)
 
 
 class BusinessSyncService:
     """Syncs businesses from BigQuery (canonical) to all other systems.
-    
+
     All errors are reported transparently - nothing hidden.
     """
 
@@ -23,7 +24,7 @@ class BusinessSyncService:
         error_reporter: Any,
     ) -> None:
         """Initialize business sync service.
-        
+
         Args:
             bq_client: BigQuery client
             supabase_client: Supabase client
@@ -37,12 +38,12 @@ class BusinessSyncService:
         self.crm_twenty = crm_twenty_client
         self.error_reporter = error_reporter
 
-    def sync_business_to_all(self, business_id: str) -> Dict[str, Any]:
+    def sync_business_to_all(self, business_id: str) -> dict[str, Any]:
         """Sync a single business from BigQuery to all systems.
-        
+
         Args:
             business_id: Business ID in BigQuery
-            
+
         Returns:
             Dict with sync results for each system
         """
@@ -101,14 +102,12 @@ class BusinessSyncService:
             )
             raise
 
-    def _fetch_business_from_bigquery(
-        self, business_id: str
-    ) -> Optional[Dict[str, Any]]:
+    def _fetch_business_from_bigquery(self, business_id: str) -> dict[str, Any] | None:
         """Fetch business from BigQuery.
-        
+
         Args:
             business_id: Business ID
-            
+
         Returns:
             Business record or None
         """
@@ -119,9 +118,7 @@ class BusinessSyncService:
             LIMIT 1
             """
 
-            job_config = {
-                "query_parameters": [("business_id", "INT64", int(business_id))]
-            }
+            job_config = {"query_parameters": [("business_id", "INT64", int(business_id))]}
 
             query_job = self.bq_client.query(query, job_config=job_config)
             results = list(query_job.result())
@@ -141,12 +138,12 @@ class BusinessSyncService:
             )
             raise
 
-    def _sync_business_to_supabase(self, business: Dict[str, Any]) -> Dict[str, Any]:
+    def _sync_business_to_supabase(self, business: dict[str, Any]) -> dict[str, Any]:
         """Sync business to Supabase.
-        
+
         Args:
             business: Business record from BigQuery
-            
+
         Returns:
             Sync result
         """
@@ -174,12 +171,12 @@ class BusinessSyncService:
             )
             return {"status": "error", "error": error_msg}
 
-    def _sync_business_to_local(self, business: Dict[str, Any]) -> Dict[str, Any]:
+    def _sync_business_to_local(self, business: dict[str, Any]) -> dict[str, Any]:
         """Sync business to local database.
-        
+
         Args:
             business: Business record from BigQuery
-            
+
         Returns:
             Sync result
         """
@@ -227,14 +224,14 @@ class BusinessSyncService:
             )
             return {"status": "error", "error": error_msg}
 
-    def _sync_business_to_crm_twenty(self, business: Dict[str, Any]) -> Dict[str, Any]:
+    def _sync_business_to_crm_twenty(self, business: dict[str, Any]) -> dict[str, Any]:
         """Sync business to CRM Twenty.
-        
+
         Uses TwentyCRMClient which gets API key from secrets manager.
-        
+
         Args:
             business: Business record from BigQuery
-            
+
         Returns:
             Sync result
         """
@@ -258,7 +255,7 @@ class BusinessSyncService:
             )
             return {"status": "error", "error": error_msg}
 
-    def _transform_bq_to_supabase(self, business: Dict[str, Any]) -> Dict[str, Any]:
+    def _transform_bq_to_supabase(self, business: dict[str, Any]) -> dict[str, Any]:
         """Transform BigQuery business to Supabase format."""
         import json
 
@@ -272,7 +269,7 @@ class BusinessSyncService:
             "sync_metadata": json.dumps(business.get("sync_metadata", {})),
         }
 
-    def _transform_bq_to_local(self, business: Dict[str, Any]) -> Dict[str, Any]:
+    def _transform_bq_to_local(self, business: dict[str, Any]) -> dict[str, Any]:
         """Transform BigQuery business to local format."""
         return {
             "business_id": str(business["business_id"]),
@@ -283,7 +280,7 @@ class BusinessSyncService:
             "sync_metadata": business.get("sync_metadata", {}),
         }
 
-    def _transform_bq_to_crm_twenty(self, business: Dict[str, Any]) -> Dict[str, Any]:
+    def _transform_bq_to_crm_twenty(self, business: dict[str, Any]) -> dict[str, Any]:
         """Transform BigQuery business to CRM Twenty format."""
         import json
 

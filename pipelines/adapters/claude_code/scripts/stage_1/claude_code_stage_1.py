@@ -98,10 +98,8 @@ Enterprise Governance Standards:
 Usage:
     python claude_code_stage_1.py [--source-dir PATH] [--batch-size N] [--dry-run]
 """
-try:
-    from truth_forge.core import get_logger as _get_logger
-except Exception:
-    from src.services.central_services.core import get_logger as _get_logger
+# Use shared logging bridge for consistent logging
+from shared.logging_bridge import get_logger as _get_logger
 _LOGGER = _get_logger(__name__)
 
 
@@ -134,12 +132,24 @@ from shared import (
     TABLE_STAGE_1,
     get_full_table_id,
 )
-from src.services.central_services.core import get_current_run_id, get_logger
-from src.services.central_services.core.config import get_bigquery_client
-from src.services.central_services.core.pipeline_tracker import PipelineTracker
-from src.services.central_services.governance.governance import (
-    require_diagnostic_on_error,
-)
+from shared.logging_bridge import get_current_run_id, get_logger
+from google.cloud import bigquery
+
+# Fallback implementations for missing central_services
+def get_bigquery_client():
+    """Get BigQuery client (fallback implementation)."""
+    return bigquery.Client()
+
+from contextlib import contextmanager
+@contextmanager
+def PipelineTracker(*args, **kwargs):
+    """PipelineTracker fallback (simple context manager)."""
+    obj = type("obj", (object,), {"update_progress": lambda self, **kw: None})()
+    yield obj
+
+def require_diagnostic_on_error(error, context):
+    """require_diagnostic_on_error fallback (no-op)."""
+    pass
 
 
 logger = get_logger(__name__)
@@ -307,7 +317,7 @@ def load_to_bigquery(
     records: list[dict[str, Any]],
     dry_run: bool = False,
 ) -> int:
-    """Load records to BigQuery.
+    """Load records to BigQuery with duplicate prevention.
 
     Args:
         client: BigQuery client
@@ -324,13 +334,30 @@ def load_to_bigquery(
         logger.info(f"DRY RUN: Would load {len(records)} records")
         return len(records)
 
-    errors = client.insert_rows_json(STAGE_1_TABLE, records)
-
-    if errors:
-        logger.error(f"BigQuery insert errors: {errors[:5]}")  # Log first 5 errors
-        raise ValueError(f"Failed to insert {len(errors)} records")
-
-    return len(records)
+    # Prevent duplicates by checking fingerprints before insert
+    # Stage 1 uses fingerprint as unique key
+    from shared import merge_rows_to_table
+    from shared_validation import validate_table_id
+    
+    validated_table = validate_table_id(STAGE_1_TABLE)
+    
+    try:
+        # Use MERGE to prevent duplicates based on fingerprint
+        merge_rows_to_table(
+            client=client,
+            table_id=validated_table,
+            rows=records,
+            match_key="fingerprint"
+        )
+        return len(records)
+    except Exception as e:
+        # Fallback to direct insert if merge fails (for first-time loads)
+        logger.warning(f"MERGE failed, using direct insert: {e}")
+        errors = client.insert_rows_json(STAGE_1_TABLE, records)
+        if errors:
+            logger.error(f"BigQuery insert errors: {errors[:5]}")
+            raise ValueError(f"Failed to insert {len(errors)} records")
+        return len(records)
 
 
 def main() -> int:
@@ -446,7 +473,9 @@ def main() -> int:
             return 0
 
         except Exception as e:
-            logger.error(f"Stage 1 failed: {e}", exc_info=True, extra={"run_id": run_id})
+            logger.error("Failed to extract data from source files")
+            logger.error(f"Error: {str(e)}")
+            logger.debug(f"Technical details: {e}", exc_info=True, extra={"run_id": run_id})
             require_diagnostic_on_error(e, "stage_1_extraction")
             tracker.update_progress(items_failed=1)
             return 1

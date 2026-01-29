@@ -4,35 +4,35 @@ Sets up custom fields and data model in Twenty CRM.
 Run this once to initialize the CRM with our schema.
 """
 
-from typing import Dict, Any, List, Optional
 import logging
+from typing import Any
 
 from truth_forge.services.sync.twenty_crm_client import TwentyCRMClient
-from truth_forge.services.secret.service import SecretService
+
 
 logger = logging.getLogger(__name__)
 
 
 class TwentyCRMSetup:
     """Sets up Twenty CRM with our data model.
-    
+
     Creates custom fields for:
     - Contacts (contact_id, category_code, llm_context, etc.)
     - Companies (business_id, industry, llm_context, etc.)
     - Relationships (relationship_id, relationship_type, etc.)
     """
 
-    def __init__(self, client: Optional[TwentyCRMClient] = None) -> None:
+    def __init__(self, client: TwentyCRMClient | None = None) -> None:
         """Initialize setup service.
-        
+
         Args:
             client: TwentyCRMClient instance (optional, will create if not provided)
         """
         self.client = client or TwentyCRMClient()
 
-    def setup_all(self) -> Dict[str, Any]:
+    def setup_all(self) -> dict[str, Any]:
         """Set up all custom fields and data model.
-        
+
         Returns:
             Setup results
         """
@@ -44,9 +44,9 @@ class TwentyCRMSetup:
 
         return results
 
-    def setup_person_custom_fields(self) -> List[Dict[str, Any]]:
+    def setup_person_custom_fields(self) -> list[dict[str, Any]]:
         """Set up custom fields for persons (contacts).
-        
+
         Returns:
             List of created field definitions
         """
@@ -262,8 +262,7 @@ class TwentyCRMSetup:
 
         created_fields = []
         existing_fields = {
-            field["name"]: field
-            for field in self.client.list_custom_fields("person")
+            field["name"]: field for field in self.client.list_custom_fields("person")
         }
 
         for field_def in fields:
@@ -281,9 +280,9 @@ class TwentyCRMSetup:
 
         return created_fields
 
-    def setup_company_custom_fields(self) -> List[Dict[str, Any]]:
+    def setup_company_custom_fields(self) -> list[dict[str, Any]]:
         """Set up custom fields for companies (businesses).
-        
+
         Returns:
             List of created field definitions
         """
@@ -342,8 +341,7 @@ class TwentyCRMSetup:
 
         created_fields = []
         existing_fields = {
-            field["name"]: field
-            for field in self.client.list_custom_fields("company")
+            field["name"]: field for field in self.client.list_custom_fields("company")
         }
 
         for field_def in fields:
@@ -361,9 +359,9 @@ class TwentyCRMSetup:
 
         return created_fields
 
-    def verify_setup(self) -> Dict[str, Any]:
+    def verify_setup(self) -> dict[str, Any]:
         """Verify that all custom fields are set up correctly.
-        
+
         Returns:
             Verification results
         """
@@ -407,5 +405,3 @@ class TwentyCRMSetup:
             },
             "all_complete": len(missing_person) == 0 and len(missing_company) == 0,
         }
-
-

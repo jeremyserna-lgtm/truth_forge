@@ -5,7 +5,6 @@ Tests the OllamaProvider class.
 
 from __future__ import annotations
 
-from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -97,14 +96,16 @@ class TestOllamaProviderGetClient:
         """Test _get_client raises ProviderError when ollama not installed."""
         provider = OllamaProvider()
 
-        with patch.dict("sys.modules", {"ollama": None}):
-            with patch(
+        with (
+            patch.dict("sys.modules", {"ollama": None}),
+            patch(
                 "builtins.__import__",
                 side_effect=ImportError("No module named 'ollama'"),
-            ):
-                with pytest.raises(ProviderError) as exc_info:
-                    provider._get_client()
-                assert "ollama package not installed" in str(exc_info.value)
+            ),
+        ):
+            with pytest.raises(ProviderError) as exc_info:
+                provider._get_client()
+            assert "ollama package not installed" in str(exc_info.value)
 
     def test_get_client_cached(self) -> None:
         """Test _get_client returns cached client."""
@@ -131,9 +132,7 @@ class TestOllamaProviderComplete:
 
     @patch.object(OllamaProvider, "is_available", return_value=True)
     @patch.object(OllamaProvider, "_get_client")
-    def test_complete_success(
-        self, mock_get_client: MagicMock, mock_available: MagicMock
-    ) -> None:
+    def test_complete_success(self, mock_get_client: MagicMock, mock_available: MagicMock) -> None:
         """Test successful completion."""
         mock_response = {
             "response": "Generated response",
@@ -234,14 +233,10 @@ class TestOllamaProviderEmbed:
 
     @patch.object(OllamaProvider, "is_available", return_value=True)
     @patch.object(OllamaProvider, "_get_client")
-    def test_embed_success(
-        self, mock_get_client: MagicMock, mock_available: MagicMock
-    ) -> None:
+    def test_embed_success(self, mock_get_client: MagicMock, mock_available: MagicMock) -> None:
         """Test successful embedding."""
         mock_client = MagicMock()
-        mock_client.embeddings.return_value = {
-            "embedding": [0.1, 0.2, 0.3, 0.4, 0.5]
-        }
+        mock_client.embeddings.return_value = {"embedding": [0.1, 0.2, 0.3, 0.4, 0.5]}
         mock_get_client.return_value = mock_client
 
         provider = OllamaProvider()
@@ -281,9 +276,7 @@ class TestOllamaProviderEmbed:
 
     @patch.object(OllamaProvider, "is_available", return_value=True)
     @patch.object(OllamaProvider, "_get_client")
-    def test_embed_api_error(
-        self, mock_get_client: MagicMock, mock_available: MagicMock
-    ) -> None:
+    def test_embed_api_error(self, mock_get_client: MagicMock, mock_available: MagicMock) -> None:
         """Test embed handles API errors."""
         mock_client = MagicMock()
         mock_client.embeddings.side_effect = Exception("Embedding Error")
@@ -312,9 +305,7 @@ class TestOllamaProviderStream:
 
     @patch.object(OllamaProvider, "is_available", return_value=True)
     @patch.object(OllamaProvider, "_get_client")
-    def test_stream_success(
-        self, mock_get_client: MagicMock, mock_available: MagicMock
-    ) -> None:
+    def test_stream_success(self, mock_get_client: MagicMock, mock_available: MagicMock) -> None:
         """Test successful streaming."""
         chunks = [
             {"response": "Hello"},
@@ -359,9 +350,7 @@ class TestOllamaProviderStream:
 
     @patch.object(OllamaProvider, "is_available", return_value=True)
     @patch.object(OllamaProvider, "_get_client")
-    def test_stream_api_error(
-        self, mock_get_client: MagicMock, mock_available: MagicMock
-    ) -> None:
+    def test_stream_api_error(self, mock_get_client: MagicMock, mock_available: MagicMock) -> None:
         """Test stream handles API errors."""
         mock_client = MagicMock()
         mock_client.generate.side_effect = Exception("Stream Error")

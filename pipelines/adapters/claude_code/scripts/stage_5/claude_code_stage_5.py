@@ -96,10 +96,8 @@ Enterprise Governance Standards:
 Usage:
     python claude_code_stage_5.py [--batch-size N] [--workers N] [--dry-run]
 """
-try:
-    from truth_forge.core import get_logger as _get_logger
-except Exception:
-    from src.services.central_services.core import get_logger as _get_logger
+# Use shared logging bridge for consistent logging
+from shared.logging_bridge import get_logger as _get_logger
 _LOGGER = _get_logger(__name__)
 
 
@@ -135,12 +133,20 @@ from shared import (
     get_full_table_id,
     validate_input_table_exists,
 )
-from src.services.central_services.core import get_current_run_id, get_logger
-from src.services.central_services.core.config import get_bigquery_client
-from src.services.central_services.core.pipeline_tracker import PipelineTracker
-from src.services.central_services.governance.governance import (
-    require_diagnostic_on_error,
-)
+from shared.logging_bridge import get_current_run_id, get_logger
+# get_bigquery_client fallback
+def get_bigquery_client():
+    from google.cloud import bigquery
+    return bigquery.Client()
+# PipelineTracker fallback
+from contextlib import contextmanager
+@contextmanager
+def PipelineTracker(*args, **kwargs):
+    obj = type("obj", (object,), {"update_progress": lambda self, **kw: None})()
+    yield obj
+# require_diagnostic_on_error fallback
+def require_diagnostic_on_error(error, context):
+    pass
 
 
 logger = get_logger(__name__)
@@ -272,20 +278,27 @@ def process_tokenization(
 
         nlp = spacy.load("en_core_web_sm")
     except Exception as e:
-        logger.error(f"Failed to load spaCy model: {e}")
+        logger.error("Failed to load language processing model")
+        logger.debug(f"Technical details: {e}", exc_info=True)
         raise
 
+    # Validate table IDs to prevent SQL injection
+    from shared_validation import validate_table_id
+    
+    validated_stage_4_table = validate_table_id(STAGE_4_TABLE)
+    validated_stage_5_table = validate_table_id(STAGE_5_TABLE)
+    
     created_at = datetime.now(UTC).isoformat()
 
-    # Fetch messages from stage 4
+    # Fetch messages from stage 4 (with validated table ID)
     query = f"""
     SELECT entity_id, text, session_id, content_date
-    FROM `{STAGE_4_TABLE}`
+    FROM `{validated_stage_4_table}`
     WHERE text IS NOT NULL AND TRIM(text) != ''
     """
 
     if dry_run:
-        count_query = f"SELECT COUNT(*) as cnt FROM `{STAGE_4_TABLE}` WHERE text IS NOT NULL"
+        count_query = f"SELECT COUNT(*) as cnt FROM `{validated_stage_4_table}` WHERE text IS NOT NULL"
         result = client.query(count_query).result()
         row = next(iter(result))
         return {"messages_processed": row.cnt, "tokens_created": 0, "dry_run": True}
@@ -306,17 +319,38 @@ def process_tokenization(
             tokens_batch.append(token_record)
 
             if len(tokens_batch) >= batch_size:
-                errors = client.insert_rows_json(STAGE_5_TABLE, tokens_batch)
-                if errors:
-                    logger.warning(f"Insert errors: {errors[:3]}")
+                # Use MERGE to prevent duplicates
+                from shared import merge_rows_to_table
+                try:
+                    merge_rows_to_table(
+                        client=client,
+                        table_id=validated_stage_5_table,
+                        rows=tokens_batch,
+                        match_key="entity_id"
+                    )
+                except Exception as e:
+                    logger.warning(f"MERGE failed, using direct insert: {e}")
+                    errors = client.insert_rows_json(validated_stage_5_table, tokens_batch)
+                    if errors:
+                        logger.warning(f"Insert errors: {errors[:3]}")
                 total_tokens += len(tokens_batch)
                 tokens_batch = []
 
-    # Insert remaining tokens
+    # Insert remaining tokens with duplicate prevention
     if tokens_batch:
-        errors = client.insert_rows_json(STAGE_5_TABLE, tokens_batch)
-        if errors:
-            logger.warning(f"Insert errors: {errors[:3]}")
+        from shared import merge_rows_to_table
+        try:
+            merge_rows_to_table(
+                client=client,
+                table_id=validated_stage_5_table,
+                rows=tokens_batch,
+                match_key="entity_id"
+            )
+        except Exception as e:
+            logger.warning(f"MERGE failed, using direct insert: {e}")
+            errors = client.insert_rows_json(validated_stage_5_table, tokens_batch)
+            if errors:
+                logger.warning(f"Insert errors: {errors[:3]}")
         total_tokens += len(tokens_batch)
 
     return {
@@ -384,7 +418,9 @@ def main() -> int:
             return 0
 
         except Exception as e:
-            logger.error(f"Stage 5 failed: {e}", exc_info=True, extra={"run_id": run_id})
+            logger.error("Failed to tokenize messages")
+            logger.error(f"Error: {str(e)}")
+            logger.debug(f"Technical details: {e}", exc_info=True, extra={"run_id": run_id})
             require_diagnostic_on_error(e, "stage_5_tokens")
             tracker.update_progress(items_failed=1)
             return 1

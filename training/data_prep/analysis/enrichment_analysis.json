@@ -1,0 +1,25 @@
+{
+  "timestamp": "2026-01-28T02:50:17.302303",
+  "project": "flash-clover-464719-g1",
+  "dataset": "spine",
+  "tables_analyzed": [
+    "entity_unified"
+  ],
+  "metadata_fields": {},
+  "gap_analysis": {
+    "genesis_required": {
+      "emotion": "Primary emotion (28 categories from GoEmotions)",
+      "thought_type": "Type of cognitive process",
+      "cognitive_stage": "Stage in problem-solving",
+      "pattern": "Framework pattern demonstrated"
+    },
+    "current_fields": [],
+    "gaps": [
+      "emotion",
+      "thought_type",
+      "cognitive_stage",
+      "pattern"
+    ],
+    "metadata_by_level": {}
+  }
+}

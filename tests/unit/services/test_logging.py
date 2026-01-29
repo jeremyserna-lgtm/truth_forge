@@ -8,8 +8,6 @@ from __future__ import annotations
 import logging
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from truth_forge.services.logging.service import KnowledgeServiceHandler, LoggingService
 
 
@@ -155,4 +153,3 @@ class TestKnowledgeServiceHandler:
 
         call_args = mock_logging_service.inhale.call_args[0][0]
         assert call_args["level"] == "WARNING"
-

@@ -5,7 +5,6 @@ Tests the ClaudeProvider class.
 
 from __future__ import annotations
 
-from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -68,14 +67,16 @@ class TestClaudeProviderGetClient:
         """Test _get_client raises ProviderError when anthropic not installed."""
         provider = ClaudeProvider(api_key="key")
 
-        with patch.dict("sys.modules", {"anthropic": None}):
-            with patch(
+        with (
+            patch.dict("sys.modules", {"anthropic": None}),
+            patch(
                 "builtins.__import__",
                 side_effect=ImportError("No module named 'anthropic'"),
-            ):
-                with pytest.raises(ProviderError) as exc_info:
-                    provider._get_client()
-                assert "anthropic package not installed" in str(exc_info.value)
+            ),
+        ):
+            with pytest.raises(ProviderError) as exc_info:
+                provider._get_client()
+            assert "anthropic package not installed" in str(exc_info.value)
 
     @patch("truth_forge.gateway.providers.claude.ClaudeProvider._get_client")
     def test_get_client_cached(self, mock_get_client: MagicMock) -> None:

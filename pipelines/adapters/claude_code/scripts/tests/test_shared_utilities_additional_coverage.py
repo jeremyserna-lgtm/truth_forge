@@ -37,8 +37,8 @@ def test_validate_input_table_exists_not_found(mock_run_id, mock_logger) -> None
     
     mock_client = Mock(spec=bigquery.Client)
     mock_client.get_table.side_effect = NotFound("Table not found")
-    
-    with pytest.raises(NotFound):
+    # Function raises ValueError with message about table not existing
+    with pytest.raises(ValueError, match="does not exist|not found"):
         validate_input_table_exists(mock_client, "test_table")
 
 
@@ -70,7 +70,8 @@ def test_validate_gate_no_null_identity_with_nulls(mock_run_id, mock_logger) -> 
     mock_query_job.result.return_value = iter([mock_row])
     mock_client.query.return_value = mock_query_job
     
-    with pytest.raises(ValueError, match="null.*identity"):
+    # Function raises ValueError with "THE GATE VIOLATION" message
+    with pytest.raises(ValueError, match="THE GATE VIOLATION|GATE|violation"):
         validate_gate_no_null_identity(mock_client, "test_table", "test_field")
 
 
@@ -96,16 +97,20 @@ def test_validate_gate_no_null_identity_no_nulls(mock_run_id, mock_logger) -> No
 def test_verify_row_counts_match(mock_run_id, mock_logger) -> None:
     """Test verify_row_counts when counts match."""
     from shared.utilities import verify_row_counts
+    from google.cloud import bigquery
     
     mock_client = Mock(spec=bigquery.Client)
-    mock_query_job = Mock()
-    mock_row = Mock()
-    mock_row.cnt = 100
-    mock_query_job.result.return_value = iter([mock_row])
-    mock_client.query.return_value = mock_query_job
+    mock_source_table = Mock()
+    mock_source_table.num_rows = 100
+    mock_target_table = Mock()
+    mock_target_table.num_rows = 100
+    mock_client.get_table.side_effect = [mock_source_table, mock_target_table]
     
-    # Should not raise
-    verify_row_counts(mock_client, "table1", "table2", expected_diff=0)
+    source_count, target_count, is_valid = verify_row_counts(mock_client, "table1", "table2", expected_ratio=1.0)
+    
+    assert source_count == 100
+    assert target_count == 100
+    assert is_valid is True
 
 
 @patch('src.services.central_services.core.get_logger')
@@ -113,19 +118,20 @@ def test_verify_row_counts_match(mock_run_id, mock_logger) -> None:
 def test_verify_row_counts_mismatch(mock_run_id, mock_logger) -> None:
     """Test verify_row_counts when counts don't match."""
     from shared.utilities import verify_row_counts
+    from google.cloud import bigquery
     
     mock_client = Mock(spec=bigquery.Client)
-    mock_query_job = Mock()
-    # First query returns 100, second returns 50 (diff = 50, but expected_diff = 0)
-    mock_row1 = Mock()
-    mock_row1.cnt = 100
-    mock_row2 = Mock()
-    mock_row2.cnt = 50
-    mock_query_job.result.side_effect = [iter([mock_row1]), iter([mock_row2])]
-    mock_client.query.return_value = mock_query_job
+    mock_source_table = Mock()
+    mock_source_table.num_rows = 100
+    mock_target_table = Mock()
+    mock_target_table.num_rows = 50
+    mock_client.get_table.side_effect = [mock_source_table, mock_target_table]
     
-    with pytest.raises(ValueError, match="row count"):
-        verify_row_counts(mock_client, "table1", "table2", expected_diff=0)
+    source_count, target_count, is_valid = verify_row_counts(mock_client, "table1", "table2", expected_ratio=1.0)
+    
+    assert source_count == 100
+    assert target_count == 50
+    assert is_valid is False  # 50/100 = 0.5, not 1.0
 
 
 # =============================================================================

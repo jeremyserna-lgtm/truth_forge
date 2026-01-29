@@ -5,11 +5,8 @@ Tests the TruthForgeDaemon, DaemonConfig, and DaemonStatus classes.
 
 from __future__ import annotations
 
-import time
 from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 from truth_forge.daemon.service import (
     DaemonConfig,

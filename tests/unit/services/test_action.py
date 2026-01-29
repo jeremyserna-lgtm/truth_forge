@@ -9,8 +9,6 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from truth_forge.services.action.service import ActionService
 
 
@@ -147,7 +145,7 @@ class TestActionService:
                 "action": "write_file",
                 "params": {"path": "../../../etc/passwd", "content": "bad"},
             }
-            result = service.process(record)
+            service.process(record)
 
             # File should be in output_dir with sanitized name
             assert (service.output_dir / "passwd").exists()

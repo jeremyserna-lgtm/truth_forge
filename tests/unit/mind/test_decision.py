@@ -5,8 +5,6 @@ Tests the decision-making engine.
 
 from __future__ import annotations
 
-import pytest
-
 from truth_forge.mind.decision import (
     Decision,
     DecisionContext,

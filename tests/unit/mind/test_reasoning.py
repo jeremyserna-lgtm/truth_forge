@@ -5,8 +5,6 @@ Tests the cognitive reasoning engine.
 
 from __future__ import annotations
 
-import pytest
-
 from truth_forge.mind.reasoning import (
     Confidence,
     ReasoningEngine,
@@ -265,7 +263,7 @@ class TestReasoningEngine:
         """Test last_result tracking."""
         engine = ReasoningEngine()
 
-        result1 = engine.reason("First question")
+        engine.reason("First question")
         result2 = engine.reason("Second question")
 
         assert engine.last_result() is result2

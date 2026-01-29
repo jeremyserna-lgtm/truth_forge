@@ -24,30 +24,6 @@ Control: All utilities must be idempotent and well-tested
 """
 from __future__ import annotations
 
-"""Claude Code Pipeline - Shared Utilities
-
-Common functions used across all pipeline stages.
-Includes retry logic, validation, and data utilities.
-
-🧠 STAGE FIVE GROUNDING
-This module exists to provide reusable utilities for all stages.
-
-Structure: Define utilities → Export → Use in stages
-Purpose: Eliminate code duplication, ensure consistent behavior
-Boundaries: Stateless utilities only, no stage-specific logic
-Control: All utilities must be idempotent and well-tested
-
-⚠️ WHAT THIS MODULE CANNOT SEE
-- Stage execution context
-- BigQuery client state
-- Runtime errors in calling code
-
-🔥 THE FURNACE PRINCIPLE
-- Truth (input): Function arguments
-- Heat (processing): Utility logic execution
-- Meaning (output): Processed results
-- Care (delivery): Consistent, reliable utilities
-"""
 # Use logging bridge or fallback
 try:
     from .logging_bridge import get_logger as _get_logger
@@ -327,3 +303,170 @@ def get_pipeline_hold2_path(stage: int, pipeline_name: str) -> Path:
     staging_dir = pipeline_dir / "staging" / "knowledge_atoms" / f"stage_{stage}"
     staging_dir.mkdir(parents=True, exist_ok=True)
     return staging_dir / "hold2.jsonl"
+
+# =============================================================================
+# DUPLICATE PREVENTION - MERGE UTILITIES
+# =============================================================================
+
+def merge_rows_to_table(
+    client: bigquery.Client,
+    table_id: str,
+    rows: List[dict[str, Any]],
+    match_key: str,
+    project: Optional[str] = None,
+    dataset: Optional[str] = None,
+) -> int:
+    """Insert or update rows using MERGE to prevent duplicates.
+    
+    This function uses BigQuery MERGE statement to ensure idempotent inserts.
+    If a row with the same match_key exists, it updates; otherwise, it inserts.
+    
+    Args:
+        client: BigQuery client
+        table_id: Target table ID (will be validated)
+        rows: List of row dictionaries to merge
+        match_key: Column name to use for matching (must exist in rows)
+        project: Optional project override
+        dataset: Optional dataset override
+        
+    Returns:
+        Number of rows merged (inserted or updated)
+        
+    Raises:
+        ValueError: If table_id is invalid, match_key missing, or merge fails
+    """
+    if not rows:
+        return 0
+    
+    # Validate table_id using shared_validation
+    try:
+        from shared_validation import validate_table_id
+    except ImportError:
+        # Fallback validation
+        def validate_table_id(tid: str) -> str:
+            if not tid or not isinstance(tid, str):
+                raise ValueError(f"Invalid table_id: {tid}")
+            if any(danger in tid.upper() for danger in ['--', ';', 'DROP', 'DELETE']):
+                raise ValueError(f"Invalid table_id: potential SQL injection: {tid}")
+            return tid
+    
+    full_table_id = get_full_table_id(table_id, project, dataset)
+    validated_table_id = validate_table_id(full_table_id)
+    
+    # Validate match_key exists in all rows
+    if not all(match_key in row for row in rows):
+        raise ValueError(f"match_key '{match_key}' missing from one or more rows")
+    
+    # Get table schema to build MERGE statement
+    try:
+        table = client.get_table(validated_table_id)
+        schema = table.schema
+        field_names = [field.name for field in schema]
+    except google_exceptions.NotFound:
+        raise ValueError(f"Table {validated_table_id} does not exist")
+    
+    # For large batches, use temporary table approach
+    # For small batches, use direct insert with duplicate checking via MERGE
+    
+    if len(rows) > 100:
+        # Large batch: use temporary table
+        import uuid
+        temp_table_id = f"{validated_table_id.replace(':', '_')}_temp_{uuid.uuid4().hex[:8]}"
+        
+        # Create temp table with same schema
+        temp_table = bigquery.Table(temp_table_id, schema=schema)
+        client.create_table(temp_table, exists_ok=True)
+        
+        try:
+            # Load rows to temp table
+            errors = client.insert_rows_json(temp_table_id, rows)
+            if errors:
+                raise ValueError(f"Failed to load temp table: {errors[:5]}")
+            
+            # Build MERGE statement
+            update_fields = [f.name for f in schema if f.name != match_key]
+            insert_fields = [f.name for f in schema]
+            
+            merge_query = f"""
+            MERGE `{validated_table_id}` AS target
+            USING `{temp_table_id}` AS source
+            ON target.{match_key} = source.{match_key}
+            WHEN MATCHED THEN
+                UPDATE SET {', '.join(f"{f} = source.{f}" for f in update_fields)}
+            WHEN NOT MATCHED THEN
+                INSERT ({', '.join(insert_fields)})
+                VALUES ({', '.join(f'source.{f}' for f in insert_fields)})
+            """
+            
+            job = client.query(merge_query)
+            job.result()
+            
+            if job.errors:
+                raise ValueError(f"MERGE failed: {job.errors[:5]}")
+            
+            # Clean up temp table
+            client.delete_table(temp_table_id, not_found_ok=True)
+            
+        except Exception as e:
+            # Clean up temp table on error
+            try:
+                client.delete_table(temp_table_id, not_found_ok=True)
+            except Exception:
+                pass
+            raise
+    else:
+        # Small batch: use DELETE + INSERT pattern for idempotency
+        # This prevents duplicates by deleting existing rows first
+        
+        # Get all match_key values (validate they're safe)
+        from shared_validation import validate_entity_id
+        match_values = []
+        for row in rows:
+            match_val = str(row[match_key])
+            # Basic validation to prevent injection
+            if any(danger in match_val for danger in ['--', ';', '/*', '*/']):
+                raise ValueError(f"Invalid match_key value: potential SQL injection")
+            match_values.append(match_val)
+        
+        # Build safe IN clause
+        # Escape single quotes for SQL
+        safe_values = ', '.join(f"'{v.replace(chr(39), chr(39) + chr(39))}'" for v in match_values)
+        
+        # Delete existing rows with these match_keys (for this run_id if present)
+        if "run_id" in field_names and all("run_id" in row for row in rows):
+            run_ids = list(set(row["run_id"] for row in rows))
+            if len(run_ids) == 1:
+                from shared_validation import validate_run_id
+                safe_run_id = validate_run_id(run_ids[0])
+                delete_query = f"""
+                DELETE FROM `{validated_table_id}`
+                WHERE {match_key} IN ({safe_values})
+                AND run_id = '{safe_run_id}'
+                """
+            else:
+                # Escape single quotes for SQL
+                safe_run_ids = ', '.join(f"'{validate_run_id(rid).replace(chr(39), chr(39) + chr(39))}'" for rid in run_ids)
+                delete_query = f"""
+                DELETE FROM `{validated_table_id}`
+                WHERE {match_key} IN ({safe_values})
+                AND run_id IN ({safe_run_ids})
+                """
+        else:
+            delete_query = f"""
+            DELETE FROM `{validated_table_id}`
+            WHERE {match_key} IN ({safe_values})
+            """
+        
+        # Execute delete
+        delete_job = client.query(delete_query)
+        delete_job.result()
+        
+        if delete_job.errors:
+            raise ValueError(f"DELETE failed: {delete_job.errors[:5]}")
+        
+        # Insert new rows
+        errors = client.insert_rows_json(validated_table_id, rows)
+        if errors:
+            raise ValueError(f"Failed to insert rows: {errors[:5]}")
+    
+    return len(rows)

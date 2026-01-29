@@ -46,7 +46,7 @@ def get_entity_coverage() -> dict[str, Any]:
         SELECT COUNT(DISTINCT entity_id) as enriched_entities
         FROM `{BQ_PROJECT_ID}.{BQ_DATASET_ID}.{ENRICHMENTS_TABLE}`
     )
-    SELECT 
+    SELECT
         t.total_entities,
         e.enriched_entities,
         e.enriched_entities / t.total_entities * 100 as coverage_pct
@@ -84,7 +84,7 @@ def get_coverage_by_level() -> list[dict[str, Any]]:
         FROM `{BQ_PROJECT_ID}.{BQ_DATASET_ID}.{ENRICHMENTS_TABLE}`
         GROUP BY level
     )
-    SELECT 
+    SELECT
         t.level,
         t.total,
         COALESCE(e.enriched, 0) as enriched,
@@ -127,7 +127,7 @@ def get_coverage_by_source() -> list[dict[str, Any]]:
         WHERE source_platform IS NOT NULL
         GROUP BY source_platform
     )
-    SELECT 
+    SELECT
         t.source_platform,
         t.total,
         COALESCE(e.enriched, 0) as enriched,
@@ -187,7 +187,7 @@ def get_column_coverage() -> list[dict[str, Any]]:
         coverage_queries.append(f"COUNTIF({col} IS NOT NULL) as {col.replace('.', '_')}_count")
 
     query = f"""
-    SELECT 
+    SELECT
         COUNT(*) as total_rows,
         {", ".join(coverage_queries)}
     FROM `{BQ_PROJECT_ID}.{BQ_DATASET_ID}.{ENRICHMENTS_TABLE}`

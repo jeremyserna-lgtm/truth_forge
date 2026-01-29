@@ -7,8 +7,6 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from truth_forge.services.cognition.service import CognitionService
 
 
@@ -28,13 +26,11 @@ class TestCognitionService:
         mock_mediator = MagicMock()
 
         def get_service_side_effect(name: str) -> MagicMock:
-            if name == "knowledge":
-                return mock_knowledge
-            elif name == "relationship":
-                return mock_relationship
-            elif name == "mediator":
-                return mock_mediator
-            return MagicMock()
+            return {
+                "knowledge": mock_knowledge,
+                "relationship": mock_relationship,
+                "mediator": mock_mediator,
+            }.get(name, MagicMock())
 
         mock_get_service.side_effect = get_service_side_effect
 
@@ -344,4 +340,3 @@ class TestCognitionService:
         assert action["action"] == "write_file"
         assert action["params"]["path"] == "output.md"
         assert "Summary" in action["params"]["content"]
-

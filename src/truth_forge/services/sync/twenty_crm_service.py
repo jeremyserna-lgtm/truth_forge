@@ -3,40 +3,35 @@
 Initializes clients and provides high-level sync operations.
 """
 
-from typing import Dict, Any, Optional
-from datetime import datetime
 import logging
-
-from typing import TYPE_CHECKING, Any, Optional
 from datetime import datetime
-import logging
+from typing import Any
 
 from google.cloud import bigquery
 
 from truth_forge.services.sync.twenty_crm_client import TwentyCRMClient
 
-if TYPE_CHECKING:
-    from supabase import Client
-else:
-    try:
-        from supabase import create_client, Client
-    except ImportError:
-        create_client = None
-        Client = Any
+
+try:
+    from supabase import Client, create_client
+except ImportError:
+    Client = Any
+    create_client = None
+from truth_forge.core.settings import settings
+from truth_forge.services.secret.service import SecretService
 from truth_forge.services.sync.bigquery_sync import BigQuerySyncService
 from truth_forge.services.sync.business_sync import BusinessSyncService
+from truth_forge.services.sync.error_reporter import ErrorReporter
 from truth_forge.services.sync.people_relationship_sync import PeopleRelationshipSyncService
 from truth_forge.services.sync.relationship_sync import RelationshipSyncService
-from truth_forge.services.sync.error_reporter import ErrorReporter
-from truth_forge.services.secret.service import SecretService
-from truth_forge.core.settings import settings
+
 
 logger = logging.getLogger(__name__)
 
 
 class TwentyCRMService:
     """Main service for Twenty CRM operations.
-    
+
     Provides:
     - Initialization with secrets manager
     - Setup of custom fields
@@ -46,12 +41,12 @@ class TwentyCRMService:
 
     def __init__(
         self,
-        bq_client: Optional[bigquery.Client] = None,
-        supabase_client: Optional[Any] = None,
-        local_db: Optional[Any] = None,
+        bq_client: bigquery.Client | None = None,
+        supabase_client: Any | None = None,
+        local_db: Any | None = None,
     ) -> None:
         """Initialize Twenty CRM service.
-        
+
         Args:
             bq_client: BigQuery client (optional, will create if not provided)
             supabase_client: Supabase client (optional, will create if not provided)
@@ -120,9 +115,13 @@ class TwentyCRMService:
             self.error_reporter,
         )
 
-    def setup_crm(self) -> Dict[str, Any]:
+        from truth_forge.services.sync.crm_twenty_sync import CRMTwentySyncService
+
+        self.crm_sync = CRMTwentySyncService(self.crm_client, self.bq_client, self.bq_sync)
+
+    def setup_crm(self) -> dict[str, Any]:
         """Set up Twenty CRM with custom fields and data model.
-        
+
         Returns:
             Setup results
         """
@@ -131,9 +130,9 @@ class TwentyCRMService:
         setup = TwentyCRMSetup(client=self.crm_client)
         return setup.setup_all()
 
-    def verify_setup(self) -> Dict[str, Any]:
+    def verify_setup(self) -> dict[str, Any]:
         """Verify CRM setup is complete.
-        
+
         Returns:
             Verification results
         """
@@ -142,40 +141,38 @@ class TwentyCRMService:
         setup = TwentyCRMSetup(client=self.crm_client)
         return setup.verify_setup()
 
-    def sync_contact_from_crm(self, crm_contact_id: str) -> Dict[str, Any]:
+    def sync_contact_from_crm(self, crm_contact_id: str) -> dict[str, Any]:
         """Sync a contact from CRM to BigQuery and all systems.
-        
+
         Args:
             crm_contact_id: Contact ID in Twenty CRM
-            
+
         Returns:
             Sync result
         """
         from truth_forge.services.sync.crm_twenty_sync import CRMTwentySyncService
 
-        crm_sync = CRMTwentySyncService(
-            self.crm_client, self.bq_client, self.bq_sync
-        )
+        crm_sync = CRMTwentySyncService(self.crm_client, self.bq_client, self.bq_sync)
         return crm_sync.sync_from_crm_to_bigquery(crm_contact_id)
 
-    def sync_business_from_crm(self, crm_company_id: str) -> Dict[str, Any]:
+    def sync_business_from_crm(self, crm_company_id: str) -> dict[str, Any]:
         """Sync a business from CRM to BigQuery and all systems.
-        
+
         Args:
             crm_company_id: Company ID in Twenty CRM
-            
+
         Returns:
             Sync result
         """
         try:
             # Fetch from CRM
             company = self.crm_client.get_company(crm_company_id)
-            
+
             # Get business_id from customFields
             business_id = company.get("customFields", {}).get("business_id")
             if not business_id:
                 return {"status": "error", "error": "Company missing business_id in customFields"}
-            
+
             # Sync business (which propagates to all systems)
             result = self.business_sync.sync_business_to_all(business_id)
             return result
@@ -183,29 +180,25 @@ class TwentyCRMService:
             logger.error(f"Failed to sync business from CRM: {e}", exc_info=True)
             return {"status": "error", "error": str(e)}
 
-    def sync_all_from_crm(
-        self, last_sync_time: Optional[datetime] = None
-    ) -> Dict[str, Any]:
+    def sync_all_from_crm(self, last_sync_time: datetime | None = None) -> dict[str, Any]:
         """Sync all contacts and companies from CRM.
-        
+
         Args:
             last_sync_time: Last sync timestamp
-            
+
         Returns:
             Sync summary
         """
         from truth_forge.services.sync.crm_twenty_sync import CRMTwentySyncService
 
-        crm_sync = CRMTwentySyncService(
-            self.crm_client, self.bq_client, self.bq_sync
-        )
+        crm_sync = CRMTwentySyncService(self.crm_client, self.bq_client, self.bq_sync)
 
         # Sync contacts
         contacts_result = crm_sync.sync_all_from_crm(last_sync_time)
 
         # Sync companies
         companies = self.crm_client.list_companies(updated_since=last_sync_time)
-        companies_result = {"synced": 0, "results": []}
+        companies_result: dict[str, Any] = {"synced": 0, "results": []}
         for company in companies:
             try:
                 # Get business_id from customFields

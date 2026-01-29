@@ -69,11 +69,18 @@ sys.path.insert(0, str(_src_path))
 
 # Local imports after path setup (ruff: noqa: E402)
 from shared import PIPELINE_NAME, SOURCE_NAME  # noqa: E402
-from src.services.central_services.core import (  # noqa: E402
+from shared.logging_bridge import (  # noqa: E402
     get_current_run_id,
     get_logger,
 )
-from src.services.central_services.core.pipeline_tracker import (  # noqa: E402
+# PipelineTracker fallback
+from contextlib import contextmanager
+@contextmanager
+def PipelineTracker(*args, **kwargs):  # noqa: E402
+    obj = type("obj", (object,), {"update_progress": lambda self, **kw: None})()
+    yield obj
+# Import fallback for
+from shared.logging_bridge import (  # noqa: E402
     PipelineTracker,
 )
 

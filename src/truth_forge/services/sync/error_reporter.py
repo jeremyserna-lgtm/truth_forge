@@ -4,17 +4,18 @@ All errors, issues, and problems are reported to Jeremy.
 Nothing is hidden or suppressed.
 """
 
-from typing import Dict, Any, Optional
-from datetime import datetime
 import logging
-import traceback
+from datetime import datetime
 from enum import Enum
+from typing import Any
+
 
 logger = logging.getLogger(__name__)
 
 
 class ErrorType(Enum):
     """Error types for categorization."""
+
     VALIDATION = "validation"
     SYNC = "sync"
     CONFLICT = "conflict"
@@ -28,7 +29,7 @@ class ErrorType(Enum):
 
 class ErrorReporter:
     """Reports all errors transparently - nothing hidden.
-    
+
     Every error is:
     1. Stored in entity's sync_errors array
     2. Stored in central error log
@@ -39,10 +40,10 @@ class ErrorReporter:
     def __init__(
         self,
         bq_client: Any,
-        alert_service: Optional[Any] = None,
+        alert_service: Any | None = None,
     ) -> None:
         """Initialize error reporter.
-        
+
         Args:
             bq_client: BigQuery client for error log
             alert_service: Service for alerting Jeremy (email/Slack)
@@ -59,9 +60,9 @@ class ErrorReporter:
         error_message: str,
         error_details: Any = None,
         raise_after: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Report an error - ALWAYS called, never hidden.
-        
+
         Args:
             entity_type: Type of entity (business, relationship, contact)
             entity_id: ID of the entity
@@ -70,7 +71,7 @@ class ErrorReporter:
             error_message: Human-readable error message
             error_details: Full error details (stack trace, etc.)
             raise_after: Whether to raise exception after reporting
-            
+
         Returns:
             Error record
         """
@@ -79,9 +80,7 @@ class ErrorReporter:
             "system": system,
             "error_type": error_type,
             "error_message": error_message,
-            "error_details": (
-                str(error_details) if error_details else None
-            ),
+            "error_details": (str(error_details) if error_details else None),
             "resolved": False,
         }
 
@@ -90,8 +89,7 @@ class ErrorReporter:
             self._store_error_in_entity(entity_type, entity_id, error)
         except Exception as e:
             logger.critical(
-                f"CRITICAL: Failed to store error in entity: {e}. "
-                f"Original error: {error_message}"
+                f"CRITICAL: Failed to store error in entity: {e}. Original error: {error_message}"
             )
 
         # 2. Store in central error log (BigQuery)
@@ -99,8 +97,7 @@ class ErrorReporter:
             self._store_in_error_log(entity_type, entity_id, error)
         except Exception as e:
             logger.critical(
-                f"CRITICAL: Failed to store error in log: {e}. "
-                f"Original error: {error_message}"
+                f"CRITICAL: Failed to store error in log: {e}. Original error: {error_message}"
             )
 
         # 3. Alert Jeremy (email/Slack/notification)
@@ -108,14 +105,12 @@ class ErrorReporter:
             self._alert_jeremy(error, entity_type, entity_id)
         except Exception as e:
             logger.critical(
-                f"CRITICAL: Failed to alert Jeremy: {e}. "
-                f"Original error: {error_message}"
+                f"CRITICAL: Failed to alert Jeremy: {e}. Original error: {error_message}"
             )
 
         # 4. Log to monitoring system
         logger.error(
-            f"SYNC ERROR [{error_type}] in {system} for {entity_type} {entity_id}: "
-            f"{error_message}"
+            f"SYNC ERROR [{error_type}] in {system} for {entity_type} {entity_id}: {error_message}"
         )
         if error_details:
             logger.error(f"Error details: {error_details}")
@@ -126,10 +121,10 @@ class ErrorReporter:
         return error
 
     def _store_error_in_entity(
-        self, entity_type: str, entity_id: str, error: Dict[str, Any]
+        self, entity_type: str, entity_id: str, error: dict[str, Any]
     ) -> None:
         """Store error in entity's sync_errors array.
-        
+
         Args:
             entity_type: Type of entity
             entity_id: Entity ID
@@ -181,11 +176,9 @@ class ErrorReporter:
 
         self.bq_client.query(query, job_config=job_config).result()
 
-    def _store_in_error_log(
-        self, entity_type: str, entity_id: str, error: Dict[str, Any]
-    ) -> None:
+    def _store_in_error_log(self, entity_type: str, entity_id: str, error: dict[str, Any]) -> None:
         """Store error in central error log.
-        
+
         Args:
             entity_type: Type of entity
             entity_id: Entity ID
@@ -210,11 +203,9 @@ class ErrorReporter:
         if errors:
             logger.critical(f"Failed to insert error log: {errors}")
 
-    def _alert_jeremy(
-        self, error: Dict[str, Any], entity_type: str, entity_id: str
-    ) -> None:
+    def _alert_jeremy(self, error: dict[str, Any], entity_type: str, entity_id: str) -> None:
         """Alert Jeremy about the error - nothing hidden.
-        
+
         Args:
             error: Error record
             entity_type: Type of entity
@@ -230,13 +221,13 @@ SYNC ERROR DETECTED
 
 Entity Type: {entity_type}
 Entity ID: {entity_id}
-System: {error['system']}
-Error Type: {error['error_type']}
-Error Message: {error['error_message']}
-Timestamp: {error['timestamp']}
+System: {error["system"]}
+Error Type: {error["error_type"]}
+Error Message: {error["error_message"]}
+Timestamp: {error["timestamp"]}
 
 Error Details:
-{error['error_details'] or 'None'}
+{error["error_details"] or "None"}
 
 This error has been logged and stored. Please review.
 """
@@ -251,14 +242,14 @@ This error has been logged and stored. Please review.
             logger.critical(f"Failed to send alert to Jeremy: {e}")
 
     def get_unresolved_errors(
-        self, entity_type: Optional[str] = None, system: Optional[str] = None
-    ) -> list[Dict[str, Any]]:
+        self, entity_type: str | None = None, system: str | None = None
+    ) -> list[dict[str, Any]]:
         """Get unresolved errors.
-        
+
         Args:
             entity_type: Filter by entity type
             system: Filter by system
-            
+
         Returns:
             List of unresolved errors
         """
@@ -282,11 +273,9 @@ This error has been logged and stored. Please review.
         query_job = self.bq_client.query(query, job_config=job_config)
         return [dict(row) for row in query_job.result()]
 
-    def mark_error_resolved(
-        self, error_id: str, resolution_notes: Optional[str] = None
-    ) -> None:
+    def mark_error_resolved(self, error_id: str, resolution_notes: str | None = None) -> None:
         """Mark an error as resolved.
-        
+
         Args:
             error_id: Error ID
             resolution_notes: Notes about resolution

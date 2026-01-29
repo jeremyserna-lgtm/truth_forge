@@ -203,9 +203,10 @@ force-single-line = false
 lines-after-imports = 2
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["PLR2004", "S101"]  # Allow asserts and magic values in tests
+"tests/**/*.py" = ["PLR2004", "S101", "SIM117"]  # Asserts, magic values; nested with kept for clarity
 "__init__.py" = ["F401"]  # Allow unused imports in __init__.py
-"pipelines/enrichment/**/*.py" = ["PLC0415", "PLR0911", "TC002"]  # Lazy imports; multiple returns; bigquery at runtime
+"pipelines/enrichment/**/*.py" = ["PLC0415", "PLR0911", "RUF012", "TC002"]
+"src/truth_forge/services/sync/conflict_resolver.py" = ["PLR0911"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -258,6 +259,11 @@ module = [
     "sklearn.*",
     "google.generativeai.*",
 ]
+ignore_missing_imports = true
+
+# Sync optional / missing modules
+[[tool.mypy.overrides]]
+module = ["supabase.*", "supabase", "truth_forge.services.sync.local_sync"]
 ignore_missing_imports = true
 
 # =============================================================================

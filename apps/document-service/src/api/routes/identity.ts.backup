@@ -1,0 +1,215 @@
+/**
+ * API Routes for Identity Architecture System
+ */
+
+import express from 'express';
+import multer from 'multer';
+import { IdentityArchitecturePipeline } from '../core/identity-pipeline';
+import { LocalStorageAdapter } from '../storage/adapters/local';
+import { Document } from '../types';
+import { getConfig } from '../config';
+
+const router = express.Router();
+const config = getConfig();
+const upload = multer({ storage: multer.memoryStorage() });
+
+// Initialize services
+const pipeline = new IdentityArchitecturePipeline(config.integrations.gemini?.apiKey || '');
+const storageAdapter = new LocalStorageAdapter(config.defaultStorage.path || '/tmp/documents');
+
+// In-memory storage for demo (TODO: replace with database)
+const architectures = new Map();
+const documents = new Map();
+
+/**
+ * POST /api/v1/upload
+ * Upload documents and start processing
+ */
+router.post('/upload', upload.array('files', 20), async (req, res) => {
+    try {
+        const tenantId = req.body.tenantId || 'demo-user';
+        const files = req.files as Express.Multer.File[];
+
+        if (!files || files.length === 0) {
+            return res.status(400).json({ error: 'No files uploaded' });
+        }
+
+        // Store files
+        const uploadedDocs: Document[] = [];
+
+        for (const file of files) {
+            const storageUri = await storageAdapter.upload(file.buffer, {
+                tenantId,
+                filename: file.originalname,
+                mimeType: file.mimetype
+            });
+
+            const doc: Document = {
+                id: `doc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                tenantId,
+                type: 'knowledge',
+                metadata: {
+                    filename: file.originalname,
+                    mimeType: file.mimetype,
+                    sizeBytes: file.size,
+                    uploadedAt: new Date()
+                },
+                storageUri,
+                ocrStatus: 'pending',
+                ocrText: file.buffer.toString('utf-8'), // Simple text extraction for now
+                createdAt: new Date(),
+                updatedAt: new Date()
+            };
+
+            documents.set(doc.id, doc);
+            uploadedDocs.push(doc);
+        }
+
+        res.json({
+            success: true,
+            documentIds: uploadedDocs.map(d => d.id),
+            count: uploadedDocs.length,
+            message: 'Files uploaded successfully. Starting processing...'
+        });
+
+    } catch (error: any) {
+        console.error('Upload error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * POST /api/v1/process
+ * Process documents into identity architecture
+ */
+router.post('/process', async (req, res) => {
+    try {
+        const { tenantId, documentIds } = req.body;
+
+        if (!tenantId || !documentIds || documentIds.length === 0) {
+            return res.status(400).json({ error: 'Missing tenantId or documentIds' });
+        }
+
+        // Get documents
+        const docs = documentIds.map((id: string) => documents.get(id)).filter((d: any) => d);
+
+        if (docs.length === 0) {
+            return res.status(404).json({ error: 'No documents found' });
+        }
+
+        // Process through pipeline
+        const architecture = await pipeline.process(tenantId, docs, (progress) => {
+            console.log(`[${progress.stage}] ${progress.progress}% - ${progress.message}`);
+            // TODO: Send real-time updates via WebSocket
+        });
+
+        // Store architecture
+        architectures.set(tenantId, architecture);
+
+        // Return summary
+        const summary = pipeline.getArchitectureSummary(architecture);
+
+        res.json({
+            success: true,
+            tenantId,
+            summary,
+            architecture
+        });
+
+    } catch (error: any) {
+        console.error('Processing error:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+/**
+ * GET /api/v1/architecture/:tenantId
+ * Get complete architecture for a tenant
+ */
+router.get('/architecture/:tenantId', (req, res) => {
+    const { tenantId } = req.params;
+    const architecture = architectures.get(tenantId);
+
+    if (!architecture) {
+        return res.status(404).json({ error: 'Architecture not found' });
+    }
+
+    res.json(architecture);
+});
+
+/**
+ * GET /api/v1/architecture/:tenantId/summary
+ * Get architecture summary (for dashboard display)
+ */
+router.get('/architecture/:tenantId/summary', (req, res) => {
+    const { tenantId } = req.params;
+    const architecture = architectures.get(tenantId);
+
+    if (!architecture) {
+        return res.status(404).json({ error: 'Architecture not found' });
+    }
+
+    const summary = pipeline.getArchitectureSummary(architecture);
+    res.json(summary);
+});
+
+/**
+ * GET /api/v1/architecture/:tenantId/screen/:screenNumber
+ * Get data for specific screen (1-4)
+ */
+router.get('/architecture/:tenantId/screen/:screenNumber', (req, res) => {
+    const { tenantId, screenNumber } = req.params;
+    const architecture = architectures.get(tenantId);
+
+    if (!architecture) {
+        return res.status(404).json({ error: 'Architecture not found' });
+    }
+
+    const screen = parseInt(screenNumber);
+
+    switch (screen) {
+        case 1:
+            // Screen 1: What You Gave Us
+            res.json({
+                screen: 1,
+                title: 'What You Gave Us',
+                documents: architecture.documents,
+                atoms: architecture.atoms
+            });
+            break;
+
+        case 2:
+            // Screen 2: What We See
+            res.json({
+                screen: 2,
+                title: 'What We See',
+                metaLayers: architecture.metaLayers
+            });
+            break;
+
+        case 3:
+            // Screen 3: Furnace Principle
+            res.json({
+                screen: 3,
+                title: 'Furnace Principle',
+                expandedAtoms: architecture.furnace.expandedAtoms,
+                patterns: architecture.furnace.patterns
+            });
+            break;
+
+        case 4:
+            // Screen 4: Not-Me Identity
+            res.json({
+                screen: 4,
+                title: 'Not-Me Identity',
+                identity: architecture.identity,
+                summary: pipeline.getArchitectureSummary(architecture)
+            });
+            break;
+
+        default:
+            res.status(400).json({ error: 'Invalid screen number (1-4)' });
+    }
+});
+
+export default router;

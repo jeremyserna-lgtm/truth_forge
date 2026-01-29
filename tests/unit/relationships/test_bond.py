@@ -5,14 +5,11 @@ Tests Memory, Preferences, and Journey classes.
 
 from __future__ import annotations
 
-import json
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any
 from unittest.mock import patch
-
-import pytest
 
 from truth_forge.relationships.bond import (
     Chapter,
@@ -109,7 +106,7 @@ class TestMemory:
         """Test initialization creates storage path."""
         with TemporaryDirectory() as tmpdir:
             storage = Path(tmpdir) / "memory" / "test.jsonl"
-            memory = Memory(storage_path=storage)
+            Memory(storage_path=storage)
             assert storage.parent.exists()
 
     def test_remember_creates_interaction(self) -> None:
@@ -262,7 +259,7 @@ class TestPreferences:
         """Test initialization creates storage path."""
         with TemporaryDirectory() as tmpdir:
             storage = Path(tmpdir) / "prefs" / "preferences.json"
-            prefs = Preferences(storage_path=storage)
+            Preferences(storage_path=storage)
             assert storage.parent.exists()
 
     def test_observe_action(self) -> None:
@@ -400,7 +397,7 @@ class TestJourney:
         """Test initialization creates storage path."""
         with TemporaryDirectory() as tmpdir:
             storage = Path(tmpdir) / "journey" / "journey.jsonl"
-            journey = Journey(storage_path=storage)
+            Journey(storage_path=storage)
             assert storage.parent.exists()
 
     def test_start_chapter(self) -> None:

@@ -5,14 +5,14 @@ Tests the pipeline configuration loading and validation.
 
 from __future__ import annotations
 
+# Add pipelines to path for imports
+import sys
 from pathlib import Path
-from tempfile import NamedTemporaryFile
 from typing import Any
 
 import pytest
 
-# Add pipelines to path for imports
-import sys
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
 from pipelines.core.config import PipelineConfig, StageConfig
@@ -106,7 +106,7 @@ class TestPipelineConfig:
 
     def test_from_toml(self, tmp_path: Path) -> None:
         """Test loading from TOML file."""
-        toml_content = '''
+        toml_content = """
 [pipeline]
 name = "test_pipeline"
 version = "2.0.0"
@@ -115,7 +115,7 @@ description = "Test pipeline"
 [stages.stage_0]
 name = "Extract"
 type = "extract"
-'''
+"""
         toml_file = tmp_path / "config.toml"
         toml_file.write_text(toml_content)
 

@@ -5,8 +5,7 @@ Tests the unified LLM orchestration.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -15,8 +14,6 @@ from truth_forge.gateway.types import (
     CompletionRequest,
     CompletionResponse,
     CostLimitError,
-    EmbeddingRequest,
-    EmbeddingResponse,
     GatewayError,
     ModelProvider,
     ProviderError,
@@ -59,7 +56,7 @@ class TestModelGateway:
     def test_get_provider(self) -> None:
         """Test getting a specific provider."""
         gateway = ModelGateway()
-        provider = gateway.get_provider("claude")
+        gateway.get_provider("claude")
 
         # Provider may or may not be available
         # but the method should not raise
@@ -134,7 +131,7 @@ class TestModelGateway:
         gateway._cache["test-key"] = (time.time(), cached_response)
 
         # Create request with same cache key
-        request = CompletionRequest(prompt="Test", cache_key="test-key")
+        CompletionRequest(prompt="Test", cache_key="test-key")
 
         # Get cached response
         result = gateway._get_cached("test-key")
@@ -197,7 +194,7 @@ class TestModelGateway:
         gateway._providers[ModelProvider.CLAUDE] = mock_provider
 
         request = CompletionRequest(prompt="Test", model="claude-haiku")
-        response = gateway.complete(request)
+        gateway.complete(request)
 
         assert gateway.total_cost == 0.001
         assert gateway.request_count == 1
@@ -320,7 +317,7 @@ class TestModelGatewayComplete:
         gateway._providers[ModelProvider.CLAUDE] = mock_provider
 
         request = CompletionRequest(prompt="Test", model="claude-haiku", cache_key="test-cache-key")
-        response = gateway.complete(request)
+        gateway.complete(request)
 
         # Should be cached now
         assert "test-cache-key" in gateway._cache

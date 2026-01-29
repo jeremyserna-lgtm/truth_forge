@@ -112,10 +112,7 @@ class TaxonomyEnrichment(BaseEnrichment):
         if metadata:
             # Try to extract from metadata JSON
             try:
-                if isinstance(metadata, str):
-                    metadata_dict = json.loads(metadata)
-                else:
-                    metadata_dict = metadata
+                metadata_dict = json.loads(metadata) if isinstance(metadata, str) else metadata
 
                 primary_category = metadata_dict.get("category") or metadata_dict.get(
                     "primary_category"
@@ -182,8 +179,7 @@ class TaxonomyEnrichment(BaseEnrichment):
             logger.info("Nothing to process.")
             return
 
-        # Process in batches
-        enriched = []
+        enriched: list[dict[str, Any]] = []
         total = len(results)
 
         for i, row in enumerate(results):
@@ -192,11 +188,11 @@ class TaxonomyEnrichment(BaseEnrichment):
                 if not text:
                     continue
 
-                result = self.compute_enrichment_from_row(row, text)
-                result["entity_id"] = (
+                out = self.compute_enrichment_from_row(row, text)
+                out["entity_id"] = (
                     row.entity_id if hasattr(row, "entity_id") else row.get("entity_id")
                 )
-                enriched.append(result)
+                enriched.append(out)
 
                 # Write batch when full
                 if len(enriched) >= self.args.write_batch_size:

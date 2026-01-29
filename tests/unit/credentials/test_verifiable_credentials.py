@@ -9,8 +9,6 @@ import json
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-import pytest
-
 from truth_forge.credentials.verifiable_credentials import (
     VC_CONTEXT_V2,
     CredentialProof,
@@ -423,12 +421,14 @@ class TestVerifyCredential:
 
     def test_verify_json_string(self) -> None:
         """Test verifying from JSON string."""
-        json_str = json.dumps({
-            "@context": [VC_CONTEXT_V2],
-            "type": ["VerifiableCredential"],
-            "issuer": "did:example:issuer",
-            "credentialSubject": {"name": "Bob"},
-        })
+        json_str = json.dumps(
+            {
+                "@context": [VC_CONTEXT_V2],
+                "type": ["VerifiableCredential"],
+                "issuer": "did:example:issuer",
+                "credentialSubject": {"name": "Bob"},
+            }
+        )
         result = verify_credential(json_str)
         assert result.valid is True
 
@@ -588,18 +588,20 @@ class TestVerifyPresentation:
 
     def test_verify_presentation_from_json_string(self) -> None:
         """Test verifying presentation from JSON string."""
-        json_str = json.dumps({
-            "@context": [VC_CONTEXT_V2],
-            "type": ["VerifiablePresentation"],
-            "holder": "did:example:holder",
-            "verifiableCredential": [
-                {
-                    "@context": [VC_CONTEXT_V2],
-                    "issuer": "did:example:issuer",
-                    "credentialSubject": {},
-                }
-            ],
-        })
+        json_str = json.dumps(
+            {
+                "@context": [VC_CONTEXT_V2],
+                "type": ["VerifiablePresentation"],
+                "holder": "did:example:holder",
+                "verifiableCredential": [
+                    {
+                        "@context": [VC_CONTEXT_V2],
+                        "issuer": "did:example:issuer",
+                        "credentialSubject": {},
+                    }
+                ],
+            }
+        )
         result = verify_presentation(json_str)
         assert result.valid is True
 

@@ -7,8 +7,6 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from truth_forge.core.script_runner import run_script_with_knowledge_capture
 
 

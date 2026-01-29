@@ -139,7 +139,7 @@ class TestMoltConfig:
 
             # Create config file
             config_path = Path(tmpdir) / "molt.yaml"
-            config_path.write_text(f"""
+            config_path.write_text("""
 organism:
   name: test_org
   type: offspring

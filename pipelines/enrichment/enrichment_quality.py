@@ -65,8 +65,8 @@ class QualityEnrichment(BaseEnrichment):
         Returns:
             Dictionary with quality flags and metadata
         """
-        flags = []
-        metadata = {}
+        flags: list[str] = []
+        out_meta: dict[str, Any] = {}
 
         # Check for missing required enrichments
         required_enrichments = [
@@ -83,7 +83,7 @@ class QualityEnrichment(BaseEnrichment):
 
         if missing:
             flags.append("missing_required")
-            metadata["missing_enrichments"] = missing
+            out_meta["missing_enrichments"] = missing
 
         # Check for low confidence scores
         if hasattr(row, "textblob_polarity") and row.textblob_polarity is not None:
@@ -102,22 +102,21 @@ class QualityEnrichment(BaseEnrichment):
             text_length = len(text)
             if text_length > 100000:
                 flags.append("very_long_text")
-                metadata["text_length"] = text_length
+                out_meta["text_length"] = text_length
             elif text_length < 10:
                 flags.append("very_short_text")
-                metadata["text_length"] = text_length
+                out_meta["text_length"] = text_length
 
             # Check for unusual character patterns
             if text.count("\x00") > 0:
                 flags.append("null_bytes_detected")
 
-        # Add processing metadata
-        metadata["processed_at"] = datetime.utcnow().isoformat()
-        metadata["processing_version"] = "1.0.0"
+        out_meta["processed_at"] = datetime.utcnow().isoformat()
+        out_meta["processing_version"] = "1.0.0"
 
         return {
             "enrichment_quality_flags": flags if flags else None,
-            "enrichment_metadata": json.dumps(metadata) if metadata else None,
+            "enrichment_metadata": json.dumps(out_meta) if out_meta else None,
             "quality_version": "1.0.0",
         }
 
@@ -128,7 +127,7 @@ class QualityEnrichment(BaseEnrichment):
 
         # Query enrichments table (not entity_unified)
         query = f"""
-        SELECT 
+        SELECT
             e.entity_id,
             e.text,
             e.textblob_polarity,
@@ -181,19 +180,18 @@ class QualityEnrichment(BaseEnrichment):
             logger.info("Nothing to process.")
             return
 
-        # Process in batches
-        enriched = []
+        enriched: list[dict[str, Any]] = []
         total = len(results)
 
         for i, row in enumerate(results):
             try:
                 text = row.text if hasattr(row, "text") else row.get("text", "")
 
-                result = self.compute_enrichment_from_row(row, text)
-                result["entity_id"] = (
+                out = self.compute_enrichment_from_row(row, text)
+                out["entity_id"] = (
                     row.entity_id if hasattr(row, "entity_id") else row.get("entity_id")
                 )
-                enriched.append(result)
+                enriched.append(out)
 
                 # Write batch when full
                 if len(enriched) >= self.args.write_batch_size:

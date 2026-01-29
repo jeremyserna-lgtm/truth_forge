@@ -1,15 +1,16 @@
 """BigQuery sync service - syncs from canonical source to all systems."""
 
-from typing import Dict, Any, List, Optional
-from datetime import datetime
 import logging
+from datetime import datetime
+from typing import Any
+
 
 logger = logging.getLogger(__name__)
 
 
 class BigQuerySyncService:
     """Syncs contacts from BigQuery (canonical) to all other systems.
-    
+
     BigQuery is the canonical source. All changes flow through BigQuery first,
     then propagate to Supabase, Local DB, and CRM Twenty.
     """
@@ -22,7 +23,7 @@ class BigQuerySyncService:
         crm_twenty_client: Any,
     ) -> None:
         """Initialize BigQuery sync service.
-        
+
         Args:
             bq_client: BigQuery client
             supabase_client: Supabase client
@@ -34,12 +35,12 @@ class BigQuerySyncService:
         self.local_db = local_db
         self.crm_twenty = crm_twenty_client
 
-    def sync_contact_to_all(self, contact_id: str) -> Dict[str, Any]:
+    def sync_contact_to_all(self, contact_id: str) -> dict[str, Any]:
         """Sync a single contact from BigQuery to all systems.
-        
+
         Args:
             contact_id: Contact ID in BigQuery
-            
+
         Returns:
             Dict with sync results for each system
         """
@@ -65,19 +66,20 @@ class BigQuerySyncService:
         }
 
     def sync_all_contacts(
-        self, last_sync_time: Optional[datetime] = None, batch_size: int = 100
-    ) -> Dict[str, Any]:
+        self, last_sync_time: datetime | None = None, batch_size: int = 100
+    ) -> dict[str, Any]:
         """Sync all contacts modified since last sync.
-        
+
         Args:
             last_sync_time: Last sync timestamp (defaults to 24 hours ago)
             batch_size: Number of contacts to sync per batch
-            
+
         Returns:
             Dict with sync summary
         """
         if not last_sync_time:
             from datetime import timedelta
+
             last_sync_time = datetime.utcnow() - timedelta(hours=24)
 
         query = """
@@ -108,12 +110,12 @@ class BigQuerySyncService:
             "last_sync_time": last_sync_time.isoformat(),
         }
 
-    def _fetch_from_bigquery(self, contact_id: str) -> Optional[Dict[str, Any]]:
+    def _fetch_from_bigquery(self, contact_id: str) -> dict[str, Any] | None:
         """Fetch contact from BigQuery.
-        
+
         Args:
             contact_id: Contact ID
-            
+
         Returns:
             Contact record or None
         """
@@ -121,7 +123,7 @@ class BigQuerySyncService:
         # Includes: apple_unique_id, name fields, organization, category_code, etc.
         # Extended fields may not exist yet, so we use SAFE_CAST to handle gracefully
         query = """
-        SELECT 
+        SELECT
           contact_id,
           apple_unique_id,
           first_name,
@@ -145,9 +147,9 @@ class BigQuerySyncService:
           updated_at,
           -- Extended fields (may not exist yet - use SAFE_CAST to handle gracefully)
           -- Only include if they exist in the schema
-          COALESCE(display_name, 
+          COALESCE(display_name,
             CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, ''))) as canonical_name,
-          COALESCE(display_name, 
+          COALESCE(display_name,
             CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, ''))) as full_name
         FROM `identity.contacts_master`
         WHERE CAST(contact_id AS STRING) = @contact_id
@@ -156,10 +158,9 @@ class BigQuerySyncService:
 
         # contact_id is STRING in BigQuery - always use STRING parameter
         from google.cloud.bigquery import QueryJobConfig, ScalarQueryParameter
+
         job_config = QueryJobConfig(
-            query_parameters=[
-                ScalarQueryParameter("contact_id", "STRING", str(contact_id))
-            ]
+            query_parameters=[ScalarQueryParameter("contact_id", "STRING", str(contact_id))]
         )
 
         query_job = self.bq_client.query(query, job_config=job_config)
@@ -170,13 +171,23 @@ class BigQuerySyncService:
 
         # Convert BigQuery row to dict
         contact = dict(results[0])
-        
+
         # Ensure canonical_name exists (already handled in query, but double-check)
         if not contact.get("canonical_name"):
-            contact["canonical_name"] = contact.get("full_name") or f"{contact.get('first_name', '')} {contact.get('last_name', '')}".strip()
-        
+            contact["canonical_name"] = (
+                contact.get("full_name")
+                or f"{contact.get('first_name', '')} {contact.get('last_name', '')}".strip()
+            )
+
         # Initialize extended fields (may not exist in schema)
-        json_fields = ["llm_context", "communication_stats", "social_network", "ai_insights", "recommendations", "sync_metadata"]
+        json_fields = [
+            "llm_context",
+            "communication_stats",
+            "social_network",
+            "ai_insights",
+            "recommendations",
+            "sync_metadata",
+        ]
         for field in json_fields:
             if field not in contact:
                 contact[field] = {}
@@ -184,6 +195,7 @@ class BigQuerySyncService:
                 if isinstance(contact[field], str):
                     try:
                         import json
+
                         contact[field] = json.loads(contact[field])
                     except (json.JSONDecodeError, TypeError):
                         contact[field] = {}
@@ -191,15 +203,15 @@ class BigQuerySyncService:
                     contact[field] = {}
             else:
                 contact[field] = {}
-        
+
         return contact
 
-    def _sync_to_supabase(self, contact: Dict[str, Any]) -> Dict[str, Any]:
+    def _sync_to_supabase(self, contact: dict[str, Any]) -> dict[str, Any]:
         """Sync contact to Supabase.
-        
+
         Args:
             contact: Contact record from BigQuery
-            
+
         Returns:
             Sync result
         """
@@ -220,12 +232,12 @@ class BigQuerySyncService:
             logger.error(f"Failed to sync to Supabase: {e}")
             return {"status": "error", "error": str(e)}
 
-    def _sync_to_local(self, contact: Dict[str, Any]) -> Dict[str, Any]:
+    def _sync_to_local(self, contact: dict[str, Any]) -> dict[str, Any]:
         """Sync contact to local database.
-        
+
         Args:
             contact: Contact record from BigQuery
-            
+
         Returns:
             Sync result
         """
@@ -315,38 +327,40 @@ class BigQuerySyncService:
             logger.warning(f"Failed to sync to local DB (may not be configured): {e}")
             return {"status": "error", "error": str(e)}
 
-    def _sync_to_crm_twenty(self, contact: Dict[str, Any]) -> Dict[str, Any]:
+    def _sync_to_crm_twenty(self, contact: dict[str, Any]) -> dict[str, Any]:
         """Sync contact to CRM Twenty.
-        
+
         Uses TwentyCRMClient which gets API key from secrets manager.
-        
+
         Args:
             contact: Contact record from BigQuery
-            
+
         Returns:
             Sync result
         """
         if not self.crm_twenty:
             logger.warning("CRM Twenty client not configured, skipping sync")
             return {"status": "skipped", "error": "CRM client not configured"}
-        
+
         try:
             contact_id = contact.get("contact_id")
             contact_name = contact.get("canonical_name") or contact.get("full_name") or "Unknown"
-            
+
             logger.info(f"Syncing contact to CRM: {contact_name} (ID: {contact_id})")
-            
+
             # Transform BigQuery format to CRM Twenty format
             crm_contact = self._transform_bq_to_crm_twenty(contact)
-            
-            logger.debug(f"Transformed contact data: name={crm_contact.get('name')}, "
-                        f"email={crm_contact.get('email')}, "
-                        f"customFields count={len(crm_contact.get('customFields', {}))}")
+
+            logger.debug(
+                f"Transformed contact data: name={crm_contact.get('name')}, "
+                f"email={crm_contact.get('email')}, "
+                f"customFields count={len(crm_contact.get('customFields', {}))}"
+            )
 
             # Upsert to CRM Twenty
             logger.debug(f"Calling upsert_contact for contact_id: {contact_id}")
             result = self.crm_twenty.upsert_contact(crm_contact)
-            
+
             crm_id = result.get("id")
             if not crm_id:
                 raise ValueError(f"Upsert returned no ID: {result}")
@@ -359,16 +373,19 @@ class BigQuerySyncService:
             # Don't fail entire sync if CRM sync fails - return error but continue
             return {"status": "error", "error": error_msg}
 
-    def _transform_bq_to_supabase(self, contact: Dict[str, Any]) -> Dict[str, Any]:
+    def _transform_bq_to_supabase(self, contact: dict[str, Any]) -> dict[str, Any]:
         """Transform BigQuery contact to Supabase format.
-        
+
         Aligns with existing identity.contacts_master structure.
         """
         import json
 
         # Use canonical_name or derive from full_name
-        canonical_name = contact.get("canonical_name") or contact.get("full_name") or \
-            f"{contact.get('first_name', '')} {contact.get('last_name', '')}".strip()
+        canonical_name = (
+            contact.get("canonical_name")
+            or contact.get("full_name")
+            or f"{contact.get('first_name', '')} {contact.get('last_name', '')}".strip()
+        )
 
         return {
             "contact_id": str(contact["contact_id"]),
@@ -400,16 +417,19 @@ class BigQuerySyncService:
             "sync_metadata": json.dumps(contact.get("sync_metadata", {})),
         }
 
-    def _transform_bq_to_local(self, contact: Dict[str, Any]) -> Dict[str, Any]:
+    def _transform_bq_to_local(self, contact: dict[str, Any]) -> dict[str, Any]:
         """Transform BigQuery contact to local format.
-        
+
         Includes ALL metadata fields for complete local storage.
         Aligns with existing identity.contacts_master structure.
         """
         import json
 
-        canonical_name = contact.get("canonical_name") or contact.get("full_name") or \
-            f"{contact.get('first_name', '')} {contact.get('last_name', '')}".strip()
+        canonical_name = (
+            contact.get("canonical_name")
+            or contact.get("full_name")
+            or f"{contact.get('first_name', '')} {contact.get('last_name', '')}".strip()
+        )
 
         return {
             "contact_id": str(contact["contact_id"]),
@@ -441,18 +461,18 @@ class BigQuerySyncService:
             "sync_metadata": json.dumps(contact.get("sync_metadata", {})),
         }
 
-    def _fetch_contact_identifiers(self, contact_id: str) -> Dict[str, Any]:
+    def _fetch_contact_identifiers(self, contact_id: str) -> dict[str, Any]:
         """Fetch contact identifiers (emails, phones) from BigQuery.
-        
+
         Args:
             contact_id: Contact ID
-            
+
         Returns:
             Dict with primary_email and primary_phone
         """
         try:
             query = """
-            SELECT 
+            SELECT
               identifier_type,
               identifier_value,
               is_primary
@@ -461,26 +481,25 @@ class BigQuerySyncService:
               AND identifier_type IN ('email', 'phone')
             ORDER BY is_primary DESC, identifier_type
             """
-            
+
             # contact_id is STRING in BigQuery
             from google.cloud.bigquery import QueryJobConfig, ScalarQueryParameter
+
             job_config = QueryJobConfig(
-                query_parameters=[
-                    ScalarQueryParameter("contact_id", "STRING", str(contact_id))
-                ]
+                query_parameters=[ScalarQueryParameter("contact_id", "STRING", str(contact_id))]
             )
             query_job = self.bq_client.query(query, job_config=job_config)
             results = list(query_job.result())
-            
+
             primary_email = None
             primary_phone = None
-            
+
             for row in results:
                 if row.identifier_type == "email" and not primary_email:
                     primary_email = row.identifier_value
                 elif row.identifier_type == "phone" and not primary_phone:
                     primary_phone = row.identifier_value
-                    
+
             return {
                 "primary_email": primary_email,
                 "primary_phone": primary_phone,
@@ -490,20 +509,20 @@ class BigQuerySyncService:
             logger.debug(f"Contact identifiers table may not exist or query failed: {e}")
             return {"primary_email": None, "primary_phone": None}
 
-    def _fetch_contact_relationships(self, contact_id: str) -> Dict[str, Any]:
+    def _fetch_contact_relationships(self, contact_id: str) -> dict[str, Any]:
         """Fetch people-to-people relationships for a contact.
-        
+
         Enhances social_network field with relationship data.
-        
+
         Args:
             contact_id: Contact ID
-            
+
         Returns:
             Dict with relationships data to merge into social_network
         """
         try:
             query = """
-            SELECT 
+            SELECT
               person_2_id as related_contact_id,
               relationship_type,
               relationship_subtype,
@@ -513,7 +532,7 @@ class BigQuerySyncService:
             WHERE person_1_id = @contact_id
               AND is_current = TRUE
             UNION ALL
-            SELECT 
+            SELECT
               person_1_id as related_contact_id,
               relationship_type,
               relationship_subtype,
@@ -523,27 +542,28 @@ class BigQuerySyncService:
             WHERE CAST(person_2_id AS STRING) = @contact_id
               AND is_current = TRUE
             """
-            
+
             # contact_id is STRING in BigQuery
             from google.cloud.bigquery import QueryJobConfig, ScalarQueryParameter
+
             job_config = QueryJobConfig(
-                query_parameters=[
-                    ScalarQueryParameter("contact_id", "STRING", str(contact_id))
-                ]
+                query_parameters=[ScalarQueryParameter("contact_id", "STRING", str(contact_id))]
             )
             query_job = self.bq_client.query(query, job_config=job_config)
             results = list(query_job.result())
-            
+
             relationships = []
             for row in results:
-                relationships.append({
-                    "contact_id": str(row.related_contact_id),
-                    "relationship_type": row.relationship_type,
-                    "relationship_subtype": row.relationship_subtype,
-                    "is_current": row.is_current,
-                    "relationship_status": row.relationship_status,
-                })
-            
+                relationships.append(
+                    {
+                        "contact_id": str(row.related_contact_id),
+                        "relationship_type": row.relationship_type,
+                        "relationship_subtype": row.relationship_subtype,
+                        "is_current": row.is_current,
+                        "relationship_status": row.relationship_status,
+                    }
+                )
+
             return {
                 "people_relationships": relationships,
                 "relationship_count": len(relationships),
@@ -553,29 +573,35 @@ class BigQuerySyncService:
             logger.debug(f"People relationships table may not exist or query failed: {e}")
             return {"people_relationships": [], "relationship_count": 0}
 
-    def _transform_bq_to_crm_twenty(self, contact: Dict[str, Any]) -> Dict[str, Any]:
+    def _transform_bq_to_crm_twenty(self, contact: dict[str, Any]) -> dict[str, Any]:
         """Transform BigQuery contact to CRM Twenty format.
-        
+
         Includes ALL contact metadata fields for complete relationship management.
         Aligns with existing identity.contacts_master structure.
         """
         import json
 
-        canonical_name = contact.get("canonical_name") or contact.get("full_name") or \
-            f"{contact.get('first_name', '')} {contact.get('last_name', '')}".strip()
+        canonical_name = (
+            contact.get("canonical_name")
+            or contact.get("full_name")
+            or f"{contact.get('first_name', '')} {contact.get('last_name', '')}".strip()
+        )
 
         # Fetch contact identifiers (emails, phones)
         identifiers = self._fetch_contact_identifiers(str(contact["contact_id"]))
-        
+
         # Fetch and enhance social_network with relationship data
         social_network = contact.get("social_network", {})
         if not isinstance(social_network, dict):
             try:
                 import json
-                social_network = json.loads(social_network) if isinstance(social_network, str) else {}
-            except:
+
+                social_network = (
+                    json.loads(social_network) if isinstance(social_network, str) else {}
+                )
+            except (TypeError, ValueError):
                 social_network = {}
-        
+
         # Merge relationship data into social_network
         relationships_data = self._fetch_contact_relationships(str(contact["contact_id"]))
         if relationships_data.get("people_relationships"):
@@ -588,7 +614,6 @@ class BigQuerySyncService:
             "contact_id": str(contact["contact_id"]),
             "apple_unique_id": contact.get("apple_unique_id"),
             "apple_identity_unique_id": contact.get("apple_identity_unique_id"),
-            
             # Name Components
             "first_name": contact.get("first_name"),
             "last_name": contact.get("last_name"),
@@ -598,41 +623,35 @@ class BigQuerySyncService:
             "title": contact.get("title"),
             "full_name": contact.get("full_name"),
             "name_normalized": contact.get("name_normalized"),
-            
             # Organization
             "organization": contact.get("organization"),
             "job_title": contact.get("job_title"),
             "department": contact.get("department"),
-            
             # Relationship Categorization
             "category_code": contact.get("category_code"),
             "subcategory_code": contact.get("subcategory_code"),
             "relationship_category": contact.get("relationship_category"),
-            
             # Metadata
             "notes": contact.get("notes"),
             "birthday": contact.get("birthday"),
             "is_business": contact.get("is_business", False),
             "is_me": contact.get("is_me", False),
-            
             # Rich LLM Data (JSON strings)
             "llm_context": json.dumps(contact.get("llm_context", {})),
             "communication_stats": json.dumps(contact.get("communication_stats", {})),
             "social_network": json.dumps(social_network),  # Enhanced with relationships
             "ai_insights": json.dumps(contact.get("ai_insights", {})),
             "recommendations": json.dumps(contact.get("recommendations", {})),
-            
             # Sync Metadata
             "sync_metadata": json.dumps(contact.get("sync_metadata", {})),
         }
-        
+
         # Remove None values and empty strings to avoid sending empty fields
         # But keep False/0 values as they are valid
         custom_fields = {
-            k: v for k, v in custom_fields.items() 
-            if v is not None and v != "" and v != "null"
+            k: v for k, v in custom_fields.items() if v is not None and v not in {"", "null"}
         }
-        
+
         # Ensure we have at least contact_id in customFields
         if "contact_id" not in custom_fields:
             custom_fields["contact_id"] = str(contact["contact_id"])
@@ -645,16 +664,16 @@ class BigQuerySyncService:
                 "lastName": contact.get("last_name") or "",
             },
         }
-        
+
         # If no first/last name, use display name as firstName
         if not result["name"]["firstName"] and not result["name"]["lastName"]:
             result["name"]["firstName"] = canonical_name or "Contact"
-        
+
         # Add email if available (Twenty CRM native fields)
         if identifiers.get("primary_email"):
             result["emails"] = {
                 "primaryEmail": identifiers.get("primary_email"),
-                "additionalEmails": []
+                "additionalEmails": [],
             }
         # Phone uses phones object, not phone field
         if identifiers.get("primary_phone"):
@@ -662,15 +681,17 @@ class BigQuerySyncService:
                 "primaryPhoneNumber": identifiers.get("primary_phone"),
                 "primaryPhoneCountryCode": "",
                 "primaryPhoneCallingCode": "",
-                "additionalPhones": []
+                "additionalPhones": [],
             }
-        
+
         # Try to add custom fields - but only if they're set up
         # For now, skip customFields and add them in a separate update if needed
         # result.update(custom_fields)
-        
-        logger.debug(f"Transformed contact for CRM: name={result.get('name')}, "
-                    f"email={result.get('email')}, "
-                    f"customFields={len(custom_fields)} fields")
-        
+
+        logger.debug(
+            f"Transformed contact for CRM: name={result.get('name')}, "
+            f"email={result.get('email')}, "
+            f"customFields={len(custom_fields)} fields"
+        )
+
         return result

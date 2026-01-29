@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any
 from unittest.mock import patch
@@ -149,8 +148,9 @@ class TestGovernanceServiceIntegration:
 
     def test_query_events_with_data(self, tmp_path: Path) -> None:
         """Test query_events returns data from DuckDB."""
-        import duckdb
         import uuid
+
+        import duckdb
 
         services_dir = tmp_path / "services"
         services_dir.mkdir(parents=True)
@@ -186,8 +186,9 @@ class TestGovernanceServiceIntegration:
 
     def test_query_events_with_filter(self, tmp_path: Path) -> None:
         """Test query_events with event_type filter."""
-        import duckdb
         import uuid
+
+        import duckdb
 
         services_dir = tmp_path / "services"
         services_dir.mkdir(parents=True)
@@ -220,8 +221,9 @@ class TestGovernanceServiceIntegration:
 
     def test_query_events_with_source_filter(self, tmp_path: Path) -> None:
         """Test query_events with source filter."""
-        import duckdb
         import uuid
+
+        import duckdb
 
         services_dir = tmp_path / "services"
         services_dir.mkdir(parents=True)
@@ -253,8 +255,9 @@ class TestGovernanceServiceIntegration:
 
     def test_query_events_with_limit(self, tmp_path: Path) -> None:
         """Test query_events respects limit."""
-        import duckdb
         import uuid
+
+        import duckdb
 
         services_dir = tmp_path / "services"
         services_dir.mkdir(parents=True)
@@ -282,8 +285,9 @@ class TestGovernanceServiceIntegration:
 
     def test_get_event_count_with_data(self, tmp_path: Path) -> None:
         """Test get_event_count with actual data."""
-        import duckdb
         import uuid
+
+        import duckdb
 
         services_dir = tmp_path / "services"
         services_dir.mkdir(parents=True)
@@ -295,11 +299,11 @@ class TestGovernanceServiceIntegration:
             conn = duckdb.connect(str(duckdb_file))
             try:
                 conn.execute(service.create_schema())
-                for i in range(5):
+                for _i in range(5):
                     conn.execute(
                         "INSERT INTO governance_records (id, data, event_type, source) "
                         "VALUES (?, ?, ?, ?)",
-                        [str(uuid.uuid4()), '{}', "type", "source"],
+                        [str(uuid.uuid4()), "{}", "type", "source"],
                     )
                 conn.commit()
             finally:
@@ -311,8 +315,9 @@ class TestGovernanceServiceIntegration:
 
     def test_get_event_count_with_source_filter(self, tmp_path: Path) -> None:
         """Test get_event_count with source filter."""
-        import duckdb
         import uuid
+
+        import duckdb
 
         services_dir = tmp_path / "services"
         services_dir.mkdir(parents=True)
@@ -327,17 +332,17 @@ class TestGovernanceServiceIntegration:
                 conn.execute(
                     "INSERT INTO governance_records (id, data, event_type, source) "
                     "VALUES (?, ?, ?, ?)",
-                    [str(uuid.uuid4()), '{}', "type", "molt_service"],
+                    [str(uuid.uuid4()), "{}", "type", "molt_service"],
                 )
                 conn.execute(
                     "INSERT INTO governance_records (id, data, event_type, source) "
                     "VALUES (?, ?, ?, ?)",
-                    [str(uuid.uuid4()), '{}', "type", "molt_service"],
+                    [str(uuid.uuid4()), "{}", "type", "molt_service"],
                 )
                 conn.execute(
                     "INSERT INTO governance_records (id, data, event_type, source) "
                     "VALUES (?, ?, ?, ?)",
-                    [str(uuid.uuid4()), '{}', "type", "other"],
+                    [str(uuid.uuid4()), "{}", "type", "other"],
                 )
                 conn.commit()
             finally:
@@ -349,8 +354,9 @@ class TestGovernanceServiceIntegration:
 
     def test_get_summary_with_data(self, tmp_path: Path) -> None:
         """Test get_summary with actual data."""
-        import duckdb
         import uuid
+
+        import duckdb
 
         services_dir = tmp_path / "services"
         services_dir.mkdir(parents=True)
@@ -365,17 +371,17 @@ class TestGovernanceServiceIntegration:
                 conn.execute(
                     "INSERT INTO governance_records (id, data, event_type, source) "
                     "VALUES (?, ?, ?, ?)",
-                    [str(uuid.uuid4()), '{}', "molt_started", "molt_service"],
+                    [str(uuid.uuid4()), "{}", "molt_started", "molt_service"],
                 )
                 conn.execute(
                     "INSERT INTO governance_records (id, data, event_type, source) "
                     "VALUES (?, ?, ?, ?)",
-                    [str(uuid.uuid4()), '{}', "molt_started", "molt_service"],
+                    [str(uuid.uuid4()), "{}", "molt_started", "molt_service"],
                 )
                 conn.execute(
                     "INSERT INTO governance_records (id, data, event_type, source) "
                     "VALUES (?, ?, ?, ?)",
-                    [str(uuid.uuid4()), '{}', "error", "other_service"],
+                    [str(uuid.uuid4()), "{}", "error", "other_service"],
                 )
                 conn.commit()
             finally:

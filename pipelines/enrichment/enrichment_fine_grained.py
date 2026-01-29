@@ -131,19 +131,18 @@ class FineGrainedEnrichment(BaseEnrichment):
             logger.info("Nothing to process.")
             return
 
-        # Process in batches
-        enriched = []
+        enriched: list[dict[str, Any]] = []
         total = len(results)
 
         for i, row in enumerate(results):
             try:
                 text = row.text if hasattr(row, "text") else row.get("text", "")
 
-                result = self.compute_enrichment_from_row(row, text)
-                result["entity_id"] = (
+                out = self.compute_enrichment_from_row(row, text)
+                out["entity_id"] = (
                     row.entity_id if hasattr(row, "entity_id") else row.get("entity_id")
                 )
-                enriched.append(result)
+                enriched.append(out)
 
                 # Write batch when full
                 if len(enriched) >= self.args.write_batch_size:
