@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hey Curtis - From Jeremy</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            margin-bottom: 16px;
+            font-size: 36px;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.95);
+            margin-bottom: 32px;
+            font-size: 18px;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .note-from-jeremy {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 32px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border-top: 4px solid #f5576c;
+        }
+
+        .note-from-jeremy h2 {
+            color: #2d3748;
+            margin-bottom: 16px;
+        }
+
+        .note-from-jeremy p {
+            color: #4a5568;
+            line-height: 1.8;
+            margin-bottom: 12px;
+        }
+
+        .chat-section {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .chat-section h2 {
+            color: #2d3748;
+            margin-bottom: 16px;
+        }
+
+        .chat-box {
+            background: #f7fafc;
+            border-radius: 12px;
+            padding: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+            margin-bottom: 16px;
+        }
+
+        .message {
+            margin-bottom: 16px;
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .message.user {
+            background: #f5576c;
+            color: white;
+            margin-left: 20%;
+        }
+
+        .message.assistant {
+            background: white;
+            border: 1px solid #e2e8f0;
+            margin-right: 20%;
+        }
+
+        .chat-input-container {
+            display: flex;
+            gap: 12px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 12px 24px;
+            background: #f5576c;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #e04858;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #a0aec0;
+            padding: 40px;
+            font-style: italic;
+        }
+
+        .candy-emoji {
+            font-size: 24px;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1><span class="candy-emoji">🍬</span> Hey Curtis <span class="candy-emoji">🍬</span></h1>
+        <p class="subtitle">
+            Jeremy built you something. It's his "Not-Me" - like a business partner who knows him as well as he knows
+            himself.<br>
+            Talk to it. See what you think. No pressure, no tech stuff. Just... try it.
+        </p>
+
+        <!-- Note from Jeremy -->
+        <div class="note-from-jeremy">
+            <h2>A Note Jeremy's Not-Me Wants You To Know</h2>
+            <p>
+                Curtis - Jeremy hasn't seen you all year. He's been building his business like crazy, and he feels
+                ashamed about it.
+                You've texted him multiple times wanting to hang out, and he's always thought "I should spend time with
+                Curtis,"
+                but he hasn't made it happen.
+            </p>
+            <p>
+                His Not-Me just made him think about that. About you. About how much that means.
+            </p>
+            <p>
+                <strong>He promises to make time.</strong> For real this time. Because you matter to him.
+            </p>
+            <p>
+                And in the meantime... his Not-Me can explain what all this is about. In a way that makes sense for you
+                and your candy store.
+                Not tech nonsense - just real talk about what this could be.
+            </p>
+        </div>
+
+        <!-- Chat Section -->
+        <div class="chat-section">
+            <h2>💬 Chat with Jeremy's Not-Me</h2>
+            <p style="color: #718096; margin-bottom: 16px; font-size: 14px;">
+                Ask it anything. About this. About your own Not-Me. About how a candy store owner could use something
+                like this.
+                It knows you're not a tech person, and that's perfect.
+            </p>
+
+            <div class="chat-box" id="chatBox">
+                <div class="empty-state">
+                    Start the conversation - it knows who you are...
+                </div>
+            </div>
+
+            <div class="chat-input-container">
+                <input type="text" id="messageInput" placeholder="What would you ask Jeremy if he were here right now?"
+                    onkeypress="if(event.key === 'Enter') sendMessage()" />
+                <button onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const USER_ID = 'curtis';  // This tells the Not-Me who you are
+        let sessionId = 'curtis_session_' + Date.now();
+        let chatBox = document.getElementById('chatBox');
+        let messageInput = document.getElementById('messageInput');
+
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            addMessage('user', message);
+            messageInput.value = '';
+
+            try {
+                const response = await fetch('/customer/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message,
+                        sessionId,
+                        userId: USER_ID  // Pass Curtis's ID for personalized context
+                    })
+                });
+
+                const data = await response.json();
+                addMessage('assistant', data.response);
+            } catch (error) {
+                addMessage('assistant', 'Sorry, something went wrong. Please try again.');
+            }
+        }
+
+        function addMessage(role, content) {
+            const emptyState = chatBox.querySelector('.empty-state');
+            if (emptyState) emptyState.remove();
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            messageDiv.textContent = content;
+            chatBox.appendChild(messageDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    </script>
+</body>
+
+</html>
