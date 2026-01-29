@@ -10,7 +10,7 @@ interface Message {
 }
 
 // Valid codes for access
-const VALID_CODES = ['CARTER', 'HANNAH', 'HUSSIEN', 'GOOGLE'];
+const VALID_CODES = ['CARTER', 'HANNAH', 'HUSSIEN', 'GOOGLE', 'ADAM', 'CURTIS'];
 
 export default function NotMe() {
   // Chat state (from MeetNotMe)
