@@ -262,3 +262,119 @@ class TestSecretService:
         result = service._get_client()
 
         assert result is existing_client
+
+    @patch.object(SecretService, "logger", new_callable=lambda: MagicMock())
+    @patch("truth_forge.services.secret.service.settings")
+    def test_get_secret_no_project_id(
+        self, mock_settings: MagicMock, mock_logger: MagicMock
+    ) -> None:
+        """Test get_secret raises error when project_id is None and not in mock mode."""
+        service = SecretService.__new__(SecretService)
+        service._cache = {}
+        service._mock_mode = False
+        mock_settings.effective_gcp_project = None
+
+        with pytest.raises(SecretNotFoundError) as exc_info:
+            service.get_secret("test_secret")
+
+        assert "GCP_PROJECT_ID is not configured" in str(exc_info.value)
+
+    @patch.object(SecretService, "logger", new_callable=lambda: MagicMock())
+    @patch("truth_forge.services.secret.service.settings")
+    def test_get_secret_no_client(self, mock_settings: MagicMock, mock_logger: MagicMock) -> None:
+        """Test get_secret raises error when client is None and not in mock mode."""
+        service = SecretService.__new__(SecretService)
+        service._cache = {}
+        service._mock_mode = False
+        service._client = None
+        mock_settings.effective_gcp_project = "test-project"
+
+        with patch.object(service, "_get_client", return_value=None):
+            with pytest.raises(SecretNotFoundError) as exc_info:
+                service.get_secret("test_secret")
+
+            assert "Secret client is not available" in str(exc_info.value)
+
+    @patch.object(SecretService, "logger", new_callable=lambda: MagicMock())
+    @patch("truth_forge.services.secret.service.settings")
+    def test_get_secret_with_variants_success_primary(
+        self, mock_settings: MagicMock, mock_logger: MagicMock
+    ) -> None:
+        """Test get_secret_with_variants succeeds with primary secret."""
+        service = SecretService.__new__(SecretService)
+        service._cache = {"primary_secret": "primary_value"}
+        service._mock_mode = False
+
+        result = service.get_secret_with_variants("primary_secret", ["variant1", "variant2"])
+
+        assert result == "primary_value"
+
+    @patch.object(SecretService, "logger", new_callable=lambda: MagicMock())
+    @patch("truth_forge.services.secret.service.settings")
+    @patch("truth_forge.services.secret.service.secretmanager.SecretManagerServiceClient")
+    def test_get_secret_with_variants_success_variant(
+        self,
+        mock_client_class: MagicMock,
+        mock_settings: MagicMock,
+        mock_logger: MagicMock,
+    ) -> None:
+        """Test get_secret_with_variants succeeds with variant secret."""
+        mock_settings.effective_gcp_project = "test-project"
+
+        mock_client = MagicMock()
+        mock_response = MagicMock()
+        mock_response.payload.data.decode.return_value = "variant_value"
+        mock_client.access_secret_version.return_value = mock_response
+        mock_client_class.return_value = mock_client
+
+        service = SecretService.__new__(SecretService)
+        service._cache = {}
+        service._client = None
+        service._mock_mode = False
+
+        # Mock get_secret to raise on primary, succeed on variant
+        call_count = 0
+
+        def mock_get_secret(secret_id: str) -> str:
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                raise SecretNotFoundError("Not found")
+            return "variant_value"
+
+        with patch.object(service, "get_secret", side_effect=mock_get_secret):
+            result = service.get_secret_with_variants("primary_secret", ["variant1"])
+
+        assert result == "variant_value"
+
+    @patch.object(SecretService, "logger", new_callable=lambda: MagicMock())
+    @patch("truth_forge.services.secret.service.settings")
+    def test_get_secret_with_variants_all_fail(
+        self, mock_settings: MagicMock, mock_logger: MagicMock
+    ) -> None:
+        """Test get_secret_with_variants raises error when all variants fail."""
+        service = SecretService.__new__(SecretService)
+        service._cache = {}
+        service._mock_mode = False
+
+        with patch.object(service, "get_secret", side_effect=SecretNotFoundError("Not found")):
+            with pytest.raises(SecretNotFoundError) as exc_info:
+                service.get_secret_with_variants("primary", ["variant1", "variant2"])
+
+            assert "Tried: primary, variant1, variant2" in str(exc_info.value)
+
+    @patch.object(SecretService, "logger", new_callable=lambda: MagicMock())
+    @patch("truth_forge.services.secret.service.settings")
+    def test_get_secret_with_variants_no_variants(
+        self, mock_settings: MagicMock, mock_logger: MagicMock
+    ) -> None:
+        """Test get_secret_with_variants with no variants provided."""
+        service = SecretService.__new__(SecretService)
+        service._cache = {}
+        service._mock_mode = False
+
+        with patch.object(service, "get_secret", side_effect=SecretNotFoundError("Not found")):
+            with pytest.raises(SecretNotFoundError) as exc_info:
+                service.get_secret_with_variants("primary", None)
+
+            assert "Tried: primary" in str(exc_info.value)
