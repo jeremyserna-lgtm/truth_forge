@@ -18,7 +18,7 @@ import logging
 import threading
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from queue import Empty, Queue
 from typing import Any
@@ -275,13 +275,13 @@ class EventDrivenSyncService:
             priority: Event priority
         """
         event = SyncEvent(
-            event_id=f"{source}:{entity_type}:{entity_id}:{datetime.utcnow().isoformat()}",
+            event_id=f"{source}:{entity_type}:{entity_id}:{datetime.now(UTC).isoformat()}",
             source=source,
             entity_type=entity_type,
             entity_id=entity_id,
             change_type=change_type,
             priority=priority,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             data=data,
         )
 

@@ -127,6 +127,9 @@ class BaseProvider(ABC):
             ModelProvider.CLAUDE: "claude-3-5-haiku-20241022",
             ModelProvider.GEMINI: "gemini-2.0-flash",
             ModelProvider.OLLAMA: "llama3.2",
+            ModelProvider.SCOUT: "llama4:scout",
+            ModelProvider.MAVERICK: "Llama-4-Maverick-17B-128E-Instruct-4bit",
+            ModelProvider.R1: "DeepSeek-R1-4bit",
         }
         return defaults.get(self.provider, "unknown")
 

@@ -9,10 +9,12 @@ from truth_forge.services.base import BaseService, ServiceState
 from truth_forge.services.cognition import CognitionService
 from truth_forge.services.factory import ServiceFactory, get_service
 from truth_forge.services.governance import GovernanceService
+from truth_forge.services.identity import IdentityService
 from truth_forge.services.knowledge import KnowledgeService
 from truth_forge.services.logging import LoggingService
 from truth_forge.services.mediator import ServiceMediator
 from truth_forge.services.perception import PerceptionService
+from truth_forge.services.refinery import LLMRefineryService, RefineryConfig
 from truth_forge.services.relationship import RelationshipService
 from truth_forge.services.secret import SecretService
 
@@ -24,8 +26,11 @@ __all__ = [
     "ServiceFactory",
     "get_service",
     "GovernanceService",
+    "IdentityService",
     "KnowledgeService",
+    "LLMRefineryService",
     "LoggingService",
+    "RefineryConfig",
     "ServiceMediator",
     "PerceptionService",
     "RelationshipService",

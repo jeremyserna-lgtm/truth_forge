@@ -3,7 +3,7 @@
 Achieves 95%+ coverage with all branches and edge cases tested.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from unittest.mock import Mock, patch
 
 from truth_forge.services.sync.cdc_sync_service import ChangeEvent, ChangeType
@@ -189,7 +189,7 @@ class TestIndustryStandardSyncService:
                 entity_type="contact",
                 entity_id="123",
                 change_type=ChangeType.INSERT,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 version=1,
                 data={},
                 metadata={},
@@ -251,7 +251,7 @@ class TestIndustryStandardSyncService:
                 entity_type="contact",
                 entity_id="123",
                 change_type=ChangeType.INSERT,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 version=1,
                 data={},
                 metadata={},
@@ -299,7 +299,7 @@ class TestIndustryStandardSyncService:
             mock_polling = Mock()
             mock_polling.get_stats.return_value = {
                 "running": True,
-                "last_sync_time": datetime.utcnow().isoformat(),
+                "last_sync_time": datetime.now(UTC).isoformat(),
                 "total_synced": 100,
             }
             mock_polling_class.return_value = mock_polling

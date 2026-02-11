@@ -165,7 +165,7 @@ def get_knowledge_graph_tools() -> list[tuple[Tool, Any]]:
             return "\n".join(lines)
 
         except Exception as e:
-            logger.error("get_entity_relationships_failed", error=str(e), exc_info=True)
+            logger.error("get_entity_relationships_failed: %s", e, exc_info=True)
             return f"Error getting relationships: {type(e).__name__}: {e!s}"
 
     tools.append((relationships_tool, handle_get_entity_relationships))
@@ -246,7 +246,7 @@ def get_knowledge_graph_tools() -> list[tuple[Tool, Any]]:
             return "\n".join(lines)
 
         except Exception as e:
-            logger.error("get_graph_stats_failed", error=str(e), exc_info=True)
+            logger.error("get_graph_stats_failed: %s", e, exc_info=True)
             return f"Error getting graph stats: {type(e).__name__}: {e!s}"
 
     tools.append((graph_stats_tool, handle_get_graph_stats))

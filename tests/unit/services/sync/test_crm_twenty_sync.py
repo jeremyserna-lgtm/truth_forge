@@ -3,7 +3,7 @@
 Achieves 95%+ coverage with all branches and edge cases tested.
 """
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from unittest.mock import Mock, patch
 
 from truth_forge.services.sync.crm_twenty_sync import CRMTwentySyncService
@@ -146,7 +146,7 @@ class TestCRMTwentySyncService:
         mock_bq_sync: Mock,
     ) -> None:
         """Test syncing all contacts from CRM."""
-        last_sync = datetime.utcnow() - timedelta(hours=12)
+        last_sync = datetime.now(UTC) - timedelta(hours=12)
 
         # Mock CRM list_contacts
         mock_twenty_crm_client.list_contacts.return_value = [

@@ -7,17 +7,36 @@ THE PATTERN:
 
 All enrichment scripts extend this base class to ensure consistent
 CLI, query building, batch processing, and write patterns.
+
+ROBUSTNESS FEATURES:
+- Streaming pagination (never loads full dataset into memory)
+- Checkpoint/resume capability
+- Memory management with explicit gc
+- Resource monitoring
 """
 
 from __future__ import annotations
 
 import argparse
+import gc
+import json
 import logging
+import os
+import resource
+import signal
+import tempfile
+import time
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, ClassVar, cast
+from typing import Any, ClassVar, Iterator, cast
+
+from google.cloud.bigquery import (
+    LoadJobConfig,
+    SourceFormat,
+    WriteDisposition,
+)
 
 from pipelines.enrichment.config import (
     BQ_DATASET_ID,
@@ -37,6 +56,38 @@ from pipelines.enrichment.utils import format_progress
 logger = logging.getLogger(__name__)
 
 
+# Memory limit: 4GB default, configurable via env
+MAX_MEMORY_MB = int(os.getenv("ENRICHMENT_MAX_MEMORY_MB", "4096"))
+# Page size for streaming queries
+STREAM_PAGE_SIZE = int(os.getenv("ENRICHMENT_STREAM_PAGE_SIZE", "5000"))
+
+
+@dataclass
+class Checkpoint:
+    """Checkpoint state for resumable processing."""
+
+    enrichment_name: str
+    levels: list[int]
+    mode: str
+    last_offset: int = 0
+    processed_count: int = 0
+    written_count: int = 0
+    failed_count: int = 0
+    started_at: str = ""
+    updated_at: str = ""
+    completed: bool = False
+    last_entity_id: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dict for JSON serialization."""
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "Checkpoint":
+        """Create from dict."""
+        return cls(**data)
+
+
 @dataclass
 class EnrichmentRunResult:
     """Result of an enrichment run with success/failure counts."""
@@ -47,10 +98,29 @@ class EnrichmentRunResult:
     dlq_count: int
 
 
+def get_memory_usage_mb() -> float:
+    """Get current memory usage in MB."""
+    usage = resource.getrusage(resource.RUSAGE_SELF)
+    return usage.ru_maxrss / 1024 / 1024  # Convert to MB (macOS reports in bytes)
+
+
+def check_memory_pressure() -> bool:
+    """Check if memory usage is approaching limit."""
+    usage_mb = get_memory_usage_mb()
+    if usage_mb > MAX_MEMORY_MB * 0.8:
+        logger.warning(
+            "memory_pressure_high",
+            extra={"usage_mb": round(usage_mb, 1), "limit_mb": MAX_MEMORY_MB},
+        )
+        return True
+    return False
+
+
 class BaseEnrichment(ABC):
     """Base class for all enrichment scripts.
 
     Provides unified CLI, BigQuery integration, and write patterns.
+    Now with streaming pagination, checkpoints, and memory management.
     """
 
     ENRICHMENT_NAME: ClassVar[str] = "base"
@@ -66,6 +136,22 @@ class BaseEnrichment(ABC):
             Path.cwd() / "dlq",
             f"enrichment_{self.ENRICHMENT_NAME}",
         )
+        self._checkpoint_dir = Path.cwd() / "checkpoints"
+        self._checkpoint_dir.mkdir(exist_ok=True)
+        self._shutdown_requested = False
+        self._setup_signal_handlers()
+
+    def _setup_signal_handlers(self) -> None:
+        """Setup graceful shutdown handlers."""
+        def handle_signal(signum: int, _frame: Any) -> None:
+            logger.info(
+                "shutdown_requested",
+                extra={"signal": signum, "enrichment": self.ENRICHMENT_NAME},
+            )
+            self._shutdown_requested = True
+
+        signal.signal(signal.SIGINT, handle_signal)
+        signal.signal(signal.SIGTERM, handle_signal)
 
     def _setup_logging(self) -> None:
         """Setup logging based on verbosity."""
@@ -76,11 +162,7 @@ class BaseEnrichment(ABC):
         )
 
     def parse_args(self) -> argparse.Namespace:
-        """Parse command-line arguments.
-
-        Returns:
-            Parsed arguments namespace.
-        """
+        """Parse command-line arguments."""
         parser = argparse.ArgumentParser(
             description=f"Enrichment: {self.ENRICHMENT_NAME}",
             formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -100,7 +182,7 @@ class BaseEnrichment(ABC):
         parser.add_argument(
             "--source",
             type=str,
-            help="Filter by source_platform (e.g., claude_code, claude_web)",
+            help="Filter by source_system (e.g., claude_code, claude_web)",
         )
         parser.add_argument(
             "--entity-ids",
@@ -108,7 +190,7 @@ class BaseEnrichment(ABC):
             help="File containing specific entity IDs to process (one per line)",
         )
         parser.add_argument("--limit", type=int, default=0, help="Max entities (0 = all)")
-        parser.add_argument("--offset", type=int, default=0, help="Offset for pagination")
+        parser.add_argument("--offset", type=int, default=0, help="Starting offset")
         parser.add_argument(
             "--batch-size",
             type=int,
@@ -137,21 +219,107 @@ class BaseEnrichment(ABC):
             action="store_true",
             help="Use existing sentence_embedding (Group C)",
         )
+        parser.add_argument(
+            "--resume",
+            action="store_true",
+            help="Resume from last checkpoint",
+        )
+        parser.add_argument(
+            "--no-checkpoint",
+            action="store_true",
+            help="Disable checkpoint saving",
+        )
+        parser.add_argument(
+            "--page-size",
+            type=int,
+            default=STREAM_PAGE_SIZE,
+            help=f"Stream page size (default: {STREAM_PAGE_SIZE})",
+        )
         return parser.parse_args()
 
-    def build_query(self) -> str:
-        """Build query to find entities needing enrichment.
+    def _get_checkpoint_path(self) -> Path:
+        """Get checkpoint file path for this enrichment run."""
+        levels_str = self.args.level.replace(",", "_")
+        return self._checkpoint_dir / f"{self.ENRICHMENT_NAME}_L{levels_str}.json"
 
-        Returns:
-            SQL query string.
+    def _load_checkpoint(self) -> Checkpoint | None:
+        """Load checkpoint from disk if exists."""
+        path = self._get_checkpoint_path()
+        if path.exists():
+            try:
+                data = json.loads(path.read_text())
+                checkpoint = Checkpoint.from_dict(data)
+                if not checkpoint.completed:
+                    logger.info(
+                        "checkpoint_loaded",
+                        extra={
+                            "enrichment": self.ENRICHMENT_NAME,
+                            "offset": checkpoint.last_offset,
+                            "processed": checkpoint.processed_count,
+                        },
+                    )
+                    return checkpoint
+            except Exception as e:
+                logger.warning(
+                    "checkpoint_load_failed",
+                    extra={"error": str(e)},
+                )
+        return None
+
+    def _save_checkpoint(self, checkpoint: Checkpoint) -> None:
+        """Save checkpoint to disk."""
+        if self.args.no_checkpoint:
+            return
+        checkpoint.updated_at = datetime.utcnow().isoformat()
+        path = self._get_checkpoint_path()
+        path.write_text(json.dumps(checkpoint.to_dict(), indent=2))
+
+    def _clear_checkpoint(self) -> None:
+        """Clear checkpoint file after successful completion."""
+        path = self._get_checkpoint_path()
+        if path.exists():
+            path.unlink()
+
+    def _get_total_count(self) -> int:
+        """Get total count of entities to process."""
+        level_strs = self.args.level.split(",")
+        levels = [int(lev.strip()) for lev in level_strs]
+        level_list = ", ".join(str(lev) for lev in levels)
+
+        query = f"""
+        SELECT COUNT(*) as cnt
+        FROM `{BQ_PROJECT_ID}.{BQ_DATASET_ID}.{ENTITY_UNIFIED_TABLE}` e
+        LEFT JOIN `{BQ_PROJECT_ID}.{BQ_DATASET_ID}.{ENRICHMENTS_TABLE}` s
+            ON e.entity_id = s.entity_id
+        WHERE e.level IN ({level_list})
+          AND e.text IS NOT NULL
+          AND LENGTH(e.text) > {MIN_TEXT_LENGTH}
         """
+        if self.args.mode == "null-only":
+            if self.COLUMNS_OWNED:
+                null_checks = " OR ".join(f"s.{col} IS NULL" for col in self.COLUMNS_OWNED)
+                query += f" AND (s.entity_id IS NULL OR {null_checks})"
+            else:
+                query += " AND s.entity_id IS NULL"
+        if self.args.source:
+            query += f" AND e.source_system = '{self.args.source}'"
+
+        try:
+            result = list(self.client.query(query).result())
+            return result[0].cnt if result else 0
+        except Exception as e:
+            logger.warning("count_query_failed", extra={"error": str(e)})
+            return 0
+
+    def _build_page_query(self, offset: int, page_size: int) -> str:
+        """Build paginated query for streaming."""
         level_strs = self.args.level.split(",")
         levels = [int(lev.strip()) for lev in level_strs]
         select_fields = [
             "e.entity_id",
             "e.text",
             "e.level",
-            "e.source_platform",
+            "e.source_system",
             "e.entity_type",
             "e.conversation_id",
             "e.message_id",
@@ -159,6 +327,7 @@ class BaseEnrichment(ABC):
         if self.REQUIRES_EMBEDDING and self.args.use_existing_embedding:
             select_fields.append("s.sentence_embedding")
         level_list = ", ".join(str(lev) for lev in levels)
+
         query = f"""
         SELECT {", ".join(select_fields)}
         FROM `{BQ_PROJECT_ID}.{BQ_DATASET_ID}.{ENTITY_UNIFIED_TABLE}` e
@@ -175,81 +344,92 @@ class BaseEnrichment(ABC):
             else:
                 query += " AND s.entity_id IS NULL"
         if self.args.source:
-            query += f" AND e.source_platform = '{self.args.source}'"
+            query += f" AND e.source_system = '{self.args.source}'"
         if self.args.entity_ids:
             p = Path(self.args.entity_ids)
             if p.exists():
                 ids = [ln.strip() for ln in p.read_text().splitlines() if ln.strip()]
                 if ids:
                     query += " AND e.entity_id IN (" + ", ".join(f"'{i}'" for i in ids) + ")"
-        query += " ORDER BY e.level DESC, COALESCE(e.created_at, e.ingestion_timestamp, CURRENT_TIMESTAMP()) DESC"
-        if self.args.limit > 0:
-            query += f" LIMIT {self.args.limit}"
-        if self.args.offset > 0:
-            query += f" OFFSET {self.args.offset}"
+
+        query += " ORDER BY e.entity_id"  # Deterministic order for pagination
+        query += f" LIMIT {page_size} OFFSET {offset}"
         return query
+
+    def _stream_entities(self, start_offset: int = 0) -> Iterator[tuple[int, Any]]:
+        """Stream entities in pages, yielding (offset, row) tuples."""
+        page_size = self.args.page_size
+        current_offset = start_offset
+        total_limit = self.args.limit if self.args.limit > 0 else float("inf")
+        yielded = 0
+
+        while yielded < total_limit:
+            if self._shutdown_requested:
+                logger.info("shutdown_during_stream", extra={"offset": current_offset})
+                break
+
+            # Check memory before fetching next page
+            if check_memory_pressure():
+                logger.info("gc_triggered_by_memory_pressure")
+                gc.collect()
+                time.sleep(1)  # Brief pause to allow system recovery
+
+            query = self._build_page_query(current_offset, page_size)
+            try:
+                results = list(self.client.query(query).result())
+            except Exception as e:
+                logger.error(
+                    "page_query_failed",
+                    extra={"offset": current_offset, "error": str(e)},
+                )
+                break
+
+            if not results:
+                # No more data
+                break
+
+            for row in results:
+                if yielded >= total_limit:
+                    break
+                yield (current_offset + yielded, row)
+                yielded += 1
+
+            current_offset += len(results)
+
+            # Force garbage collection after each page
+            del results
+            gc.collect()
+
+            logger.debug(
+                "page_fetched",
+                extra={
+                    "offset": current_offset,
+                    "page_size": page_size,
+                    "yielded": yielded,
+                },
+            )
 
     @abstractmethod
     def compute_enrichment(
         self, text: str, existing_embedding: list[float] | None = None
     ) -> dict[str, Any]:
-        """Compute enrichment for a single text.
-
-        Args:
-            text: Text content to enrich.
-            existing_embedding: Existing sentence embedding if available.
-
-        Returns:
-            Dict with enrichment data (keys match COLUMNS_OWNED).
-        """
+        """Compute enrichment for a single text."""
         ...
 
     def get_target_table(self) -> str:
-        """Target table ID from args.
-
-        Returns:
-            Full table ID (project.dataset.table).
-        """
+        """Target table ID from args."""
         table_name = ENRICHMENTS_TABLE if self.args.production else STAGING_ENRICHMENTS_TABLE
         if self.args.table_suffix:
             table_name += self.args.table_suffix
         return f"{BQ_PROJECT_ID}.{BQ_DATASET_ID}.{table_name}"
 
-    def _query_bq(self, query: str) -> list[Any]:
-        """Run BigQuery query with retry."""
-        from tenacity import (
-            retry,
-            retry_if_exception_type,
-            stop_after_attempt,
-            wait_exponential,
-        )
-
-        @retry(
-            stop=stop_after_attempt(3),
-            wait=wait_exponential(multiplier=1, min=1, max=10),
-            retry=retry_if_exception_type((ConnectionError, TimeoutError, OSError)),
-            reraise=True,
-        )
-        def _run() -> list[Any]:
-            job = self.client.query(query)
-            return list(job.result())
-
-        return _run()
-
     def write_batch(self, enriched: list[dict[str, Any]]) -> int:
-        """Write enriched batch to BigQuery.
-
-        Args:
-            enriched: List of enrichment dicts.
-
-        Returns:
-            Number of rows written.
-        """
+        """Write enriched batch to BigQuery."""
         if not enriched:
             return 0
         table_id = self.get_target_table()
         try:
-            return self._write_batch_merge(table_id, enriched)
+            return self._write_batch_insert(table_id, enriched)
         except Exception as e:
             logger.error(
                 "write_batch_failed",
@@ -264,10 +444,17 @@ class BaseEnrichment(ABC):
             )
             return 0
 
-    def _write_batch_merge(self, table_id: str, enriched: list[dict[str, Any]]) -> int:
-        """Write batch via insert_rows_json (idempotent via null-only mode)."""
+    def _write_batch_insert(self, table_id: str, enriched: list[dict[str, Any]]) -> int:
+        """Write batch via batch load (not streaming insert).
+        
+        Uses load_table_from_file with NDJSON temp file for:
+        - No streaming buffer issues
+        - Better performance for batch operations
+        - Immediate data availability for updates
+        """
         if not enriched:
             return 0
+
         rows_to_insert: list[dict[str, Any]] = []
         for row in enriched:
             eid = row.get("entity_id")
@@ -275,11 +462,18 @@ class BaseEnrichment(ABC):
                 continue
             insert_row: dict[str, Any] = {"entity_id": eid}
             for col in self.COLUMNS_OWNED:
-                insert_row[col] = row.get(col)
-            insert_row[f"{self.ENRICHMENT_NAME}_enriched_at"] = datetime.utcnow()
+                val = row.get(col)
+                # Handle JSON serialization of complex types
+                if isinstance(val, (list, dict)):
+                    insert_row[col] = val
+                else:
+                    insert_row[col] = val
+            insert_row[f"{self.ENRICHMENT_NAME}_enriched_at"] = datetime.utcnow().isoformat()
             rows_to_insert.append(insert_row)
+
         if not rows_to_insert:
             return 0
+
         from tenacity import (
             retry,
             retry_if_exception_type,
@@ -293,158 +487,254 @@ class BaseEnrichment(ABC):
             retry=retry_if_exception_type((ConnectionError, TimeoutError, OSError)),
             reraise=True,
         )
-        def _insert() -> list[Any]:
-            table_ref = self.client.get_table(table_id)
-            return cast(
-                "list[Any]",
-                self.client.insert_rows_json(table_ref, rows_to_insert, skip_invalid_rows=True),
-            )
+        def _batch_load() -> int:
+            """Write rows via batch load with temp file."""
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".ndjson", delete=False
+            ) as f:
+                for row in rows_to_insert:
+                    f.write(json.dumps(row) + "\n")
+                temp_path = f.name
 
-        errors = _insert()
-        n_err = len(errors) if errors else 0
-        if n_err:
+            try:
+                job_config = LoadJobConfig(
+                    source_format=SourceFormat.NEWLINE_DELIMITED_JSON,
+                    write_disposition=WriteDisposition.WRITE_APPEND,
+                    schema_update_options=["ALLOW_FIELD_ADDITION"],
+                )
+
+                with open(temp_path, "rb") as source_file:
+                    load_job = self.client.load_table_from_file(
+                        source_file,
+                        table_id,
+                        job_config=job_config,
+                    )
+                    load_job.result()  # Wait for completion
+
+                return len(rows_to_insert)
+            finally:
+                # Clean up temp file
+                try:
+                    os.unlink(temp_path)
+                except OSError:
+                    pass
+
+        try:
+            return _batch_load()
+        except Exception as e:
             logger.warning(
-                "insert_rows_partial_errors",
+                "batch_load_failed",
                 extra={
                     "enrichment": self.ENRICHMENT_NAME,
                     "batch_size": len(rows_to_insert),
-                    "error_count": n_err,
+                    "error": str(e),
                 },
             )
-        return len(rows_to_insert) - n_err
+            return 0
 
     def run(self) -> None:
-        """Main execution flow. Uses DLQ for failed records."""
-        query = self.build_query()
+        """Main execution flow with streaming, checkpoints, and memory management."""
         if self.args.dry_run:
-            self._dry_run(query)
+            self._dry_run()
             return
-        try:
-            results = self._query_bq(query)
-        except Exception as e:
-            logger.error(
-                "enrichment_query_failed",
-                extra={
-                    "enrichment": self.ENRICHMENT_NAME,
-                    "error_type": type(e).__name__,
-                    "error_message": str(e),
-                },
-                exc_info=True,
+
+        # Load or create checkpoint
+        checkpoint: Checkpoint | None = None
+        start_offset = self.args.offset
+
+        if self.args.resume:
+            checkpoint = self._load_checkpoint()
+            if checkpoint:
+                start_offset = checkpoint.last_offset
+                logger.info(
+                    "resuming_from_checkpoint",
+                    extra={
+                        "offset": start_offset,
+                        "previously_processed": checkpoint.processed_count,
+                    },
+                )
+
+        if checkpoint is None:
+            levels = [int(x.strip()) for x in self.args.level.split(",")]
+            checkpoint = Checkpoint(
+                enrichment_name=self.ENRICHMENT_NAME,
+                levels=levels,
+                mode=self.args.mode,
+                last_offset=start_offset,
+                started_at=datetime.utcnow().isoformat(),
             )
-            return
-        if not results:
+
+        # Get total count for progress reporting
+        total_count = self._get_total_count()
+        if total_count == 0:
             logger.info(
                 "enrichment_nothing_to_process",
                 extra={"enrichment": self.ENRICHMENT_NAME},
             )
             return
-        total = len(results)
+
+        logger.info(
+            "enrichment_starting",
+            extra={
+                "enrichment": self.ENRICHMENT_NAME,
+                "total_entities": total_count,
+                "start_offset": start_offset,
+                "page_size": self.args.page_size,
+                "target_table": self.get_target_table(),
+            },
+        )
+
         enriched: list[dict[str, Any]] = []
-        written = 0
-        failed = 0
+        written = checkpoint.written_count
+        failed = checkpoint.failed_count
+        processed = checkpoint.processed_count
         stage = f"enrichment_{self.ENRICHMENT_NAME}"
+        last_checkpoint_save = time.time()
+        checkpoint_interval = 60  # Save checkpoint every 60 seconds
 
-        for i, row in enumerate(results):
-            try:
-                text = getattr(row, "text", None) or (
-                    row.get("text") if isinstance(row, dict) else ""
-                )
-                if not text:
-                    continue
-                existing_emb: list[float] | None = None
-                if (
-                    self.REQUIRES_EMBEDDING
-                    and self.args.use_existing_embedding
-                    and hasattr(row, "sentence_embedding")
-                ):
-                    emb = getattr(row, "sentence_embedding", None)
-                    existing_emb = emb if isinstance(emb, list) else None
-                out = self.compute_enrichment(text, existing_emb)
-                eid = getattr(row, "entity_id", None) or (
-                    row.get("entity_id") if isinstance(row, dict) else None
-                )
-                out["entity_id"] = eid
-                enriched.append(out)
-
-                if len(enriched) >= self.args.write_batch_size:
-                    w = self.write_batch(enriched)
-                    written += w
-                    enriched = []
+        try:
+            for offset, row in self._stream_entities(start_offset):
+                if self._shutdown_requested:
                     logger.info(
-                        "enrichment_batch_written",
+                        "graceful_shutdown",
                         extra={
-                            "enrichment": self.ENRICHMENT_NAME,
-                            "written": w,
-                            "progress": format_progress(i + 1, total),
+                            "processed": processed,
+                            "written": written,
+                            "offset": offset,
                         },
                     )
-                if self.args.progress and (i + 1) % 100 == 0:
-                    logger.info(
-                        "enrichment_progress",
+                    break
+
+                try:
+                    text = getattr(row, "text", None) or (
+                        row.get("text") if isinstance(row, dict) else ""
+                    )
+                    if not text:
+                        continue
+
+                    existing_emb: list[float] | None = None
+                    if (
+                        self.REQUIRES_EMBEDDING
+                        and self.args.use_existing_embedding
+                        and hasattr(row, "sentence_embedding")
+                    ):
+                        emb = getattr(row, "sentence_embedding", None)
+                        existing_emb = emb if isinstance(emb, list) else None
+
+                    out = self.compute_enrichment(text, existing_emb)
+                    eid = getattr(row, "entity_id", None) or (
+                        row.get("entity_id") if isinstance(row, dict) else None
+                    )
+                    out["entity_id"] = eid
+                    enriched.append(out)
+                    processed += 1
+
+                    # Write batch when full
+                    if len(enriched) >= self.args.write_batch_size:
+                        w = self.write_batch(enriched)
+                        written += w
+                        enriched = []
+                        gc.collect()  # Clean up after batch write
+
+                        # Update checkpoint
+                        checkpoint.last_offset = offset + 1
+                        checkpoint.processed_count = processed
+                        checkpoint.written_count = written
+                        checkpoint.failed_count = failed
+                        checkpoint.last_entity_id = eid or ""
+
+                        # Save checkpoint periodically
+                        if time.time() - last_checkpoint_save > checkpoint_interval:
+                            self._save_checkpoint(checkpoint)
+                            last_checkpoint_save = time.time()
+
+                        if self.args.progress:
+                            logger.info(
+                                "enrichment_progress",
+                                extra={
+                                    "enrichment": self.ENRICHMENT_NAME,
+                                    "processed": processed,
+                                    "written": written,
+                                    "total": total_count,
+                                    "pct": round(processed / total_count * 100, 1),
+                                    "memory_mb": round(get_memory_usage_mb(), 1),
+                                },
+                            )
+
+                except Exception as e:
+                    failed += 1
+                    rec: dict[str, Any] = {
+                        "entity_id": getattr(row, "entity_id", None)
+                        or (row.get("entity_id") if isinstance(row, dict) else None),
+                        "text_preview": (text[:200] if text else ""),
+                    }
+                    self._dlq.send(rec, e, stage, attempt_count=1)
+                    logger.error(
+                        "enrichment_record_failed",
                         extra={
                             "enrichment": self.ENRICHMENT_NAME,
-                            "current": i + 1,
-                            "total": total,
+                            "entity_id": rec.get("entity_id"),
+                            "error_type": type(e).__name__,
+                            "error_message": str(e),
                         },
                     )
-            except Exception as e:
-                failed += 1
-                rec: dict[str, Any] = {
-                    "entity_id": getattr(row, "entity_id", None)
-                    or (row.get("entity_id") if isinstance(row, dict) else None),
-                    "text_preview": (text[:200] if text else ""),
-                }
-                self._dlq.send(rec, e, stage, attempt_count=1)
-                logger.error(
-                    "enrichment_record_failed",
-                    extra={
-                        "enrichment": self.ENRICHMENT_NAME,
-                        "entity_id": rec.get("entity_id"),
-                        "error_type": type(e).__name__,
-                        "error_message": str(e),
-                    },
-                    exc_info=True,
-                )
 
-        if enriched:
-            w = self.write_batch(enriched)
-            written += w
+            # Write remaining batch
+            if enriched:
+                w = self.write_batch(enriched)
+                written += w
+
+            # Mark complete and clear checkpoint
+            checkpoint.completed = True
+            checkpoint.processed_count = processed
+            checkpoint.written_count = written
+            checkpoint.failed_count = failed
+            self._save_checkpoint(checkpoint)
+
+            if not self._shutdown_requested:
+                self._clear_checkpoint()
+
+        except Exception as e:
+            logger.error(
+                "enrichment_run_failed",
+                extra={
+                    "enrichment": self.ENRICHMENT_NAME,
+                    "error": str(e),
+                    "processed": processed,
+                    "written": written,
+                },
+                exc_info=True,
+            )
+            # Save checkpoint on failure for resume
+            checkpoint.processed_count = processed
+            checkpoint.written_count = written
+            checkpoint.failed_count = failed
+            self._save_checkpoint(checkpoint)
+            raise
+
         dlq_count = self._dlq.count()
         logger.info(
             "enrichment_complete",
             extra={
                 "enrichment": self.ENRICHMENT_NAME,
-                "processed": total,
+                "processed": processed,
                 "written": written,
                 "failed": failed,
                 "dlq_count": dlq_count,
+                "final_memory_mb": round(get_memory_usage_mb(), 1),
             },
         )
 
-    def _dry_run(self, query: str) -> None:
-        """Log dry-run query and optional count."""
+    def _dry_run(self) -> None:
+        """Log dry-run info with count."""
+        total = self._get_total_count()
         logger.info(
             "enrichment_dry_run",
-            extra={"enrichment": self.ENRICHMENT_NAME, "query_preview": query[:500]},
+            extra={
+                "enrichment": self.ENRICHMENT_NAME,
+                "would_process": total,
+                "levels": self.args.level,
+                "mode": self.args.mode,
+                "target_table": self.get_target_table(),
+            },
         )
-        count_q = query.replace(
-            "SELECT " + query.split("SELECT ")[1].split(" FROM")[0],
-            "SELECT COUNT(*) as cnt",
-            1,
-        )
-        try:
-            rows = self._query_bq(count_q)
-            cnt = getattr(rows[0], "cnt", None) or (rows[0][0] if rows else 0)
-            logger.info(
-                "enrichment_dry_run_count",
-                extra={"enrichment": self.ENRICHMENT_NAME, "would_process": cnt},
-            )
-        except Exception as e:
-            logger.warning(
-                "enrichment_dry_run_count_failed",
-                extra={
-                    "enrichment": self.ENRICHMENT_NAME,
-                    "error_type": type(e).__name__,
-                    "error_message": str(e),
-                },
-            )

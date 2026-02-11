@@ -10,10 +10,19 @@ Purpose: Systematically expand enrichment coverage from 4.62% to target (e.g., 5
 
 from __future__ import annotations
 
+import json
 import logging
+import os
 import sys
+import tempfile
 from datetime import datetime
 from typing import Any
+
+from google.cloud.bigquery import (
+    LoadJobConfig,
+    SourceFormat,
+    WriteDisposition,
+)
 
 from pipelines.enrichment.config import (
     BQ_DATASET_ID,
@@ -189,34 +198,56 @@ def expand_coverage(
                 "entity_type": row.entity_type,
                 "conversation_id": row.conversation_id,
                 "message_id": row.message_id,
-                "created_at": datetime.utcnow(),
-                "updated_at": datetime.utcnow(),
+                "created_at": datetime.utcnow().isoformat(),
+                "updated_at": datetime.utcnow().isoformat(),
             }
             rows_to_insert.append(enrichment_row)
 
         # Insert to staging first
         staging_table_id = f"{BQ_PROJECT_ID}.{BQ_DATASET_ID}.staging_entity_enrichments"
         try:
-            staging_table = client.get_table(staging_table_id)
+            client.get_table(staging_table_id)
         except Exception:
             # Staging table doesn't exist, create it or use production
             logger.warning(f"Staging table not found, using production: {ENRICHMENTS_TABLE}")
             staging_table_id = f"{BQ_PROJECT_ID}.{BQ_DATASET_ID}.{ENRICHMENTS_TABLE}"
-            staging_table = client.get_table(staging_table_id)
 
-        # Insert in batches
+        # Insert in batches using batch load (not streaming insert)
         batch_size = 1000
         total_inserted = 0
 
         for i in range(0, len(rows_to_insert), batch_size):
             batch = rows_to_insert[i : i + batch_size]
-            errors = client.insert_rows_json(staging_table, batch, skip_invalid_rows=True)
+            
+            # Write batch via temp file and load_table_from_file
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".ndjson", delete=False) as f:
+                for row in batch:
+                    f.write(json.dumps(row, default=str) + "\n")
+                temp_path = f.name
 
-            if errors:
-                logger.warning(f"Batch {i // batch_size + 1} had {len(errors)} errors")
-                total_inserted += len(batch) - len(errors)
-            else:
+            try:
+                job_config = LoadJobConfig(
+                    source_format=SourceFormat.NEWLINE_DELIMITED_JSON,
+                    write_disposition=WriteDisposition.WRITE_APPEND,
+                    schema_update_options=["ALLOW_FIELD_ADDITION"],
+                )
+
+                with open(temp_path, "rb") as source_file:
+                    load_job = client.load_table_from_file(
+                        source_file,
+                        staging_table_id,
+                        job_config=job_config,
+                    )
+                    load_job.result()  # Wait for completion
+
                 total_inserted += len(batch)
+            except Exception as e:
+                logger.warning(f"Batch {i // batch_size + 1} failed: {e}")
+            finally:
+                try:
+                    os.unlink(temp_path)
+                except OSError:
+                    pass
 
             logger.info(
                 f"Inserted batch {i // batch_size + 1}: {total_inserted:,}/{len(rows_to_insert):,}"

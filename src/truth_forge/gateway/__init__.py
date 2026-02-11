@@ -28,6 +28,9 @@ Providers:
     - claude: Anthropic Claude (default for complex reasoning)
     - gemini: Google Gemini (fast, good for structured output)
     - ollama: Local Ollama (free, private, good for embeddings)
+    - scout: Local Scout endpoint (MLX/Ollama compatible)
+    - maverick: Local Maverick endpoint (deep reasoning)
+    - r1: Local DeepSeek R1 endpoint (synthesis)
 
 MOLT LINEAGE:
 - Source: Truth_Engine/src/truth_forge/gateway/
@@ -62,7 +65,10 @@ from truth_forge.gateway.providers import (
     BaseProvider,
     ClaudeProvider,
     GeminiProvider,
+    MaverickProvider,
     OllamaProvider,
+    R1Provider,
+    ScoutProvider,
 )
 from truth_forge.gateway.types import (
     CompletionRequest,
@@ -103,6 +109,9 @@ __all__ = [
     "ClaudeProvider",
     "GeminiProvider",
     "OllamaProvider",
+    "ScoutProvider",
+    "MaverickProvider",
+    "R1Provider",
     # Membrane
     "Membrane",
     "MembraneDecision",

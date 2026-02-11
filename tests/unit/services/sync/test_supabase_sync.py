@@ -3,7 +3,7 @@
 Achieves 95%+ coverage with all branches and edge cases tested.
 """
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from unittest.mock import Mock, patch
 
 import pytest
@@ -194,7 +194,7 @@ class TestSupabaseSyncService:
         mock_bq_sync: Mock,
     ) -> None:
         """Test syncing all contacts from Supabase."""
-        last_sync = datetime.utcnow() - timedelta(hours=12)
+        last_sync = datetime.now(UTC) - timedelta(hours=12)
 
         # Mock Supabase table - need separate queries for list and individual fetches
         supabase_table = Mock()

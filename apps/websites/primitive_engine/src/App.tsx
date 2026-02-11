@@ -2,75 +2,68 @@
  * Primitive Engine Website - THE BUILDER
  *
  * MOLT LINEAGE:
- * - Source: Truth_Engine/apps/primitive_app/ (reference)
- * - Version: 1.0.0
- * - Date: 2026-01-27
+ * - Source: truth_forge website (pattern)
+ * - Version: 2.0.0
+ * - Date: 2026-01-30
+ *
+ * Same chat interface, different content space.
+ * Specialization LETS it happen, doesn't DEMAND it.
  */
+
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
+import Layout from './components/Layout';
+import Home from './pages/Home';
+
+// Lazy load route-level components
+const Chat = lazy(() => import('./pages/Chat'));
+const About = lazy(() => import('./pages/About'));
+
+// Loading fallback
+function LoadingFallback() {
+  return (
+    <div style={{
+      minHeight: '60vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: '#0a0a0a'
+    }}>
+      <div style={{
+        width: '200px',
+        height: '40px',
+        background: '#1a1a1a',
+        borderRadius: '4px'
+      }}></div>
+    </div>
+  );
+}
 
 function App() {
   return (
-    <div className="app">
-      <header>
-        <h1>Primitive Engine</h1>
-        <p>THE BUILDER</p>
-      </header>
-
-      <main>
-        <section className="hero">
-          <h2>EXIST:NOW</h2>
-          <p>Build. Spawn. Deploy.</p>
-        </section>
-
-        <section className="pattern">
-          <h2>THE PATTERN</h2>
-          <div className="pattern-visual">
-            <span>Build Request</span>
-            <span className="arrow">→</span>
-            <span>Primitive Builder</span>
-            <span className="arrow">→</span>
-            <span>Deployed Primitive</span>
-          </div>
-        </section>
-
-        <section className="primitive">
-          <h2>Primitive: EXIST:NOW</h2>
-          <p>The Primitive Engine exists in the present, building the future.</p>
-        </section>
-
-        <section className="fertility">
-          <h2>Fertility: FERTILE</h2>
-          <p>Spawns children. Each primitive can become its own organism.</p>
-        </section>
-
-        <section className="features">
-          <h2>Features</h2>
-          <ul>
-            <li><strong>Slot Builder</strong> - Visual interface for creating primitives</li>
-            <li><strong>Template Library</strong> - Pre-built primitive templates</li>
-            <li><strong>One-Click Deploy</strong> - Instant primitive deployment</li>
-            <li><strong>Monitoring</strong> - Runtime primitive health</li>
-          </ul>
-        </section>
-
-        <section className="templates">
-          <h2>Template Categories</h2>
-          <ul>
-            <li><strong>Data Processing</strong> - ETL, transforms, aggregations</li>
-            <li><strong>API Integration</strong> - REST, GraphQL, webhooks</li>
-            <li><strong>AI/ML</strong> - Model inference, embeddings, RAG</li>
-            <li><strong>Automation</strong> - Workflows, schedules, triggers</li>
-          </ul>
-        </section>
-
-        <section className="cta">
-          <a href="/builder" className="button">Start Building</a>
-        </section>
-      </main>
-
-      <footer>
-        <p>Primitive Engine LLC - A Truth Forge organism</p>
-      </footer>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Home />} />
+          <Route
+            path="chat"
+            element={
+              <Suspense fallback={<LoadingFallback />}>
+                <Chat />
+              </Suspense>
+            }
+          />
+          <Route
+            path="about"
+            element={
+              <Suspense fallback={<LoadingFallback />}>
+                <About />
+              </Suspense>
+            }
+          />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   );
 }
 

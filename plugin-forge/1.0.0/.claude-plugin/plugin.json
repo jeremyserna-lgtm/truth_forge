@@ -1,0 +1,8 @@
+{
+  "name": "plugin-forge",
+  "version": "1.0.0",
+  "description": "The plugin that makes plugins. Analyze your ecosystem, identify gaps, forge new plugins, and recursively evolve your Cowork setup — each plugin's outputs feed back to determine what to build next.",
+  "author": {
+    "name": "Jeremy Serna"
+  }
+}

@@ -16,7 +16,7 @@ BQ_PROJECT_ID = os.getenv("BQ_PROJECT_ID", "flash-clover-464719-g1")
 BQ_DATASET_ID = os.getenv("BQ_DATASET_ID", "spine")
 
 # Primary table names
-ENTITY_TABLE = "entity_production"  # Main entity table
+ENTITY_TABLE = "entity_unified"  # Main entity table (entity view references missing entity_production)
 DOCUMENT_TABLE = "document"  # Document metadata
 RELATIONSHIP_TABLE = "entity_relationship"  # Entity relationships
 

@@ -575,4 +575,35 @@ Available for Vector Search
 ---
 
 **Last Updated**: 2026-01-28  
-**Status**: ✅ **Code Complete - Ready to Deploy**
+**Status**: ✅ **Code Complete - Ready to Deploy**  
+**Test Coverage**: ✅ **Tests Created** - See `TEST_COVERAGE_PLAN.md` for coverage details
+
+---
+
+## Testing
+
+**Test File**: `tests/unit/pipelines/test_dataflow_pipeline.py`  
+**Coverage Target**: 95% (per user requirement)  
+**Standard**: 90% minimum (per framework standards)
+
+**Test Coverage**:
+- ✅ Multi-source support (all 8 sources)
+- ✅ Extract functions
+- ✅ THE GATE identity generation
+- ✅ Gemini Flash Lite spelling correction
+- ✅ spaCy sentence segmentation
+- ✅ Entity creation (L4, L5, L8)
+- ✅ entity_unified row builder
+- ✅ Error handling
+
+**Run Tests**:
+```bash
+.venv/bin/pytest tests/unit/pipelines/test_dataflow_pipeline.py -v
+```
+
+**Check Coverage**:
+```bash
+.venv/bin/pytest tests/unit/pipelines/test_dataflow_pipeline.py \
+  --cov=pipelines/adapters/claude_code/dataflow_pipeline \
+  --cov-report=term-missing
+```

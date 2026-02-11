@@ -42,7 +42,10 @@ from spine_analysis_mcp import __version__
 from spine_analysis_mcp.tools import (
     concept_tools,
     cross_level_tools,
+    data_ghost_tools,
+    discovery_tools,
     enrichment_tools,
+    notme_analytics_tools,
     pattern_tools,
     query_tools,
     relationship_tools,
@@ -84,6 +87,9 @@ def _register_all_tools() -> None:
         semantic_tools,
         cross_level_tools,
         enrichment_tools,
+        notme_analytics_tools,  # Clara Era Legacy (SOVEREIGN Section 24)
+        discovery_tools,  # Knowledge Graph + Emergent Patterns + Reasoning Chains
+        data_ghost_tools,  # Surface AI's unauthorized interpretations
     ]
 
     for module in modules:

@@ -87,7 +87,7 @@ def get_relationship_tools() -> list[tuple[Tool, Any]]:
             return "\n".join(lines)
 
         except Exception as e:
-            logger.error("get_partnership_failed", error=str(e), exc_info=True)
+            logger.error("get_partnership_failed: %s", e, exc_info=True)
             return f"Error getting partnership: {type(e).__name__}: {e!s}"
 
     tools.append((partnership_tool, handle_get_partnership))
@@ -155,7 +155,7 @@ def get_relationship_tools() -> list[tuple[Tool, Any]]:
             return "\n".join(lines)
 
         except Exception as e:
-            logger.error("get_trust_level_failed", error=str(e), exc_info=True)
+            logger.error("get_trust_level_failed: %s", e, exc_info=True)
             return f"Error getting trust level: {type(e).__name__}: {e!s}"
 
     tools.append((trust_tool, handle_get_trust_level))
@@ -235,7 +235,7 @@ def get_relationship_tools() -> list[tuple[Tool, Any]]:
                 conn.close()
 
         except Exception as e:
-            logger.error("list_partnerships_failed", error=str(e), exc_info=True)
+            logger.error("list_partnerships_failed: %s", e, exc_info=True)
             return f"Error listing partnerships: {type(e).__name__}: {e!s}"
 
     tools.append((list_tool, handle_list_partnerships))

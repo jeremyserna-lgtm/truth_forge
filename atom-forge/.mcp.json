@@ -1,0 +1,21 @@
+{
+  "mcpServers": {
+    "truth-forge": {
+      "type": "stdio",
+      "command": "python",
+      "args": ["-m", "truth_forge_mcp"],
+      "cwd": "mcp-servers/truth-forge-mcp"
+    },
+    "spine-analysis": {
+      "type": "stdio",
+      "command": "python",
+      "args": ["-m", "spine_analysis_mcp"],
+      "cwd": "mcp-servers/spine-analysis-mcp",
+      "env": {
+        "GOOGLE_APPLICATION_CREDENTIALS": "~/.config/gcloud/application_default_credentials.json",
+        "BIGQUERY_PROJECT": "flash-clover-464719-g1",
+        "BIGQUERY_DATASET": "spine"
+      }
+    }
+  }
+}

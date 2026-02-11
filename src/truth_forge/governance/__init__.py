@@ -44,18 +44,35 @@ from truth_forge.governance.audit_trail import (
     AuditTrail,
     get_current_run_id,
 )
+from truth_forge.governance.control_plane import (
+    ControlPlaneError,
+    LeaseRequest,
+    TaskRequest,
+    enqueue_task,
+    heartbeat,
+    kill_switch_status,
+    renew_lease,
+)
+from truth_forge.governance.control_plane import (
+    record_audit as control_plane_record_audit,
+)
 from truth_forge.governance.cost_enforcer import (
     BudgetConfig,
     CostAction,
     CostEnforcer,
     CostRecord,
 )
+from truth_forge.governance.feature_flags import FeatureFlags, feature_flags
 from truth_forge.governance.hold_isolation import (
     HoldIsolation,
     HoldLayer,
     IsolationViolation,
     OperationType,
 )
+from truth_forge.governance.kill_switch import KillSwitchError, assert_not_armed, current_state
+from truth_forge.governance.peer_review import Consensus, verify_claim
+from truth_forge.governance.privacy import scrub_messages, scrub_text
+from truth_forge.governance.risk_gate import should_ask_permission
 from truth_forge.governance.unified_governance import (
     GovernanceConfig,
     UnifiedGovernance,
@@ -88,4 +105,28 @@ __all__ = [
     "CostRecord",
     "CostAction",
     "BudgetConfig",
+    # Feature Flags
+    "feature_flags",
+    "FeatureFlags",
+    # Control plane
+    "ControlPlaneError",
+    "TaskRequest",
+    "LeaseRequest",
+    "enqueue_task",
+    "renew_lease",
+    "control_plane_record_audit",
+    "heartbeat",
+    "kill_switch_status",
+    # Kill switch
+    "KillSwitchError",
+    "assert_not_armed",
+    "current_state",
+    # Peer review
+    "Consensus",
+    "verify_claim",
+    # Privacy
+    "scrub_text",
+    "scrub_messages",
+    # Risk gating
+    "should_ask_permission",
 ]

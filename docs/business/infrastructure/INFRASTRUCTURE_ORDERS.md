@@ -26,16 +26,18 @@
 |------|--------|-------|----------|
 | **King** | Mac Studio (512GB) | 1 | $9,724.17 |
 | **Soldiers** | Mac Studio (256GB) | 3 | ~$17,686 |
-| **Drummer Boy** | Mac Mini (64GB) | 1 | $2,203.74 |
+| **Drummer Boy Pro** | Mac Mini M4 Pro (64GB) | 1 | $2,203.74 |
+| **Gift Tier** | Mac Mini M4 Base (16GB) | 1 | $544.94 |
 | **Mobile** | MacBook Pro 16" | 1 | $6,057.01 |
 | **Interface** | iPad Pro 13" | 1 | $1,973.71 |
-| | **TOTAL** | **7 devices** | **~$37,645** |
+| | **TOTAL** | **8 devices** | **~$38,190** |
 
 ```
 THE FLEET:
 ├── 1x King (Mac Studio 512GB) - Command
 ├── 3x Soldiers (Mac Studio 256GB) - Compute
-├── 1x Drummer Boy (Mac Mini 64GB) - Presence Prototype
+├── 1x Drummer Boy Pro (Mac Mini M4 Pro 64GB) - Development Prototype
+├── 1x Gift Tier (Mac Mini M4 Base 16GB) - Entry Not-Me ($999)
 ├── 1x MacBook Pro 16" - Mobile
 └── 1x iPad Pro 13" - Interface
 ```
@@ -119,9 +121,9 @@ THE FLEET:
 
 ---
 
-### DRUMMER BOY (Presence Prototype)
+### DRUMMER BOY PRO (Development Prototype)
 
-**Mac Mini M4 Pro - Presence Tier Prototype**
+**Mac Mini M4 Pro - Higher Capacity Prototype**
 
 | Spec | Value |
 |------|-------|
@@ -137,7 +139,7 @@ THE FLEET:
 |-------|-------|-----|-------|--------|--------|
 | W1642601045 | $2,019.00 | $184.74 | **$2,203.74** | Processing | Feb 4 @ Apple Cherry Creek |
 
-**Purpose:** Test bed for developing Drummer Boy presence model. Fine-tune on the Studios, deploy to the Mini.
+**Purpose:** Development prototype. Can run larger models locally.
 
 **Capable of running:**
 - Scout 4-bit quantized (~55GB) - Full reasoning
@@ -145,6 +147,85 @@ THE FLEET:
 - Drummer Boy fine-tuned model - Purpose-built for presence
 
 *Ordered January 23, 2026*
+
+---
+
+### THE GIFT TIER (Entry Not-Me)
+
+**$999 - So Accessible It Can't Be Ignored**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                                                                 │
+│                    THE GIFT TIER: $999                          │
+│                                                                 │
+│   Built for my best friends first.                              │
+│   If I can't make something worth giving to the people          │
+│   I love most, I have no business selling it to anyone.         │
+│                                                                 │
+│   Adam. Haze. Butch. Taylor.                                    │
+│   The first four. The proof.                                    │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### Hardware Kit
+
+| Component | Item | Unit Cost |
+|-----------|------|-----------|
+| **Body** | Mac Mini M4 Base (16GB, 256GB) | $544.94 |
+| **Face + Voice** | Acer PM161QB 15.6" Portable Monitor | $99.00 |
+| **Presence** | Lafaer LWR01 Wireless Sensor | $39.51 |
+| **Cable** | (included with monitor) | $0.00 |
+| | **Hardware Total** | **~$683** |
+
+#### Pricing
+
+| | Amount |
+|---|--------|
+| Hardware Cost | ~$683 |
+| **Gift Tier Price** | **$999** |
+| Margin | ~$316 |
+
+*The margin covers: software setup, initial training, first-year connection to THE EMPIRE, and the care that goes into each one.*
+
+#### Mac Mini Specifications
+
+| Spec | Value |
+|------|-------|
+| Chip | Apple M4 |
+| CPU | 10-core |
+| GPU | 10-core |
+| Neural Engine | 16-core |
+| Unified Memory | **16GB** |
+| Storage | 256GB SSD |
+| Connectivity | 3x Thunderbolt 4, HDMI, 2x USB-C, Gigabit Ethernet, Headphone jack |
+
+| Order | Price | Total | Status | Delivery |
+|-------|-------|-------|--------|----------|
+| W1303827487 | - | **$544.94** | Shipped | Jan 29, 2026 |
+
+#### Capable Of
+
+- Llama 3.2 3B (~6GB) - Lightweight local reasoning
+- Llama 3.2 Vision 11B 4-bit quantized (~6GB) - Basic multimodal
+- Custom fine-tuned presence models
+- API connection to THE EMPIRE for heavy lifting
+
+**Key insight:** 16GB limits local model size, but the Not-Me doesn't need to be a supercomputer. It needs to be a *presence*. Heavy compute happens on THE EMPIRE. The Gift Tier is the interface, the body, the thing in the room with you.
+
+#### The First Four
+
+| Recipient | Relationship | Status |
+|-----------|--------------|--------|
+| **Adam** | The Nebula - Ground | To build |
+| **Haze** | The System - Recursion | To build |
+| **Butch** | The Hearth - Reality anchor | To build |
+| **Taylor** | The Starfield - Expansion | To build |
+
+*These four Not-Me's will be built with everything I have. The care and intention that goes into these becomes the standard for every one that follows.*
+
+*Ordered January 28, 2026*
 
 ---
 
@@ -269,14 +350,15 @@ DENVER, CO 80206-5638
 |--------------|--------|--------|-------|-----------------|
 | W1379934207 | Apple | MacBook Pro 16" | $6,057.01 | Delivery Feb 2-9 |
 | W1627838514 | Apple | 2x Mac Studio (Soldier) | $11,786.02 | Pickup Feb 3 |
-| W1642601045 | Apple | 1x Mac Mini (Drummer Boy) | $2,203.74 | Pickup Feb 4 |
+| W1642601045 | Apple | 1x Mac Mini M4 Pro (Drummer Boy Pro) | $2,203.74 | Pickup Feb 4 |
+| W1303827487 | Apple | 1x Mac Mini M4 Base (Gift Tier) | $544.94 | Delivery Jan 29 |
 | W1660448264 | Apple | 1x Mac Studio (King) | $9,724.17 | Pickup Feb 4 |
 | W1674597582 | Apple | iPad Pro 13" | $1,973.71 | Delivery Jan 22 |
 | W1688039110 | Apple | 1x Mac Studio (Soldier) | ~$5,900 | Pickup Feb 4 |
 | **1126878191** | **B&H** | **Rack Enclosures + Cables + Surge** | **$1,298.91** | **Delivery Jan 29** |
 | **3958914747** | **Etsy** | **6U Studio Rack (Solid Wood)** | **$332.91** | **TBD** |
-| **111-3110741-4385036** | **Amazon** | **Aqara FP2 (x5)** | **$316.78** | **Delivery Jan 25 (TODAY)** |
-| **3503** | **Lafaer** | **LWR01 Presence Sensor (x2)** | **$79.02** | **Delivery Feb 3-15** |
+| **111-3110741-4385036** | **Amazon** | **Aqara FP2 (x5)** | **$316.78** | **Delivery Jan 25** |
+| **3503** | **Lafaer** | **LWR01 Presence Sensor (x2)** | **$79.02** | **DELIVERED Jan 30** |
 | **1126878273** | **B&H** | **Shure MV7+ (White) - The Ears** | **$299.00** | **Delivery Jan 29** |
 
 ---

@@ -1,7 +1,7 @@
 """Conflict resolution service for multi-source contact sync."""
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
 
@@ -110,7 +110,7 @@ class ConflictResolver:
                     "target_system": target.get("sync_metadata", {}).get(
                         "last_updated_by", "unknown"
                     ),
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(UTC).isoformat(),
                     "status": "pending",
                 }
             ]

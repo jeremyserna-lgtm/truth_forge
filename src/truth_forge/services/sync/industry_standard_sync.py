@@ -19,7 +19,7 @@ Based on industry standards:
 import logging
 import threading
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from truth_forge.services.sync.auto_sync_service import AutoSyncService
@@ -219,7 +219,7 @@ class IndustryStandardSyncService:
         status: dict[str, Any] = {
             "entity_id": entity_id,
             "entity_type": entity_type,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
         # Get CDC status

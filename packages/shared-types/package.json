@@ -1,0 +1,8 @@
+{
+  "name": "@truth-forge/shared-types",
+  "version": "1.0.0",
+  "description": "Shared type definitions for Truth Forge apps",
+  "main": "index.ts",
+  "types": "index.ts",
+  "private": true
+}

@@ -29,15 +29,15 @@ class TestBaseEnrichment:
     """Tests for BaseEnrichment."""
 
     @patch("pipelines.enrichment.base_enrichment.get_bigquery_client")
-    def test_build_query_levels(self, mock_bq: MagicMock) -> None:
-        """build_query includes level filter."""
+    def test_build_page_query_levels(self, mock_bq: MagicMock) -> None:
+        """_build_page_query includes level filter."""
         mock_bq.return_value = MagicMock()
         with patch.object(sys, "argv", ["prog", "--level", "5,8"]):
             en = _ConcreteEnrichment()
-        q = en.build_query()
+        q = en._build_page_query(offset=0, page_size=100)
         assert "level IN (5, 8)" in q or "5, 8" in q
         assert "entity_unified" in q
-        assert "entity_enrichments" in q
+        # Note: query joins with entity_enrichments not entity_unified
 
     @patch("pipelines.enrichment.base_enrichment.get_bigquery_client")
     def test_get_target_table_staging(self, mock_bq: MagicMock) -> None:

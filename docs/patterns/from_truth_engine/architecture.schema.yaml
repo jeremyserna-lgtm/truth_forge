@@ -1,0 +1,258 @@
+# Architecture Pattern Schema
+# ===========================
+# How services and systems are built.
+# This is the canonical source for SERVICE_STRUCTURE, HOLD_PATTERN, and BREATHING_INTERFACE.
+#
+# "THE_STRUCTURE appears at every scale."
+# — 04_ARCHITECTURE.md
+
+schema_version: "1.0.0"
+pattern_name: architecture
+authority: THE_FRAMEWORK
+status: CANONICAL
+source_document: "framework/04_ARCHITECTURE.md"
+
+provides:
+  - SERVICE_STRUCTURE
+  - HOLD_PATTERN
+  - BREATHING_INTERFACE
+
+traces_to: genesis
+
+# =============================================================================
+# SERVICE_STRUCTURE
+# =============================================================================
+service_structure:
+  description: |
+    How every service in the organism must be structured.
+    Services are the operational units that implement THE_PATTERN.
+
+  required_files:
+    __init__.py:
+      purpose: "Module initialization and exports"
+      must_contain:
+        - "Module docstring with MOLT information"
+        - "Exports for public interface"
+
+    service.py:
+      purpose: "Main service implementation"
+      must_contain:
+        - "Service class with breathing interface"
+        - "MOLT_SOURCE declaration"
+        - "Logging via get_logger()"
+
+    models.py:
+      purpose: "Data models and types"
+      must_contain:
+        - "Dataclasses or Pydantic models"
+        - "Input/output type definitions"
+      optional: true
+
+  class_structure:
+    description: "Service classes follow a standard pattern"
+    required_attributes:
+      - "organism_id or service_id"
+      - "_pattern (PrimitivePattern instance)"
+    required_methods:
+      - "inhale"
+      - "exhale"
+      - "sync"
+      - "_agent_logic"
+
+  molt_declarations:
+    description: "Every service must declare its lineage"
+    required_markers:
+      MOLT_SOURCE:
+        type: "string"
+        description: "Path to the source this was molted from"
+        example: "Primitive/central_services/quality_service/"
+
+      MOLT_VERSION:
+        type: "string"
+        description: "Version of this molt"
+        example: "1.0.0"
+
+      MOLT_DATE:
+        type: "string"
+        description: "Date of molt (ISO format)"
+        example: "2026-01-21"
+
+      MOLT_RATIONALE:
+        type: "string"
+        description: "Why this molt was created"
+        example: "Cognitive dimensions adapted from quality dimensions"
+
+# =============================================================================
+# HOLD_PATTERN
+# =============================================================================
+hold_pattern:
+  description: |
+    The canonical data flow pattern.
+    HOLD₁ (JSONL) → AGENT → HOLD₂ (DuckDB)
+
+  hold_1:
+    format: "JSONL (append-only)"
+    purpose:
+      - "Audit trail"
+      - "Recovery source"
+      - "Batch input"
+    naming: "{service_name}/intake/hold1.jsonl"
+    operations:
+      - "append"
+      - "read"
+    never:
+      - "update"
+      - "delete"
+
+  agent:
+    purpose: "Transform HOLD₁ records into HOLD₂ records"
+    operations:
+      - "hold back (skip)"
+      - "transform"
+      - "pass through"
+    stateless: true
+    signature: "(record: Dict, context: AgentContext) -> Optional[Dict]"
+
+  hold_2:
+    format: "DuckDB (queryable)"
+    purpose:
+      - "Canonical storage"
+      - "Query interface"
+      - "Downstream source"
+    naming: "{service_name}/processed/hold2.duckdb"
+    operations:
+      - "insert"
+      - "query"
+      - "upsert (with dedupe)"
+
+  data_flow:
+    - step: "Input arrives"
+      target: "HOLD₁ (JSONL)"
+      action: "Append record"
+
+    - step: "Agent processes"
+      source: "HOLD₁"
+      target: "AGENT"
+      action: "Transform each record"
+
+    - step: "Output stored"
+      source: "AGENT"
+      target: "HOLD₂ (DuckDB)"
+      action: "Insert/upsert"
+
+    - step: "Sync to cloud (optional)"
+      source: "HOLD₂"
+      target: "BigQuery"
+      action: "Batch sync via sync layer"
+
+# =============================================================================
+# BREATHING_INTERFACE
+# =============================================================================
+breathing_interface:
+  description: |
+    The standard interface for services to inhale (read) and exhale (write).
+    Every system has lungs.
+
+  inhale:
+    purpose: "Read from HOLD (get context)"
+    signature: |
+      def inhale(
+          self,
+          query: Optional[str] = None,
+          limit: int = 100,
+          hold_level: int = 2,
+      ) -> List[Dict[str, Any]]
+    returns: "List of records from HOLD"
+    sources:
+      - "Internal atoms (HOLD₂/DuckDB)"
+      - "Web search (external)"
+      - "Truth context (sessions, observations)"
+
+  exhale:
+    purpose: "Write to HOLD (output results)"
+    signature: |
+      def exhale(
+          self,
+          content: Any,
+          **kwargs,
+      ) -> Dict[str, Any]
+    returns: "Processing result with metadata"
+    destinations:
+      - "HOLD₁ (JSONL)"
+      - "Then processed to HOLD₂"
+
+  sync:
+    purpose: "Synchronize HOLD₂ with external systems"
+    signature: |
+      def sync(self) -> Dict[str, Any]
+    returns: "Sync result with counts"
+    destinations:
+      - "BigQuery (cloud)"
+      - "Federation hub"
+
+  agent_logic:
+    purpose: "The transformation function"
+    signature: |
+      def _agent_logic(
+          self,
+          record: Dict[str, Any],
+          context: AgentContext,
+      ) -> Optional[Dict[str, Any]]
+    returns: "Transformed record or None (skip)"
+
+# =============================================================================
+# REQUIREMENTS FOR CODE TRACING TO ARCHITECTURE
+# =============================================================================
+requirements:
+  # Code that traces to architecture must have:
+  markers:
+    - "MOLT_SOURCE"
+    - "MOLT_VERSION"
+    - "MOLT_DATE"
+
+  methods:
+    - "inhale"
+    - "exhale"
+    - "sync"
+
+  structure:
+    - "HOLD₁ path configured"
+    - "HOLD₂ path configured"
+    - "_agent_logic defined"
+
+  molt_source_required: true
+
+# =============================================================================
+# VALIDATION RULES
+# =============================================================================
+validation_rules:
+  - rule: "Service must have breathing interface"
+    check: "inhale, exhale, sync methods present"
+    severity: BLOCKING
+
+  - rule: "Service must declare MOLT_SOURCE"
+    check: "MOLT_SOURCE marker in code"
+    severity: BLOCKING
+
+  - rule: "HOLD paths must be configured"
+    check: "JSONL and DuckDB paths set"
+    severity: BLOCKING
+
+  - rule: "Agent logic must be defined"
+    check: "_agent_logic method exists"
+    severity: BLOCKING
+
+  - rule: "Service should use PrimitivePattern"
+    check: "PrimitivePattern or similar pattern used"
+    severity: WARNING
+
+# =============================================================================
+# LINEAGE
+# =============================================================================
+lineage:
+  this_pattern: "architecture"
+  traces_to: "genesis"
+  children:
+    - "All central services"
+    - "All template services"
+  note: "Architecture implements THE_STRUCTURE from genesis"

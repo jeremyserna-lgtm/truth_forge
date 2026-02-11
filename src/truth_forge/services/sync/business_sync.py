@@ -2,7 +2,7 @@
 
 import logging
 import traceback
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 
@@ -205,8 +205,8 @@ class BusinessSyncService:
                     local_business.get("industry"),
                     local_business.get("business_type"),
                     str(local_business.get("sync_metadata", {})),
-                    datetime.utcnow().isoformat(),
-                    datetime.utcnow().isoformat(),
+                    datetime.now(UTC).isoformat(),
+                    datetime.now(UTC).isoformat(),
                 ),
             )
             self.local_db.commit()

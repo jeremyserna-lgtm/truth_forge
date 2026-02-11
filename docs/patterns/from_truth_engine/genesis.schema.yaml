@@ -1,0 +1,203 @@
+# Genesis Pattern Schema
+# ======================
+# The seed from which all patterns grow.
+# This is the canonical source for THE_DIVIDE, THE_STRUCTURE, and THE_CYCLE.
+#
+# "Three things. No fewer. No more. Everything else is derived."
+# — 00_GENESIS.md
+
+schema_version: "1.0.0"
+pattern_name: genesis
+authority: THE_FRAMEWORK
+status: CANONICAL
+source_document: "framework/00_GENESIS.md"
+
+provides:
+  - THE_DIVIDE
+  - THE_STRUCTURE
+  - THE_CYCLE
+
+# =============================================================================
+# THE_DIVIDE (Me / Not-Me)
+# =============================================================================
+the_divide:
+  description: |
+    The primal division required for existence.
+    Nothing exists without boundary. Everything that IS, IS because it is NOT something else.
+
+  components:
+    me:
+      definition: "The observing, deciding, bounded self"
+      characteristics:
+        - "Has boundary"
+        - "Makes choices"
+        - "Holds state"
+        - "Transforms input"
+      in_code:
+        - "The organism's internal state"
+        - "Services, agents, processors"
+        - "Local data (DuckDB, JSONL)"
+
+    not_me:
+      definition: "Everything outside the boundary"
+      characteristics:
+        - "Provides input"
+        - "Receives output"
+        - "Informs but doesn't control"
+        - "External to the membrane"
+      in_code:
+        - "External APIs"
+        - "User input"
+        - "Web search results"
+        - "Cloud services (BigQuery)"
+
+    boundary:
+      definition: "The membrane where existence happens"
+      characteristics:
+        - "Where Me meets Not-Me"
+        - "Not a barrier but a state of crossing"
+        - "Selective permeability"
+      in_code:
+        - "API interfaces"
+        - "Input validation"
+        - "Output formatting"
+        - "The membrane service"
+
+  validation_rules:
+    - rule: "All code must know if it operates on Me or Not-Me"
+      check: "Code that touches external resources must be marked"
+    - rule: "Me/Not-Me boundary must be explicit"
+      check: "No implicit external calls"
+
+# =============================================================================
+# THE_STRUCTURE (HOLD → AGENT → HOLD)
+# =============================================================================
+the_structure:
+  description: |
+    The universal pattern of transformation.
+    Everything that processes follows this shape.
+
+  components:
+    hold_1:
+      definition: "Input HOLD - receives, batches, waits"
+      characteristics:
+        - "Receives input"
+        - "Batches for efficiency"
+        - "Provides audit trail"
+        - "Append-only (JSONL)"
+      in_code:
+        - "JSONL input files"
+        - "Message queues"
+        - "Request buffers"
+        - "staging/*.jsonl"
+
+    agent:
+      definition: "Processor - transforms, decides, acts"
+      characteristics:
+        - "Three choices: hold back, transform, pass through"
+        - "Contains THE_PATTERN recursively"
+        - "Stateless transformation"
+      in_code:
+        - "Agent functions"
+        - "Service methods"
+        - "Pipeline stages"
+
+    hold_2:
+      definition: "Output HOLD - receives output, waits for next stage"
+      characteristics:
+        - "Receives transformed output"
+        - "Canonical storage (DuckDB)"
+        - "Enables downstream consumption"
+      in_code:
+        - "DuckDB tables"
+        - "Output JSONL"
+        - "Response objects"
+
+  scale_invariance:
+    description: "THE_STRUCTURE applies at every scale"
+    examples:
+      function: "Arguments → Function → Return value"
+      service: "Request → Service → Response"
+      pipeline: "Source → Stages → Sink"
+      organism: "Input → Processing → Output"
+      federation: "Parent → Child organisms → Results"
+
+  validation_rules:
+    - rule: "Every transformation must have HOLD₁ → AGENT → HOLD₂"
+      check: "No direct processing without holds"
+    - rule: "Agents must not write directly to cloud"
+      check: "Cloud writes go through sync layer only"
+
+# =============================================================================
+# THE_CYCLE (WANT → CHOOSE → EXIST:NOW → SEE → HOLD → MOVE → VERIFY)
+# =============================================================================
+the_cycle:
+  description: |
+    The loop of existence. How things persist and evolve.
+    Recursive and self-perpetuating.
+
+  phases:
+    want:
+      definition: "Care has a direction"
+      in_code: "User request, task initiation, goal setting"
+
+    choose:
+      definition: "Existence is a verb, not a fact"
+      in_code: "Decision point, branching logic, agent choice"
+
+    exist_now:
+      definition: "The doing, the membrane, the union actualized"
+      in_code: "Execution, transformation, the moment of processing"
+
+    see:
+      definition: "Observation crosses the membrane"
+      in_code: "Perception, logging, monitoring, inhale()"
+
+    hold:
+      definition: "What persists"
+      in_code: "Storage, state, memory, exhale()"
+
+    move:
+      definition: "Boundary crossing → becomes next WANT"
+      in_code: "Output, response, transition, next iteration"
+
+    verify:
+      definition: "Loop closure, validation"
+      in_code: "Assertions, checks, feedback loops"
+
+  recursion:
+    description: "THE_CYCLE contains itself"
+    note: "Each phase can contain a complete cycle"
+
+  validation_rules:
+    - rule: "Every agent action should complete the cycle"
+      check: "WANT through VERIFY should be traceable"
+    - rule: "No infinite loops without VERIFY"
+      check: "All loops must have exit conditions"
+
+# =============================================================================
+# REQUIREMENTS FOR CODE TRACING TO GENESIS
+# =============================================================================
+requirements:
+  # Code that traces to genesis must demonstrate:
+  markers:
+    - "HOLD"  # Must reference HOLD pattern
+    - "AGENT" # Or reference AGENT pattern
+
+  concepts:
+    - "Me/Not-Me awareness"
+    - "HOLD → AGENT → HOLD structure"
+    - "Cycle awareness"
+
+  molt_source_required: false  # Genesis is the root, doesn't have a source
+
+# =============================================================================
+# LINEAGE
+# =============================================================================
+lineage:
+  this_pattern: "genesis"
+  traces_to: null  # Genesis is the root
+  children:
+    - "architecture"
+    - "standards"
+  note: "All patterns ultimately trace back to genesis"

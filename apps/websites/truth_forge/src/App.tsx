@@ -11,6 +11,7 @@
 
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
+import { AuthProvider } from './contexts/AuthContext';
 import Layout from './components/Layout';
 import ScrollToTop from './components/ScrollToTop';
 import Home from './pages/Home';
@@ -24,6 +25,7 @@ const About = lazy(() => import('./pages/About'));
 const Resources = lazy(() => import('./pages/Resources'));
 const Science = lazy(() => import('./pages/Science'));
 const NotMe = lazy(() => import('./pages/NotMe'));
+const Login = lazy(() => import('./pages/Login'));
 
 // Loading fallback component
 function LoadingFallback() {
@@ -42,9 +44,10 @@ function LoadingFallback() {
 
 function App() {
   return (
-    <BrowserRouter>
-      <ScrollToTop />
-      <Routes>
+    <AuthProvider>
+      <BrowserRouter>
+        <ScrollToTop />
+        <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<Home />} />
           <Route 
@@ -103,17 +106,26 @@ function App() {
               </Suspense>
             } 
           />
-          <Route 
-            path="science" 
+          <Route
+            path="science"
             element={
               <Suspense fallback={<LoadingFallback />}>
                 <Science />
               </Suspense>
-            } 
+            }
+          />
+          <Route
+            path="login"
+            element={
+              <Suspense fallback={<LoadingFallback />}>
+                <Login />
+              </Suspense>
+            }
           />
         </Route>
       </Routes>
-    </BrowserRouter>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 

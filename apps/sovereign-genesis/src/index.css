@@ -1,0 +1,423 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================================
+   SOVEREIGN GENESIS - Brand-Compliant CSS
+   Following Truth Engine Branding Guidelines
+   ============================================================================ */
+
+/* Google Fonts Import */
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ============================================================================
+   CSS VARIABLES - From COLOR_SYSTEM.md and TYPOGRAPHY_SYSTEM.md
+   ============================================================================ */
+
+:root {
+  /* === TYPOGRAPHY === */
+  --font-display: 'Instrument Serif', serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-body: 'Inter', sans-serif;
+
+  --tracking-wide: 0.05em;
+  --tracking-normal: 0.02em;
+  --tracking-tight: -0.01em;
+
+  /* === FOUNDATION COLORS (Neutrals) === */
+  --black: #0D0D0D;
+  --charcoal: #1A1A1A;
+  --graphite: #2D2D2D;
+  --steel: #4A4A4A;
+  --concrete: #888888;
+  --ash: #B5B5B5;
+  --warm-white: #F5F0E6;
+  --pure-white: #FFFFFF;
+
+  /* === BRAND ACCENTS === */
+
+  /* Truth Engine - Source White */
+  --source: #F5F0E6;
+  --source-glow: #FFFEF5;
+  --source-dim: #E8E3D9;
+
+  /* Primitive Engine - Forge Gold */
+  --forge: #D4A853;
+  --ember: #F5C065;
+  --molten: #B8923F;
+  --ash-gold: #A08050;
+
+  /* Credential Atlas - Steel Blue */
+  --steel-blue: #4A6FA5;
+  --clear: #6B8FC5;
+  --deep: #3A5A8A;
+  --muted-blue: #5A7090;
+
+  /* Stage 5 Mind - Amber Warmth */
+  --amber: #F59E0B;
+  --glow: #FBBF24;
+  --deep-amber: #D97706;
+}
+
+/* === DARK MODE (Primary - from branding) === */
+.dark, :root {
+  --bg-primary: #0D0D0D;
+  --bg-secondary: #1A1A1A;
+  --bg-tertiary: #2D2D2D;
+
+  --text-primary: #F5F0E6;
+  --text-secondary: #B5B5B5;
+  --text-muted: #888888;
+
+  --border: #4A4A4A;
+  --border-subtle: #2D2D2D;
+}
+
+/* === LIGHT MODE (Secondary - from branding) === */
+.light {
+  --bg-primary: #F5F0E6;
+  --bg-secondary: #FFFFFF;
+  --bg-tertiary: #E8E3D9;
+
+  --text-primary: #0D0D0D;
+  --text-secondary: #4A4A4A;
+  --text-muted: #888888;
+
+  --border: #B5B5B5;
+  --border-subtle: #E8E3D9;
+}
+
+/* ============================================================================
+   BASE STYLES
+   ============================================================================ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Dark mode defaults */
+.dark {
+  color-scheme: dark;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* ============================================================================
+   TYPOGRAPHY CLASSES - Following TYPOGRAPHY_SYSTEM.md
+   ============================================================================ */
+
+/* Display font - Instrument Serif for headlines */
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+/* Mono font - JetBrains Mono for technical content */
+.font-mono {
+  font-family: var(--font-mono);
+  letter-spacing: var(--tracking-normal);
+}
+
+/* Body font - Inter for paragraphs */
+.font-body, .font-sans {
+  font-family: var(--font-body);
+}
+
+/* Type scale from branding */
+.text-hero { font-size: 4rem; }      /* 64px */
+.text-h1 { font-size: 2.5rem; }      /* 40px */
+.text-h2 { font-size: 2rem; }        /* 32px */
+.text-h3 { font-size: 1.563rem; }    /* 25px */
+.text-h4 { font-size: 1.25rem; }     /* 20px */
+.text-body { font-size: 1rem; }      /* 16px */
+.text-small { font-size: 0.875rem; } /* 14px */
+.text-micro { font-size: 0.75rem; }  /* 12px */
+
+/* Tracking utilities */
+.tracking-tighter { letter-spacing: -0.05em; }
+.tracking-tight { letter-spacing: var(--tracking-tight); }
+.tracking-normal { letter-spacing: var(--tracking-normal); }
+.tracking-wide { letter-spacing: var(--tracking-wide); }
+.tracking-widest { letter-spacing: 0.1em; }
+
+/* ============================================================================
+   BRAND COLOR CLASSES
+   ============================================================================ */
+
+/* Background colors - using brand neutrals */
+.bg-black { background-color: var(--black); }
+.bg-charcoal { background-color: var(--charcoal); }
+.bg-graphite { background-color: var(--graphite); }
+.bg-steel { background-color: var(--steel); }
+.bg-warm-white { background-color: var(--warm-white); }
+
+/* Text colors */
+.text-primary { color: var(--text-primary); }
+.text-secondary { color: var(--text-secondary); }
+.text-muted { color: var(--text-muted); }
+
+/* Brand accent classes */
+.accent-forge { color: var(--forge); }
+.accent-amber { color: var(--amber); }
+.accent-steel-blue { color: var(--steel-blue); }
+.accent-source { color: var(--source); }
+
+/* Accent backgrounds */
+.bg-forge { background-color: var(--forge); }
+.bg-amber { background-color: var(--amber); }
+.bg-steel-blue { background-color: var(--steel-blue); }
+
+/* Border colors */
+.border-brand { border-color: var(--border); }
+.border-subtle { border-color: var(--border-subtle); }
+
+/* Zinc colors for dark theme compatibility */
+.bg-zinc-950 { background-color: #09090b; }
+.bg-zinc-900 { background-color: var(--charcoal); }
+.border-zinc-800 { border-color: var(--graphite); }
+.text-zinc-500 { color: var(--concrete); }
+.text-zinc-600 { color: #52525b; }
+.text-zinc-700 { color: var(--steel); }
+
+/* Slate colors mapped to brand */
+.bg-slate-950 { background-color: var(--black); }
+.bg-slate-900 { background-color: var(--charcoal); }
+.bg-slate-800 { background-color: var(--graphite); }
+.text-slate-100 { color: var(--text-primary); }
+.text-slate-400 { color: var(--text-secondary); }
+.text-slate-500 { color: var(--text-muted); }
+.border-slate-700 { border-color: var(--steel); }
+.border-slate-800 { border-color: var(--graphite); }
+
+/* Primary/emerald mapped to amber (brand warmth) */
+.bg-primary-600 { background-color: var(--amber); }
+.text-primary-600 { color: var(--amber); }
+.text-emerald-400 { color: var(--glow); }
+.text-emerald-500 { color: var(--amber); }
+.bg-emerald-500 { background-color: var(--amber); }
+.bg-emerald-600 { background-color: var(--deep-amber); }
+.border-emerald-500 { border-color: var(--amber); }
+
+/* Indigo mapped to steel blue (Credential Atlas) */
+.text-indigo-400 { color: var(--clear); }
+.bg-indigo-500 { background-color: var(--steel-blue); }
+.from-indigo-500 { --tw-gradient-from: var(--steel-blue); }
+
+/* Rose/pink mapped to forge gold (Primitive Engine) */
+.text-rose-400 { color: var(--ember); }
+.bg-rose-600 { background-color: var(--molten); }
+.to-rose-500 { --tw-gradient-to: var(--forge); }
+
+/* Purple mapped to deep blue */
+.to-purple-600 { --tw-gradient-to: var(--deep); }
+.bg-violet-600 { background-color: var(--deep); }
+
+/* Blue mapped to steel blue */
+.bg-blue-600 { background-color: var(--steel-blue); }
+.bg-blue-500 { background-color: var(--clear); }
+.border-blue-500 { border-color: var(--steel-blue); }
+
+/* Yellow mapped to forge */
+.bg-yellow-600 { background-color: var(--forge); }
+
+/* Pink mapped to ember */
+.bg-pink-600 { background-color: var(--ember); }
+
+/* ============================================================================
+   SCROLLBAR STYLING
+   ============================================================================ */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--steel);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--concrete);
+}
+
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Selection - using amber warmth */
+::selection {
+  background-color: rgba(245, 158, 11, 0.3);
+}
+
+/* ============================================================================
+   ANIMATIONS
+   ============================================================================ */
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* ============================================================================
+   INTERACTIVE STATES - Following brand guidelines
+   ============================================================================ */
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+/* Hover states with brand colors */
+.hover\:bg-zinc-900\/50:hover {
+  background-color: rgba(26, 26, 26, 0.5);
+}
+
+/* ============================================================================
+   TRANSITIONS
+   ============================================================================ */
+
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.transition-colors {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.duration-200 { transition-duration: 200ms; }
+.duration-300 { transition-duration: 300ms; }
+
+/* ============================================================================
+   LAYOUT UTILITIES
+   ============================================================================ */
+
+.flex-1 { flex: 1 1 0%; }
+.shrink-0 { flex-shrink: 0; }
+
+/* Border utilities */
+.border-l-2 { border-left-width: 2px; }
+
+/* Backdrop blur */
+.backdrop-blur { backdrop-filter: blur(8px); }
+
+/* Shadow utilities */
+.shadow {
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+.shadow-lg {
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+/* Glow effect from branding */
+.glow-amber {
+  box-shadow: 0 0 40px rgba(245, 158, 11, 0.3);
+}
+
+/* ============================================================================
+   GRADIENTS - From branding (use sparingly)
+   ============================================================================ */
+
+/* Forge Gradient (Primitive Engine) */
+.gradient-forge {
+  background: linear-gradient(135deg, var(--forge) 0%, var(--molten) 100%);
+}
+
+/* Depth Gradient (Dark backgrounds) */
+.gradient-depth {
+  background: linear-gradient(180deg, var(--charcoal) 0%, var(--black) 100%);
+}
+
+/* Genesis gradient for the main nav */
+.gradient-genesis {
+  background: linear-gradient(135deg, var(--steel-blue) 0%, var(--amber) 50%, var(--forge) 100%);
+}
+
+/* ============================================================================
+   COMPONENT SPECIFIC
+   ============================================================================ */
+
+/* Recharts responsive container fix */
+.recharts-responsive-container {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Code editor styles */
+.code-editor {
+  font-family: var(--font-mono) !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+}
+
+.code-editor textarea {
+  outline: none !important;
+}
+
+/* Code blocks */
+pre, code {
+  font-family: var(--font-mono);
+}
+
+/* Toast animations */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.toast-enter {
+  animation: slideIn 0.3s ease-out;
+}

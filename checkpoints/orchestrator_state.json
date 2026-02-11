@@ -1,0 +1,13 @@
+{
+  "current_enrichment_idx": 0,
+  "cycle_count": 6,
+  "total_processed": 0,
+  "total_written": 0,
+  "total_failed": 0,
+  "started_at": "2026-02-02T11:13:46.945958",
+  "last_update": "2026-02-02T11:18:32.931562",
+  "last_enrichment": "textblob",
+  "last_status": "success",
+  "running": false,
+  "enrichments_completed_this_cycle": 1
+}

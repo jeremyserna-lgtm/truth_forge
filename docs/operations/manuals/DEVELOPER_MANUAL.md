@@ -614,14 +614,47 @@ See individual service READMEs:
 
 ## 🛡️ Governance and Standards
 
+### Governance Technologies
+
+The governance system lives in `src/truth_forge/governance/` with four interlocking components:
+
+| Component | Role | Biological Metaphor |
+|-----------|------|---------------------|
+| **UnifiedGovernance** | Orchestrates all governance | Cell membrane (complete) |
+| **HoldIsolation** | HOLD₁/HOLD₂ boundary enforcement | Selective permeability |
+| **AuditTrail** | Operation recording | Cellular memory |
+| **CostEnforcer** | Budget gate enforcement | Metabolic regulation |
+
+### Quick Start
+
+```python
+from truth_forge.governance import get_governance, governed
+
+gov = get_governance()
+
+# Gate operations through governance
+if gov.gate_operation("write", source="agent", target="hold2"):
+    # Operation allowed - proceed
+    pass
+
+# Check costs before expensive operations
+if gov.check_cost("openai", "completion", estimated_cost=0.05):
+    result = call_llm(...)
+    gov.record_cost("openai", "completion", actual_cost=0.04)
+
+# Or use the decorator for automatic gating
+@governed(operation="write", source="agent", target="hold2")
+def my_function():
+    pass
+```
+
 ### Universal Governance
 
 All operations must follow:
 - **Traceability**: run_id, correlation_ids in all logs
-- **Audit Trail**: Record all operations via governance.record_audit()
-- **Structured Logging**: Use get_logger(), never print()
-- **Error Handling**: require_diagnostic_on_error() for all errors
-- **Pre-Run Validation**: validate_before_run() before execution
+- **Audit Trail**: Record all operations via `gov.record_agent_action()`
+- **Cost Gating**: Check costs with `gov.check_cost()` before expensive operations
+- **HOLD Isolation**: Operations must flow External → HOLD₁ → AGENT → HOLD₂
 
 ### Required Patterns
 

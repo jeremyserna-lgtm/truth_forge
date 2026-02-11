@@ -3,7 +3,7 @@ name = "truth-browser-logger"
 version = "1.0.0"
 description = "MCP Server for Chrome/Safari browser history extraction with consent-based access"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 license = {text = "MIT"}
 authors = [
     {name = "Truth Forge", email = "jeremy.serna@gmail.com"}

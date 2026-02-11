@@ -23,6 +23,9 @@ class ModelProvider(Enum):
     CLAUDE = "claude"
     GEMINI = "gemini"
     OLLAMA = "ollama"
+    SCOUT = "scout"  # LLaMA 4 Scout - sovereign backbone for Not-Me production
+    MAVERICK = "maverick"  # LLaMA 4 Maverick deep reasoning
+    R1 = "r1"  # DeepSeek R1 sovereign synthesis
 
     @classmethod
     def from_string(cls, value: str) -> ModelProvider:
@@ -124,6 +127,63 @@ MODELS: dict[str, ModelConfig] = {
         cost_per_1k_input=0.0,
         cost_per_1k_output=0.0,
         supports_streaming=False,
+    ),
+    # LLaMA 4 Scout models (local, sovereign backbone)
+    "scout-genesis": ModelConfig(
+        provider=ModelProvider.SCOUT,
+        model="Llama-4-Scout-17B-16E-Instruct",
+        max_tokens=131072,  # 128K stable context
+        temperature=0.7,
+        cost_per_1k_input=0.0,
+        cost_per_1k_output=0.0,
+        supports_json=True,
+        supports_streaming=True,
+        supports_tools=True,
+    ),
+    "scout-genesis-deep": ModelConfig(
+        provider=ModelProvider.SCOUT,
+        model="Llama-4-Scout-17B-16E-Instruct",
+        max_tokens=1000000,  # 1M for document analysis
+        temperature=0.5,
+        cost_per_1k_input=0.0,
+        cost_per_1k_output=0.0,
+        supports_json=True,
+        supports_streaming=True,
+        supports_tools=True,
+    ),
+    "scout-fast": ModelConfig(
+        provider=ModelProvider.SCOUT,
+        model="Llama-4-Scout-17B-16E-Instruct-Q4_K_M",
+        max_tokens=32768,
+        temperature=0.7,
+        cost_per_1k_input=0.0,
+        cost_per_1k_output=0.0,
+        supports_json=True,
+        supports_streaming=True,
+        supports_tools=False,
+    ),
+    # Maverick & R1 (local endpoints)
+    "maverick-genesis": ModelConfig(
+        provider=ModelProvider.MAVERICK,
+        model="Llama-4-Maverick-17B-128E-Instruct-4bit",
+        max_tokens=131072,
+        temperature=0.7,
+        cost_per_1k_input=0.0,
+        cost_per_1k_output=0.0,
+        supports_json=True,
+        supports_streaming=True,
+        supports_tools=True,
+    ),
+    "r1-genesis": ModelConfig(
+        provider=ModelProvider.R1,
+        model="DeepSeek-R1-4bit",
+        max_tokens=32768,
+        temperature=0.7,
+        cost_per_1k_input=0.0,
+        cost_per_1k_output=0.0,
+        supports_json=True,
+        supports_streaming=True,
+        supports_tools=True,
     ),
 }
 

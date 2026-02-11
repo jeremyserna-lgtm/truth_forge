@@ -8,7 +8,7 @@ Provides comprehensive mocks for:
 - Local database
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 from unittest.mock import Mock
 
@@ -144,8 +144,8 @@ def sample_contact() -> dict[str, Any]:
         "category_code": "B",
         "subcategory_code": "B1_BEST_FRIENDS",
         "is_business": False,
-        "created_at": datetime.utcnow(),
-        "updated_at": datetime.utcnow(),
+        "created_at": datetime.now(UTC),
+        "updated_at": datetime.now(UTC),
         "llm_context": {},
         "communication_stats": {},
         "social_network": {},
@@ -186,8 +186,8 @@ def sample_business() -> dict[str, Any]:
         "business_name": "Test Company",
         "industry": "Technology",
         "website": "https://example.com",
-        "created_at": datetime.utcnow(),
-        "updated_at": datetime.utcnow(),
+        "created_at": datetime.now(UTC),
+        "updated_at": datetime.now(UTC),
     }
 
 

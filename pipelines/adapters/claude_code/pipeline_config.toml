@@ -26,30 +26,34 @@ encoding = "utf-8"
 name = "assessment"
 type = "assessment"
 input = "source"
-output = "report"
+output = "data/staging/claude_code_stage_0"
+source_path = "~/.claude-code/sessions"
 script = "stage_0/claude_code_stage_0.py"
 
 [stages.stage_1]
 name = "extraction"
 type = "extraction"
 input = "source"
-output = "claude_code_stage_1"
+output = "data/staging/claude_code_stage_1.jsonl"
+source_path = "data/staging/test_input"
 script = "stage_1/claude_code_stage_1.py"
 batch_size = 1000
 
 [stages.stage_2]
 name = "cleaning"
 type = "cleaning"
-input = "claude_code_stage_1"
-output = "claude_code_stage_2"
+input = "data/staging/claude_code_stage_1.jsonl"
+output = "data/staging/claude_code_stage_2.jsonl"
+use_gemini_cleaning = false
 script = "stage_2/claude_code_stage_2.py"
 batch_size = 1000
 
 [stages.stage_3]
 name = "identity_gate"
 type = "identity"
-input = "claude_code_stage_2"
-output = "claude_code_stage_3"
+input = "data/staging/claude_code_stage_2.jsonl"
+output = "data/staging/claude_code_stage_3.jsonl"
+source_name = "claude_code"
 script = "stage_3/claude_code_stage_3.py"
 batch_size = 1000
 uses_identity_service = true
@@ -57,8 +61,8 @@ uses_identity_service = true
 [stages.stage_4]
 name = "staging"
 type = "staging"
-input = "claude_code_stage_3"
-output = "claude_code_stage_4"
+input = "data/staging/claude_code_stage_3.jsonl"
+output = "data/staging/claude_code_stage_4.jsonl"
 script = "stage_4/claude_code_stage_4.py"
 batch_size = 1000
 
@@ -67,8 +71,8 @@ batch_size = 1000
 name = "l1_tokens"
 type = "entity_creation"
 level = 1
-input = "claude_code_stage_4"
-output = "claude_code_stage_5"
+input = "data/staging/claude_code_stage_4.jsonl"
+output = "data/staging/claude_code_stage_5.jsonl"
 script = "stage_5/claude_code_stage_5.py"
 batch_size = 10000
 model = "spacy:en_core_web_sm"
@@ -77,8 +81,8 @@ model = "spacy:en_core_web_sm"
 name = "l3_sentences"
 type = "entity_creation"
 level = 3
-input = "claude_code_stage_4"
-output = "claude_code_stage_6"
+input = "data/staging/claude_code_stage_4.jsonl"
+output = "data/staging/claude_code_stage_6.jsonl"
 script = "stage_6/claude_code_stage_6.py"
 batch_size = 5000
 model = "spacy:en_core_web_sm"
@@ -87,8 +91,8 @@ model = "spacy:en_core_web_sm"
 name = "l5_messages"
 type = "entity_creation"
 level = 5
-input = "claude_code_stage_4"
-output = "claude_code_stage_7"
+input = "data/staging/claude_code_stage_4.jsonl"
+output = "data/staging/claude_code_stage_7.jsonl"
 script = "stage_7/claude_code_stage_7.py"
 batch_size = 5000
 

@@ -1,0 +1,35 @@
+# Feature flags for Genesis / Agent Zero adaptations
+# Defaults are safe-first and backwards-compatible.
+
+sovereign_mode_enabled: false        # Stage 5 autonomy; off by default
+cluster_execution_enabled: true       # Use SSH/native execution; Docker disabled
+genesis_network_enabled: false        # Cross-node agent spawning / WebSocket mesh
+peer_review_required: true            # Force peer review on high-risk ops
+training_export_enabled: true         # Allow exporting conversations to training store
+privacy_scrub_enabled: true           # Enable PII scrubbing before export/logging
+audit_log_enabled: true               # Persist audit records to disk
+kill_switch_armed: false              # Allow global kill switch to stop execution
+autonomous_loop_enabled: true         # Run continuous autonomous loop when orchestrator starts
+cognitive_bridge_enabled: true        # Dynamic model routing (Scout/Maverick/R1)
+docker_enabled: false                 # Explicitly disable Docker fallback
+
+# Risk thresholds
+risk_thresholds:
+  servant_prompt: 2   # ask permission above this when in servant mode
+  sovereign_prompt: 5 # ask permission above this when in sovereign mode
+  irreversible: 5     # actions with risk >= irreversible must be blocked/confirmed
+
+# Routing safety
+routing:
+  safety_floor: 0.6   # min safety score to auto-route to fast model
+  require_peer_review_above: 0.8  # safety score below this triggers peer review
+
+# Control plane endpoints (logical; overridden in env/local files)
+control_plane:
+  base_url: "http://localhost:8788"
+  api_key_env: "GENESIS_CONTROL_PLANE_KEY"
+
+# Telemetry
+telemetry:
+  otlp_endpoint: "http://localhost:4318"
+  service_name: "genesis-orchestrator"

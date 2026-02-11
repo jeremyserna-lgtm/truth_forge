@@ -1,0 +1,5 @@
+[project]
+name = "deep-dive-transcripts"
+version = "0.1.0"
+description = "Deep dive transcript analysis"
+requires-python = ">=3.12"

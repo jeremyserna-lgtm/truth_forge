@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "~~data-source": {
+      "type": "http",
+      "url": "https://mcp.your-data-source.com/mcp"
+    }
+  }
+}

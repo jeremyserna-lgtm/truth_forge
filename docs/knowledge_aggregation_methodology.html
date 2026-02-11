@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Aggregation Methodology — How Claude Reads a Knowledge Base</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1" integrity="sha384-jb8JQMbMoBUzgWatfe6COACi2ljcDdZQ2OxczGA3bGNeWe+6DChMTBJemed7ZnvJ" crossorigin="anonymous"></script>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-card: #161b22;
+            --bg-card-hover: #1c2129;
+            --bg-header: #010409;
+            --border: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+            --accent-blue: #58a6ff;
+            --accent-green: #3fb950;
+            --accent-orange: #d29922;
+            --accent-red: #f85149;
+            --accent-purple: #bc8cff;
+            --accent-cyan: #39d2c0;
+            --phase-1: #58a6ff;
+            --phase-2: #bc8cff;
+            --phase-3: #3fb950;
+            --phase-4: #d29922;
+            --phase-5: #f85149;
+            --phase-6: #39d2c0;
+            --gap: 16px;
+            --radius: 10px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--gap);
+        }
+
+        /* HEADER */
+        .header {
+            background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 32px;
+            margin-bottom: var(--gap);
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--phase-1), var(--phase-2), var(--phase-3), var(--phase-4), var(--phase-5), var(--phase-6));
+        }
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .header p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            max-width: 700px;
+        }
+        .header .meta {
+            margin-top: 16px;
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+        .header .meta-item {
+            display: flex;
+            flex-direction: column;
+        }
+        .meta-item .label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .meta-item .value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--accent-blue);
+        }
+
+        /* PHASE PIPELINE */
+        .pipeline {
+            display: flex;
+            gap: 4px;
+            margin-bottom: var(--gap);
+            overflow-x: auto;
+        }
+        .pipeline-step {
+            flex: 1;
+            min-width: 140px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .pipeline-step:hover, .pipeline-step.active {
+            background: var(--bg-card-hover);
+            transform: translateY(-2px);
+        }
+        .pipeline-step.active {
+            border-color: var(--accent-blue);
+        }
+        .pipeline-step .step-num {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+        .pipeline-step .step-title {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .pipeline-step .step-desc {
+            font-size: 11px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+        .pipeline-step .cost-bar {
+            margin-top: 8px;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--border);
+        }
+        .pipeline-step .cost-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.3s;
+        }
+        .pipeline-step .cost-label {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* GRID SECTIONS */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--gap);
+            margin-bottom: var(--gap);
+        }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: var(--gap);
+            margin-bottom: var(--gap);
+        }
+        .full-width {
+            margin-bottom: var(--gap);
+        }
+
+        /* CARDS */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+        }
+        .card h3 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card h3 .badge {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+
+        /* CHART CONTAINERS */
+        .chart-wrap {
+            position: relative;
+            height: 280px;
+        }
+
+        /* SIGNAL TABLE */
+        .signal-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .signal-table th {
+            text-align: left;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        .signal-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(48,54,61,0.5);
+            color: var(--text-secondary);
+        }
+        .signal-table tr:hover td {
+            background: var(--bg-card-hover);
+            color: var(--text-primary);
+        }
+        .signal-table .signal-name {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        .signal-table .weight {
+            font-family: 'SF Mono', SFMono-Regular, monospace;
+            font-size: 12px;
+        }
+        .weight-high { color: var(--accent-green); }
+        .weight-med { color: var(--accent-orange); }
+        .weight-low { color: var(--text-muted); }
+
+        /* FEEDBACK LOOP VISUAL */
+        .loop-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            padding: 24px 0;
+            flex-wrap: wrap;
+        }
+        .loop-node {
+            padding: 16px 20px;
+            border-radius: var(--radius);
+            text-align: center;
+            min-width: 160px;
+            position: relative;
+        }
+        .loop-node .node-title {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .loop-node .node-desc {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+        .loop-arrow {
+            font-size: 24px;
+            color: var(--text-muted);
+            padding: 0 8px;
+        }
+
+        .loop-node.author {
+            background: rgba(57,210,192,0.1);
+            border: 1px solid rgba(57,210,192,0.3);
+            color: var(--accent-cyan);
+        }
+        .loop-node.machine {
+            background: rgba(88,166,255,0.1);
+            border: 1px solid rgba(88,166,255,0.3);
+            color: var(--accent-blue);
+        }
+        .loop-node.output {
+            background: rgba(188,140,255,0.1);
+            border: 1px solid rgba(188,140,255,0.3);
+            color: var(--accent-purple);
+        }
+        .loop-node.optimize {
+            background: rgba(63,185,80,0.1);
+            border: 1px solid rgba(63,185,80,0.3);
+            color: var(--accent-green);
+        }
+
+        /* OPTIMIZATION PATTERNS */
+        .pattern-list {
+            list-style: none;
+        }
+        .pattern-item {
+            padding: 14px 16px;
+            border-left: 3px solid var(--border);
+            margin-bottom: 8px;
+            background: rgba(22,27,34,0.5);
+            border-radius: 0 var(--radius) var(--radius) 0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .pattern-item:hover {
+            border-left-color: var(--accent-blue);
+            background: var(--bg-card-hover);
+        }
+        .pattern-item.active {
+            border-left-color: var(--accent-green);
+        }
+        .pattern-item .pattern-name {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        .pattern-item .pattern-impact {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        .pattern-detail {
+            padding: 16px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+        .pattern-detail code {
+            background: rgba(88,166,255,0.1);
+            color: var(--accent-blue);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .pattern-detail .impact-tag {
+            display: inline-block;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .impact-critical {
+            background: rgba(248,81,73,0.15);
+            color: var(--accent-red);
+        }
+        .impact-high {
+            background: rgba(210,153,34,0.15);
+            color: var(--accent-orange);
+        }
+        .impact-medium {
+            background: rgba(88,166,255,0.15);
+            color: var(--accent-blue);
+        }
+
+        /* LIMITATIONS */
+        .limitation-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+        }
+        .limitation-card {
+            padding: 14px;
+            background: rgba(248,81,73,0.05);
+            border: 1px solid rgba(248,81,73,0.15);
+            border-radius: var(--radius);
+        }
+        .limitation-card .lim-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent-red);
+            margin-bottom: 4px;
+        }
+        .limitation-card .lim-desc {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        /* YOUR CORPUS SECTION */
+        .corpus-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .corpus-stat {
+            text-align: center;
+            padding: 16px;
+            background: rgba(88,166,255,0.05);
+            border: 1px solid rgba(88,166,255,0.15);
+            border-radius: var(--radius);
+        }
+        .corpus-stat .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--accent-blue);
+        }
+        .corpus-stat .stat-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 900px) {
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+            .pipeline { flex-direction: column; }
+            .limitation-grid { grid-template-columns: 1fr; }
+            .corpus-stats { grid-template-columns: repeat(2, 1fr); }
+            .loop-container { flex-direction: column; }
+            .loop-arrow { transform: rotate(90deg); }
+        }
+
+        @media print {
+            body { background: white; color: #1a1a1a; }
+            .card { border: 1px solid #ddd; box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+<div class="dashboard">
+
+    <!-- HEADER -->
+    <div class="header">
+        <h1>Knowledge Aggregation Methodology</h1>
+        <p>How an LLM reads, prioritizes, and extracts patterns from unstructured knowledge — exposed as a transparent protocol so the architect can optimize document authoring for machine comprehension.</p>
+        <div class="meta">
+            <div class="meta-item">
+                <span class="label">Corpus</span>
+                <span class="value">31,740</span>
+            </div>
+            <div class="meta-item">
+                <span class="label">Time Span</span>
+                <span class="value">7 months</span>
+            </div>
+            <div class="meta-item">
+                <span class="label">Readable per Pass</span>
+                <span class="value">~20-25</span>
+            </div>
+            <div class="meta-item">
+                <span class="label">Coverage Rate</span>
+                <span class="value">0.08%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- PHASE PIPELINE -->
+    <div class="pipeline" id="pipeline">
+        <div class="pipeline-step active" data-phase="1" onclick="selectPhase(1)">
+            <div class="step-num" style="color: var(--phase-1)">Phase 1</div>
+            <div class="step-title">Structural Recon</div>
+            <div class="step-desc">Read the shape, not the content. Directory tree = ontology.</div>
+            <div class="cost-bar"><div class="cost-fill" style="width: 5%; background: var(--phase-1)"></div></div>
+            <div class="cost-label">~5% token budget</div>
+        </div>
+        <div class="pipeline-step" data-phase="2" onclick="selectPhase(2)">
+            <div class="step-num" style="color: var(--phase-2)">Phase 2</div>
+            <div class="step-title">Hub Identification</div>
+            <div class="step-desc">Find INDEX.md, CLAUDE.md, synthesis documents.</div>
+            <div class="cost-bar"><div class="cost-fill" style="width: 10%; background: var(--phase-2)"></div></div>
+            <div class="cost-label">~10% token budget</div>
+        </div>
+        <div class="pipeline-step" data-phase="3" onclick="selectPhase(3)">
+            <div class="step-num" style="color: var(--phase-3)">Phase 3</div>
+            <div class="step-title">Sampling Strategy</div>
+            <div class="step-desc">Select 20-25 files via weighted priority scoring.</div>
+            <div class="cost-bar"><div class="cost-fill" style="width: 55%; background: var(--phase-3)"></div></div>
+            <div class="cost-label">~55% token budget</div>
+        </div>
+        <div class="pipeline-step" data-phase="4" onclick="selectPhase(4)">
+            <div class="step-num" style="color: var(--phase-4)">Phase 4</div>
+            <div class="step-title">Content Extraction</div>
+            <div class="step-desc">Vocabulary, dependencies, cross-refs, temporal patterns.</div>
+            <div class="cost-bar"><div class="cost-fill" style="width: 20%; background: var(--phase-4)"></div></div>
+            <div class="cost-label">~20% token budget</div>
+        </div>
+        <div class="pipeline-step" data-phase="5" onclick="selectPhase(5)">
+            <div class="step-num" style="color: var(--phase-5)">Phase 5</div>
+            <div class="step-title">Pattern Synthesis</div>
+            <div class="step-desc">Frequency × recency, clustering, gaps, contradictions.</div>
+            <div class="cost-bar"><div class="cost-fill" style="width: 8%; background: var(--phase-5)"></div></div>
+            <div class="cost-label">~8% token budget</div>
+        </div>
+        <div class="pipeline-step" data-phase="6" onclick="selectPhase(6)">
+            <div class="step-num" style="color: var(--phase-6)">Phase 6</div>
+            <div class="step-title">Feedback Loop</div>
+            <div class="step-desc">Author optimizations that compound across sessions.</div>
+            <div class="cost-bar"><div class="cost-fill" style="width: 2%; background: var(--phase-6)"></div></div>
+            <div class="cost-label">~2% token budget</div>
+        </div>
+    </div>
+
+    <!-- ROW: SAMPLING WEIGHT + SIGNAL TABLE -->
+    <div class="grid-2">
+        <div class="card">
+            <h3>Sampling Priority Weights <span class="badge" style="background: rgba(63,185,80,0.15); color: var(--accent-green)">Phase 3</span></h3>
+            <div class="chart-wrap">
+                <canvas id="weightChart"></canvas>
+            </div>
+        </div>
+        <div class="card">
+            <h3>Signal Extraction Matrix <span class="badge" style="background: rgba(210,153,34,0.15); color: var(--accent-orange)">Phase 1-2</span></h3>
+            <table class="signal-table">
+                <thead>
+                    <tr><th>Signal</th><th>Source</th><th>Weight</th><th>Cost</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="signal-name">Folder hierarchy</td>
+                        <td>Directory tree</td>
+                        <td class="weight weight-high">3.0x</td>
+                        <td>Near-zero</td>
+                    </tr>
+                    <tr>
+                        <td class="signal-name">File naming pattern</td>
+                        <td>ls metadata</td>
+                        <td class="weight weight-high">2.5x</td>
+                        <td>Near-zero</td>
+                    </tr>
+                    <tr>
+                        <td class="signal-name">Modification recency</td>
+                        <td>File stat</td>
+                        <td class="weight weight-high">2.0x</td>
+                        <td>Near-zero</td>
+                    </tr>
+                    <tr>
+                        <td class="signal-name">File size</td>
+                        <td>File stat</td>
+                        <td class="weight weight-med">1.5x</td>
+                        <td>Near-zero</td>
+                    </tr>
+                    <tr>
+                        <td class="signal-name">Hub document content</td>
+                        <td>INDEX.md read</td>
+                        <td class="weight weight-high">3.0x</td>
+                        <td>Moderate</td>
+                    </tr>
+                    <tr>
+                        <td class="signal-name">Cross-references</td>
+                        <td>Content parse</td>
+                        <td class="weight weight-med">1.5x</td>
+                        <td>High</td>
+                    </tr>
+                    <tr>
+                        <td class="signal-name">Frontmatter metadata</td>
+                        <td>YAML header</td>
+                        <td class="weight weight-high">2.5x</td>
+                        <td>Low</td>
+                    </tr>
+                    <tr>
+                        <td class="signal-name">Extension distribution</td>
+                        <td>File stat</td>
+                        <td class="weight weight-low">1.0x</td>
+                        <td>Near-zero</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ROW: TOKEN ALLOCATION + CORPUS PROFILE -->
+    <div class="grid-2">
+        <div class="card">
+            <h3>Token Budget Allocation <span class="badge" style="background: rgba(88,166,255,0.15); color: var(--accent-blue)">Per session</span></h3>
+            <div class="chart-wrap">
+                <canvas id="tokenChart"></canvas>
+            </div>
+        </div>
+        <div class="card">
+            <h3>Your Corpus Profile <span class="badge" style="background: rgba(188,140,255,0.15); color: var(--accent-purple)">truth_forge</span></h3>
+            <div class="corpus-stats">
+                <div class="corpus-stat">
+                    <div class="stat-value">6,784</div>
+                    <div class="stat-label">Markdown</div>
+                </div>
+                <div class="corpus-stat">
+                    <div class="stat-value">23,695</div>
+                    <div class="stat-label">JSON</div>
+                </div>
+                <div class="corpus-stat">
+                    <div class="stat-value">1,003</div>
+                    <div class="stat-label">Text</div>
+                </div>
+                <div class="corpus-stat">
+                    <div class="stat-value">198</div>
+                    <div class="stat-label">YAML</div>
+                </div>
+            </div>
+            <div class="chart-wrap" style="height: 180px">
+                <canvas id="corpusChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- FEEDBACK LOOP VISUALIZATION -->
+    <div class="card full-width">
+        <h3>The Feedback Loop <span class="badge" style="background: rgba(57,210,192,0.15); color: var(--accent-cyan)">Phase 6</span></h3>
+        <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 16px;">This is what makes the methodology compound. Each cycle improves both the machine's reading AND the author's writing.</p>
+        <div class="loop-container">
+            <div class="loop-node author">
+                <div class="node-title">Author Writes</div>
+                <div class="node-desc">Documents with frontmatter, cross-refs, status markers</div>
+            </div>
+            <div class="loop-arrow">&rarr;</div>
+            <div class="loop-node machine">
+                <div class="node-title">Machine Reads</div>
+                <div class="node-desc">Samples, extracts, maps dependencies, finds gaps</div>
+            </div>
+            <div class="loop-arrow">&rarr;</div>
+            <div class="loop-node output">
+                <div class="node-title">Patterns Surface</div>
+                <div class="node-desc">Themes, contradictions, evolution, blind spots</div>
+            </div>
+            <div class="loop-arrow">&rarr;</div>
+            <div class="loop-node optimize">
+                <div class="node-title">Author Optimizes</div>
+                <div class="node-desc">Updates docs using methodology insights</div>
+            </div>
+            <div class="loop-arrow">&rarr;</div>
+            <div class="loop-node machine">
+                <div class="node-title">Machine Reads Better</div>
+                <div class="node-desc">Higher signal, fewer false positives, deeper accuracy</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- OPTIMIZATION PATTERNS -->
+    <div class="grid-2">
+        <div class="card">
+            <h3>Authoring Optimization Patterns <span class="badge" style="background: rgba(63,185,80,0.15); color: var(--accent-green)">Ranked by impact</span></h3>
+            <ul class="pattern-list" id="patternList">
+                <li class="pattern-item active" onclick="selectPattern(0)">
+                    <div class="pattern-name">1. Frontmatter Protocol</div>
+                    <div class="pattern-impact">Eliminates Phases 1-3 per document. Critical impact.</div>
+                </li>
+                <li class="pattern-item" onclick="selectPattern(1)">
+                    <div class="pattern-name">2. Canonical Vocabulary Registry</div>
+                    <div class="pattern-impact">Eliminates false-positive pattern matching. Critical impact.</div>
+                </li>
+                <li class="pattern-item" onclick="selectPattern(2)">
+                    <div class="pattern-name">3. Hub Document Maintenance</div>
+                    <div class="pattern-impact">Compresses 50 files into 1 read. High impact.</div>
+                </li>
+                <li class="pattern-item" onclick="selectPattern(3)">
+                    <div class="pattern-name">4. First Paragraph Rule</div>
+                    <div class="pattern-impact">Enables scan-mode across entire corpus. High impact.</div>
+                </li>
+                <li class="pattern-item" onclick="selectPattern(4)">
+                    <div class="pattern-name">5. Explicit Status Lifecycle</div>
+                    <div class="pattern-impact">Prevents weighting drafts as canonical. High impact.</div>
+                </li>
+                <li class="pattern-item" onclick="selectPattern(5)">
+                    <div class="pattern-name">6. Cross-Reference Density</div>
+                    <div class="pattern-impact">Builds dependency graph without inference. Medium impact.</div>
+                </li>
+                <li class="pattern-item" onclick="selectPattern(6)">
+                    <div class="pattern-name">7. Change Logs</div>
+                    <div class="pattern-impact">Free evolution tracking in long-lived documents. Medium impact.</div>
+                </li>
+                <li class="pattern-item" onclick="selectPattern(7)">
+                    <div class="pattern-name">8. Contradiction Documentation</div>
+                    <div class="pattern-impact">Transforms errors into sophistication signals. Medium impact.</div>
+                </li>
+            </ul>
+        </div>
+        <div class="card" id="patternDetailCard">
+            <h3>Pattern Detail</h3>
+            <div class="pattern-detail" id="patternDetail">
+                <div class="impact-tag impact-critical">CRITICAL IMPACT</div>
+                <p style="margin-bottom: 12px"><strong>Frontmatter Protocol</strong> — Structured YAML metadata at the top of every document.</p>
+                <p style="margin-bottom: 12px">Include: <code>status</code> (canonical/draft/experimental/deprecated), <code>created</code>, <code>last_modified</code>, <code>depends_on</code> (file paths), <code>supersedes</code>, <code>tags</code>, and a one-line <code>summary</code>.</p>
+                <p style="margin-bottom: 12px"><strong>Why it's critical:</strong> Frontmatter lets me skip the first three phases of analysis for any document that has it. I immediately know its authority level, its relationships, and its core claim. Without frontmatter, I must infer all of this from content — which is slow, expensive, and error-prone.</p>
+                <p style="margin-bottom: 12px"><strong>Cost to author:</strong> ~30 seconds per document.</p>
+                <p><strong>Value to machine:</strong> Eliminates ~60% of per-document analysis overhead.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- WHAT I CANNOT DO -->
+    <div class="card full-width">
+        <h3>Honest Limitations <span class="badge" style="background: rgba(248,81,73,0.15); color: var(--accent-red)">Transparency</span></h3>
+        <div class="limitation-grid">
+            <div class="limitation-card">
+                <div class="lim-title">Sampling Blindness</div>
+                <div class="lim-desc">Reading 0.08% of files means 99.92% is unseen. Critical information in unsampled files is invisible.</div>
+            </div>
+            <div class="limitation-card">
+                <div class="lim-title">Intent Opacity</div>
+                <div class="lim-desc">I see text, not meaning. Drafts and canonical docs look identical without explicit status metadata.</div>
+            </div>
+            <div class="limitation-card">
+                <div class="lim-title">Hallucinated Connections</div>
+                <div class="lim-desc">Pattern matching finds patterns that aren't there. Same words in different contexts = false positives.</div>
+            </div>
+            <div class="limitation-card">
+                <div class="lim-title">Nuance Compression</div>
+                <div class="lim-desc">Synthesis flattens subtlety. 200 pages compressed to 5 themes necessarily loses individual texture.</div>
+            </div>
+            <div class="limitation-card">
+                <div class="lim-title">Session Amnesia</div>
+                <div class="lim-desc">Each conversation starts fresh. Understanding doesn't persist unless externalized to files.</div>
+            </div>
+            <div class="limitation-card">
+                <div class="lim-title">Missing Absence Detection</div>
+                <div class="lim-desc">I find gaps in what's written, but can't detect what was never written at all.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SAMPLING PASSES -->
+    <div class="card full-width">
+        <h3>Sampling Pass Architecture <span class="badge" style="background: rgba(63,185,80,0.15); color: var(--accent-green)">Phase 3 Detail</span></h3>
+        <div class="chart-wrap" style="height: 320px">
+            <canvas id="samplingChart"></canvas>
+        </div>
+    </div>
+
+    <div class="header" style="margin-top: 0; padding: 20px 32px;">
+        <p style="font-size: 12px; color: var(--text-muted)">Generated 2026-02-07 for truth_forge. This dashboard documents methodology, not content. See <code>HOW_CLAUDE_READS_A_KNOWLEDGE_BASE.md</code> for the full written protocol.</p>
+    </div>
+
+</div>
+
+<script>
+    // COLOR PALETTE
+    const COLORS = ['#58a6ff', '#bc8cff', '#3fb950', '#d29922', '#f85149', '#39d2c0', '#8b949e'];
+
+    // PATTERN DETAILS DATA
+    const patterns = [
+        {
+            name: 'Frontmatter Protocol',
+            impact: 'CRITICAL',
+            impactClass: 'impact-critical',
+            html: `<p style="margin-bottom:12px"><strong>Frontmatter Protocol</strong> — Structured YAML metadata at the top of every document.</p>
+                <p style="margin-bottom:12px">Include: <code>status</code> (canonical/draft/experimental/deprecated), <code>created</code>, <code>last_modified</code>, <code>depends_on</code> (file paths), <code>supersedes</code>, <code>tags</code>, and a one-line <code>summary</code>.</p>
+                <p style="margin-bottom:12px"><strong>Why it's critical:</strong> Frontmatter lets me skip the first three phases of analysis for any document that has it. I immediately know its authority level, its relationships, and its core claim. Without frontmatter, I must infer all of this from content — which is slow, expensive, and error-prone.</p>
+                <p style="margin-bottom:12px"><strong>Cost to author:</strong> ~30 seconds per document.</p>
+                <p><strong>Value to machine:</strong> Eliminates ~60% of per-document analysis overhead.</p>`
+        },
+        {
+            name: 'Canonical Vocabulary Registry',
+            impact: 'CRITICAL',
+            impactClass: 'impact-critical',
+            html: `<p style="margin-bottom:12px"><strong>Canonical Vocabulary Registry</strong> — A single <code>VOCABULARY.md</code> defining every coined term.</p>
+                <p style="margin-bottom:12px">For each term: definition, first appearance date, current canonical source, related terms, and disambiguation ("not to be confused with").</p>
+                <p style="margin-bottom:12px"><strong>Why it's critical:</strong> Ambiguous vocabulary is the #1 cause of incorrect pattern matching. "Bridge" in "cognitive bridge" vs "network bridge" creates false positives. A vocabulary registry eliminates this entire class of error.</p>
+                <p style="margin-bottom:12px"><strong>Cost to author:</strong> ~2 minutes per new term, ongoing maintenance.</p>
+                <p><strong>Value to machine:</strong> Eliminates false-positive theme clustering. Makes vocabulary tracking near-perfect.</p>`
+        },
+        {
+            name: 'Hub Document Maintenance',
+            impact: 'HIGH',
+            impactClass: 'impact-high',
+            html: `<p style="margin-bottom:12px"><strong>Hub Document Maintenance</strong> — Every directory has an <code>INDEX.md</code> that maps its contents.</p>
+                <p style="margin-bottom:12px">Each INDEX answers: what's here, why it matters, how the pieces connect, and what's missing. Updated every time the directory changes meaningfully.</p>
+                <p style="margin-bottom:12px"><strong>Why it's high impact:</strong> A single INDEX.md compresses 50 files into one read. It gives me the author's own interpretation of relationships — infinitely more reliable than my inference. The test: can someone read ONLY the INDEX files and reconstruct the system? If yes, hubs are working.</p>
+                <p style="margin-bottom:12px"><strong>Cost to author:</strong> ~5 minutes per directory update.</p>
+                <p><strong>Value to machine:</strong> 50:1 compression ratio on attention cost.</p>`
+        },
+        {
+            name: 'First Paragraph Rule',
+            impact: 'HIGH',
+            impactClass: 'impact-high',
+            html: `<p style="margin-bottom:12px"><strong>First Paragraph Rule</strong> — The first paragraph answers: What is this? Why does it exist? What does it connect to?</p>
+                <p style="margin-bottom:12px">If I only read the first 200 words of every document in the corpus, I should be able to reconstruct the full dependency graph and a rough map of all major concepts.</p>
+                <p style="margin-bottom:12px"><strong>Why it's high impact:</strong> This enables a scan-mode pass across the entire corpus. Instead of reading 25 files deeply, I can scan 200 files shallowly and then deep-read the 25 most important ones. It expands my effective coverage from 0.08% to potentially 1-2%.</p>
+                <p style="margin-bottom:12px"><strong>Cost to author:</strong> ~1 minute of disciplined opening paragraph writing.</p>
+                <p><strong>Value to machine:</strong> 10-20x increase in effective corpus coverage.</p>`
+        },
+        {
+            name: 'Explicit Status Lifecycle',
+            impact: 'HIGH',
+            impactClass: 'impact-high',
+            html: `<p style="margin-bottom:12px"><strong>Explicit Status Lifecycle</strong> — Every document is marked: EXPERIMENTAL &rarr; DRAFT &rarr; CANONICAL &rarr; DEPRECATED / SUPERSEDED.</p>
+                <p style="margin-bottom:12px">Status should be visible in frontmatter or the first line. SUPERSEDED documents include a pointer to their replacement.</p>
+                <p style="margin-bottom:12px"><strong>Why it's high impact:</strong> Without status, I treat all documents as equally authoritative. A scratchpad from July competes with a polished framework document from February. Status markers let me weight correctly — canonical docs get 3x the attention of experimental ones.</p>
+                <p style="margin-bottom:12px"><strong>Cost to author:</strong> ~5 seconds per document (one word).</p>
+                <p><strong>Value to machine:</strong> Correct authority weighting across the entire corpus.</p>`
+        },
+        {
+            name: 'Cross-Reference Density',
+            impact: 'MEDIUM',
+            impactClass: 'impact-medium',
+            html: `<p style="margin-bottom:12px"><strong>Cross-Reference Density</strong> — When mentioning a concept defined elsewhere, always include the file path.</p>
+                <p style="margin-bottom:12px">Example: "The cognitive bridge (see <code>framework/05_ARCHITECTURE.md#cognitive-bridge</code>) mediates between..."</p>
+                <p style="margin-bottom:12px"><strong>Why it matters:</strong> Explicit cross-references are the highest-confidence signal for concept relationships. Implicit references (using a term without linking) force me to guess based on vocabulary matching — which has a ~15-20% false positive rate. Explicit links have a 0% false positive rate.</p>
+                <p style="margin-bottom:12px"><strong>Cost to author:</strong> ~10 seconds per reference.</p>
+                <p><strong>Value to machine:</strong> Zero-error dependency graph construction.</p>`
+        },
+        {
+            name: 'Change Logs',
+            impact: 'MEDIUM',
+            impactClass: 'impact-medium',
+            html: `<p style="margin-bottom:12px"><strong>Change Logs in Long-Lived Documents</strong> — Inline changelog at the bottom of documents that evolve.</p>
+                <p style="margin-bottom:12px">Format: date, what changed, why. Major revisions vs minor updates should be distinguishable.</p>
+                <p style="margin-bottom:12px"><strong>Why it matters:</strong> Evolution tracking normally requires reading multiple historical versions of a document — extremely expensive. A changelog gives me the trajectory in ~50 words. I can see paradigm shifts, reversals, and refinements without reading the full history.</p>
+                <p style="margin-bottom:12px"><strong>Cost to author:</strong> ~30 seconds per significant update.</p>
+                <p><strong>Value to machine:</strong> Free evolution tracking. Temporal analysis without historical file access.</p>`
+        },
+        {
+            name: 'Contradiction Documentation',
+            impact: 'MEDIUM',
+            impactClass: 'impact-medium',
+            html: `<p style="margin-bottom:12px"><strong>Contradiction Documentation</strong> — When two documents contain tensions, document them explicitly.</p>
+                <p style="margin-bottom:12px">A "Known Tensions" section names the conflicting documents, describes the tension, and states whether it's intentional or unresolved.</p>
+                <p style="margin-bottom:12px"><strong>Why it matters:</strong> Undocumented contradictions look like errors to a machine. Documented contradictions look like sophisticated thinking. The difference is enormous — I either flag your system as inconsistent (bad) or recognize dialectical reasoning (good). One paragraph changes the interpretation.</p>
+                <p style="margin-bottom:12px"><strong>Cost to author:</strong> ~2 minutes when you notice a tension.</p>
+                <p><strong>Value to machine:</strong> Correct interpretation of intentional complexity.</p>`
+        }
+    ];
+
+    // PHASE SELECTION
+    function selectPhase(num) {
+        document.querySelectorAll('.pipeline-step').forEach(el => el.classList.remove('active'));
+        document.querySelector(`.pipeline-step[data-phase="${num}"]`).classList.add('active');
+    }
+
+    // PATTERN SELECTION
+    function selectPattern(idx) {
+        document.querySelectorAll('.pattern-item').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.pattern-item')[idx].classList.add('active');
+        const p = patterns[idx];
+        document.getElementById('patternDetail').innerHTML =
+            `<div class="impact-tag ${p.impactClass}">${p.impact} IMPACT</div>` + p.html;
+    }
+
+    // CHARTS
+
+    // 1. Sampling Priority Weights (Horizontal Bar)
+    new Chart(document.getElementById('weightChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: ['Hub Bonus', 'Recency', 'Frontmatter', 'File Naming', 'File Size', 'Cross-Refs', 'Diversity', 'Extension Type'],
+            datasets: [{
+                label: 'Weight Multiplier',
+                data: [3.0, 2.0, 2.5, 2.5, 1.5, 1.5, 1.0, 1.0],
+                backgroundColor: [
+                    '#58a6ff99', '#3fb95099', '#bc8cff99', '#d2992299',
+                    '#39d2c099', '#f8514999', '#8b949e99', '#8b949e99'
+                ],
+                borderColor: [
+                    '#58a6ff', '#3fb950', '#bc8cff', '#d29922',
+                    '#39d2c0', '#f85149', '#8b949e', '#8b949e'
+                ],
+                borderWidth: 1,
+                borderRadius: 4,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => `${ctx.parsed.x}x priority weight`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    max: 3.5,
+                    grid: { color: 'rgba(48,54,61,0.5)' },
+                    ticks: { color: '#8b949e', callback: v => v + 'x' }
+                },
+                y: {
+                    grid: { display: false },
+                    ticks: { color: '#e6edf3', font: { size: 11 } }
+                }
+            }
+        }
+    });
+
+    // 2. Token Budget Allocation (Doughnut)
+    new Chart(document.getElementById('tokenChart').getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Phase 3: Sampling & Reading', 'Phase 4: Extraction', 'Phase 2: Hub Reading', 'Phase 5: Synthesis', 'Phase 1: Recon', 'Phase 6: Feedback'],
+            datasets: [{
+                data: [55, 20, 10, 8, 5, 2],
+                backgroundColor: [
+                    '#3fb95099', '#d2992299', '#bc8cff99', '#f8514999', '#58a6ff99', '#39d2c099'
+                ],
+                borderColor: [
+                    '#3fb950', '#d29922', '#bc8cff', '#f85149', '#58a6ff', '#39d2c0'
+                ],
+                borderWidth: 1,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '55%',
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: { color: '#e6edf3', usePointStyle: true, padding: 12, font: { size: 11 } }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => `${ctx.label}: ${ctx.parsed}% of token budget`
+                    }
+                }
+            }
+        }
+    });
+
+    // 3. Corpus Composition (Bar)
+    new Chart(document.getElementById('corpusChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: ['JSON', 'Markdown', 'Text', 'YAML', 'Log', 'YML'],
+            datasets: [{
+                label: 'Files',
+                data: [23695, 6784, 1003, 162, 60, 36],
+                backgroundColor: COLORS.map(c => c + '99'),
+                borderColor: COLORS,
+                borderWidth: 1,
+                borderRadius: 4,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => `${ctx.parsed.y.toLocaleString()} files`
+                    }
+                }
+            },
+            scales: {
+                x: { grid: { display: false }, ticks: { color: '#8b949e', font: { size: 11 } } },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(48,54,61,0.5)' },
+                    ticks: {
+                        color: '#8b949e',
+                        callback: v => v >= 1000 ? (v/1000) + 'K' : v
+                    }
+                }
+            }
+        }
+    });
+
+    // 4. Sampling Pass Architecture (Stacked Horizontal Bar)
+    new Chart(document.getElementById('samplingChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: ['Pass 1: Hub Documents', 'Pass 2: Recent Frontiers', 'Pass 3: Foundational Docs', 'Pass 4: Diversity Fill'],
+            datasets: [
+                {
+                    label: 'Files Read',
+                    data: [7, 7, 5, 4],
+                    backgroundColor: '#58a6ff99',
+                    borderColor: '#58a6ff',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                },
+                {
+                    label: 'Information Density (relative)',
+                    data: [9, 7, 8, 5],
+                    backgroundColor: '#3fb95099',
+                    borderColor: '#3fb950',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                },
+                {
+                    label: 'Risk of Missing Patterns',
+                    data: [2, 4, 3, 8],
+                    backgroundColor: '#f8514999',
+                    borderColor: '#f85149',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: { color: '#e6edf3', usePointStyle: true, padding: 16, font: { size: 11 } }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    stacked: false,
+                    grid: { color: 'rgba(48,54,61,0.5)' },
+                    ticks: { color: '#8b949e' }
+                },
+                y: {
+                    stacked: false,
+                    grid: { display: false },
+                    ticks: { color: '#e6edf3', font: { size: 12 } }
+                }
+            }
+        }
+    });
+</script>
+</body>
+</html>

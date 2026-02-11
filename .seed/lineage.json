@@ -1,0 +1,25 @@
+{
+    "organism": "truth_forge",
+    "role": "THE_BRAIN",
+    "generation": 0,
+    "parent": null,
+    "parent_type": null,
+    "genesis_date": "2025-01-01T00:00:00-07:00",
+    "lineage_notes": "Truth Forge is the genesis organism — generation zero. It has no parent. All other organisms in the federation descend from it. THE FRAMEWORK lives here.",
+    "children": [
+        {
+            "name": "primitive_engine",
+            "role": "THE_HANDS",
+            "generation": 1,
+            "spawned": "2025-01-01T00:00:00-07:00"
+        },
+        {
+            "name": "credential_atlas",
+            "role": "THE_EYES",
+            "generation": 1,
+            "spawned": "2025-01-01T00:00:00-07:00"
+        }
+    ],
+    "reproduction_rights": "fertile",
+    "reproduction_notes": "Truth Forge can spawn new organisms. Children inherit THE FRAMEWORK."
+}

@@ -125,6 +125,106 @@ Provide a thoughtful, concise analysis:`;
         const result = await model.generateContent(prompt);
         return result.response.text();
     }
+
+    /**
+     * Enrich an atom across 12 dimensions with structured metadata
+     *
+     * Dimensions:
+     * 1. Semantic - meaning, concepts, relationships
+     * 2. Significance - importance, impact, relevance
+     * 3. Epistemic - knowledge type, certainty, sources
+     * 4. Temporal - time references, sequences, duration
+     * 5. Relational - connections to other atoms/entities
+     * 6. Dialectical - contradictions, tensions, paradoxes
+     * 7. Affective - emotional tone, values, resonance
+     * 8. Pragmatic - applicability, use cases, applications
+     * 9. Structural - form, patterns, organization
+     * 10. Ontological - being, existence, category
+     * 11. Normative - should, ought, values
+     * 12. Meta - self-reference, awareness, context
+     */
+    async enrichAtom(
+        atom: { content: string; metadata?: any },
+        dimensions?: string[]
+    ): Promise<Record<string, any>> {
+        const dimensionsList = dimensions?.length
+            ? dimensions
+            : [
+                  'semantic',
+                  'significance',
+                  'epistemic',
+                  'temporal',
+                  'relational',
+                  'dialectical',
+                  'affective',
+                  'pragmatic',
+                  'structural',
+                  'ontological',
+                  'normative',
+                  'meta'
+              ];
+
+        const prompt = `You are a knowledge enrichment expert analyzing this atom across multiple dimensions.
+
+ATOM CONTENT:
+"""
+${atom.content}
+"""
+
+DIMENSIONS TO ANALYZE (${dimensionsList.length}):
+1. Semantic: What concepts and meanings are present?
+2. Significance: How important or impactful is this?
+3. Epistemic: What type of knowledge? (fact, theory, opinion, belief?)
+4. Temporal: What time references or sequences exist?
+5. Relational: What connections to other ideas/entities?
+6. Dialectical: What contradictions or tensions are present?
+7. Affective: What emotional tone or values are embedded?
+8. Pragmatic: How can this be applied or used?
+9. Structural: What form or pattern does it follow?
+10. Ontological: What category of being/existence?
+11. Normative: What values or "shoulds" are implied?
+12. Meta: How does this atom refer to itself or its context?
+
+For EACH of the following dimensions ${dimensionsList.map(d => d.toUpperCase()).join(', ')}, provide:
+- brief_summary: 1-2 sentences
+- key_aspects: array of 3-5 key points
+- score: 0-100 relevance/prominence score
+
+Return valid JSON with keys matching the dimension names (lowercase):
+{
+  "semantic": { "brief_summary": "...", "key_aspects": [...], "score": 85 },
+  "significance": { "brief_summary": "...", "key_aspects": [...], "score": 70 },
+  ... (for each dimension)
+}`;
+
+        const result = await model.generateContent(prompt);
+        const responseText = result.response.text();
+
+        try {
+            // Extract JSON from response
+            const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+            if (!jsonMatch) {
+                throw new Error('Failed to extract enrichment JSON from Gemini response');
+            }
+
+            const enrichment = JSON.parse(jsonMatch[0]);
+            return enrichment;
+        } catch (error) {
+            console.error('Enrichment parsing error:', error);
+            // Return empty enrichment structure on failure
+            return dimensionsList.reduce(
+                (acc, dim) => ({
+                    ...acc,
+                    [dim]: {
+                        brief_summary: 'Enrichment failed',
+                        key_aspects: [],
+                        score: 0
+                    }
+                }),
+                {}
+            );
+        }
+    }
 }
 
 export const geminiService = new GeminiService();

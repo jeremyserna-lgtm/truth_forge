@@ -18,7 +18,7 @@ Based on industry standards:
 import json
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
@@ -170,7 +170,7 @@ class CDCSyncService:
         Returns:
             ChangeEvent object
         """
-        event_id = f"{source}:{entity_type}:{entity_id}:{datetime.utcnow().isoformat()}"
+        event_id = f"{source}:{entity_type}:{entity_id}:{datetime.now(UTC).isoformat()}"
 
         if version is None:
             version = data.get("version", 1)
@@ -181,7 +181,7 @@ class CDCSyncService:
             entity_type=entity_type,
             entity_id=entity_id,
             change_type=change_type,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             version=version,
             data=data,
             metadata=metadata or {},

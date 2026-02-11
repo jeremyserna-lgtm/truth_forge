@@ -129,6 +129,7 @@ exclude = [
     "Truth_Engine",         # Archive - not part of workspace
     ".venv",
     "apps/*",               # Web apps have their own package.json
+    "projects/.DS_Store",   # Ignore Finder metadata file as workspace member
 ]
 
 [tool.uv.sources]

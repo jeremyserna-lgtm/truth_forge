@@ -1,13 +1,115 @@
 
+// --- COMPREHENSIVE ATOM METADATA SCHEMA ---
+// Every atom is analyzed at ALL levels by default
+
+// Semantic Level (What It Means)
+export interface SemanticMetadata {
+  theme: string;
+  domain: string;
+  abstraction_level: 'concrete' | 'conceptual' | 'abstract' | 'meta';
+}
+
+// Significance Level (Why It Matters)
+export interface SignificanceMetadata {
+  tier: 'Foundational' | 'Structural' | 'Insight' | 'Nuance' | 'Detail';
+  novelty: number; // 0-1
+  actionability: number; // 0-1
+}
+
+// Epistemic Level (How Certain)
+export interface EpistemicMetadata {
+  certainty: 'fact' | 'consensus' | 'claim' | 'speculation' | 'hypothesis';
+  evidence_strength: number; // 0-1
+  verifiability: 'observable' | 'testable' | 'logical' | 'intuitive';
+}
+
+// Temporal Level (When It Applies)
+export interface TemporalMetadata {
+  scope: 'universal' | 'historical' | 'current' | 'emerging' | 'future';
+  durability: 'permanent' | 'durable' | 'transient' | 'ephemeral';
+}
+
+// Relational Level (What It Connects To)
+export interface RelationalMetadata {
+  entities: string[];
+  concepts: string[];
+  dependencies: string[];
+  implications: string[];
+}
+
+// Dialectical Level (What It Opposes/Supports)
+export interface DialecticalMetadata {
+  supports: string[];
+  contradicts: string[];
+  tensions: string[];
+  synthesis_potential: string;
+}
+
+// Affective Level (Emotional Valence)
+export interface AffectiveMetadata {
+  sentiment: number; // -1 to 1
+  intensity: number; // 0-1
+  stakes: 'existential' | 'high' | 'medium' | 'low' | 'trivial';
+  urgency: number; // 0-1
+}
+
+// Pragmatic Level (What To Do)
+export interface PragmaticMetadata {
+  action_items: string[];
+  preconditions: string[];
+  consequences: string[];
+  audience: string[];
+}
+
+// Structural Level (How It's Built)
+export interface StructuralMetadata {
+  type: 'claim' | 'definition' | 'comparison' | 'causation' | 'sequence' | 'classification';
+  complexity: 'atomic' | 'compound' | 'nested';
+  completeness: number; // 0-1
+}
+
+// Ontological Level (What Exists)
+export interface OntologicalMetadata {
+  entity_type: 'thing' | 'process' | 'relation' | 'property' | 'state';
+  categories: string[];
+  is_a: string[];
+  has_parts: string[];
+}
+
+// Normative Level (What Should Be)
+export interface NormativeMetadata {
+  type: 'descriptive' | 'prescriptive' | 'evaluative';
+  values_invoked: string[];
+  should_statements: string[];
+}
+
+// Comprehensive Atom Metadata
 export interface AtomMetadata {
+  // LEGACY FIELDS (backward compatible)
   theme: string;
   significance: 'Fundamental' | 'Insight' | 'Prediction' | 'Nuance';
   tags: string[];
-  dimension?: string; // The lens used to generate this atom
-  // Multi-dimensional breakdown
+  dimension?: string;
   lens?: string;
   structure?: string;
   altitude?: string;
+
+  // NEW: Full 12-dimensional analysis
+  semantic?: SemanticMetadata;
+  significance_analysis?: SignificanceMetadata;
+  epistemic?: EpistemicMetadata;
+  temporal?: TemporalMetadata;
+  relational?: RelationalMetadata;
+  dialectical?: DialecticalMetadata;
+  affective?: AffectiveMetadata;
+  pragmatic?: PragmaticMetadata;
+  structural?: StructuralMetadata;
+  ontological?: OntologicalMetadata;
+  normative?: NormativeMetadata;
+
+  // Enrichment tracking
+  enrichment_coverage?: number; // 0-100, percentage of dimensions filled
+  last_enriched?: number; // timestamp
 }
 
 export interface KnowledgeAtom {
@@ -47,7 +149,8 @@ export interface TokenUsage {
   limit: number;
 }
 
-export type AppView = 'data' | 'genesis' | 'context' | 'enrichment' | 'clusters' | 'interact' | 'studio';
+// Linear workflow: INGEST → REFINE → STORE → USE
+export type AppView = 'ingest' | 'refine' | 'store' | 'interact' | 'studio' | 'architect' | 'triad';
 
 export enum CommandType {
   BASIC = 'BASIC',
@@ -61,14 +164,55 @@ export interface DynamicCommand {
   description?: string;
 }
 
-export type ModelId = 'gemini-3-pro-preview' | 'gemini-3-flash-preview' | 'gemini-flash-lite-latest';
+// --- MODEL PROVIDER TYPES (Unified) ---
+
+export type ModelProvider = 'gemini' | 'ollama';
+
+// All supported model IDs across providers
+export type ModelId =
+  // Gemini Cloud models
+  | 'gemini-2.5-pro'
+  | 'gemini-2.5-flash'
+  | 'gemini-2.5-flash-lite'
+  // Local Ollama models
+  | 'llama4-scout'
+  | 'llama3.2'
+  | 'mistral';
 
 export interface ModelConfig {
   id: ModelId;
+  provider: ModelProvider;
   label: string;
-  tokenLimit: number;
+  tokenLimit: number;           // Max context window
   description: string;
   strengths: string[];
+  endpoint?: string;            // For Ollama: base URL (default: http://localhost:11434)
+  supportsStructuredOutput?: boolean;  // JSON mode support
+  supportsEmbeddings?: boolean;        // Native embedding support
+}
+
+// Real-time context tracking
+export interface ContextWindowState {
+  tokensUsed: number;
+  tokenLimit: number;
+  percentUsed: number;
+  modelId: ModelId;
+  breakdown: {
+    systemPrompt: number;
+    documents: number;
+    atoms: number;
+    chatHistory: number;
+    currentMessage: number;
+  };
+}
+
+// Provider health/status
+export interface ProviderStatus {
+  provider: ModelProvider;
+  available: boolean;
+  models: string[];           // Available models from provider
+  error?: string;
+  lastChecked: number;
 }
 
 export interface DebateTopic {
@@ -198,4 +342,118 @@ export interface TrainingExport {
     datasetSize: number;
     estimatedEpochs: number;
     blobUrl: string;
+}
+
+// --- ARCHITECT / PLAN TYPES ---
+
+export interface ImplementationStep {
+  stepId: string;
+  description: string;
+  inputs: string[];
+  expectedOutputs: string[];
+  dependencies: string[]; // stepIds this depends on
+}
+
+export interface ArchitecturalPlan {
+  planId: string;
+  createdAt: number;
+  sourceDocuments: string[]; // doc ids
+  sourceAtoms: string[]; // atom ids
+
+  goal: string;
+  context: string;
+  requirements: string[];
+
+  implementationSteps: ImplementationStep[];
+
+  successCriteria: string[];
+  failureModes: string[];
+
+  status: 'draft' | 'exported' | 'in_progress' | 'certified' | 'defect';
+  handoffTo?: 'implementation_service' | 'certification_service' | 'break_detection';
+}
+
+export interface HandoffEnvelope {
+  envelopeId: string;
+  fromService: 'knowledge_atomizer' | 'implementation' | 'certification' | 'break_detection';
+  toService: 'knowledge_atomizer' | 'implementation' | 'certification' | 'break_detection' | 'human';
+  createdAt: number;
+
+  payloadType: 'plan' | 'artifact' | 'certification' | 'break_resolution';
+  payload: ArchitecturalPlan | ImplementationArtifact | CertificationResult | BreakResolution;
+
+  lineage: Array<{
+    service: string;
+    envelopeId: string;
+    timestamp: number;
+  }>;
+
+  context: {
+    originalGoal: string;
+    cycleCount: number;
+    totalElapsed: number;
+  };
+}
+
+export interface ImplementationArtifact {
+  artifactId: string;
+  sourcePlanId: string;
+  createdAt: number;
+
+  artifactType: 'code' | 'document' | 'config' | 'spec';
+  content: string;
+  location?: string;
+
+  buildLog: Array<{
+    stepId: string;
+    action: string;
+    result: 'success' | 'failure';
+    errors?: string[];
+  }>;
+
+  selfAssessment: {
+    completedSteps: string[];
+    issuesEncountered: string[];
+    confidenceLevel: number; // 0-100
+  };
+}
+
+export interface CertificationResult {
+  certificationId: string;
+  artifactId: string;
+  planId: string;
+  certifiedAt: number;
+
+  result: 'CERTIFIED' | 'DEFECT';
+
+  verificationReport: {
+    criteriaChecked: Array<{
+      criterion: string;
+      passed: boolean;
+      evidence: string;
+    }>;
+    coverage: number; // percentage
+    issuesFound: string[];
+  };
+
+  defectReport?: string;
+}
+
+export interface BreakResolution {
+  breakId: string;
+  source: 'knowledge_atomizer' | 'implementation' | 'certification';
+  breakType: 'defect' | 'error' | 'timeout' | 'contradiction';
+  detectedAt: number;
+
+  analysis: {
+    rootCause: string;
+    affectedArtifacts: string[];
+    severity: 'recoverable' | 'critical';
+  };
+
+  resolution: {
+    action: 'retry' | 'revise_plan' | 'escalate_to_human' | 'quarantine';
+    targetService?: string;
+    instructions?: string;
+  };
 }

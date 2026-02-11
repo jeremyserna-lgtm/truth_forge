@@ -35,6 +35,7 @@ LENGTH  ANCHOR  NAVIG.  STRUCT  GRAM.  LAYER  LINKS  COMPLETE
 
 | Primitive | Should Cover | Go Here |
 |-----------|--------------|---------|
+| **Metadata** | YAML frontmatter, document types, relationships, agent parsing | [METADATA.md](METADATA.md) |
 | Length | 300-line limit, split patterns, compress vs expand, storage vs reading | [LENGTH.md](LENGTH.md) |
 | Anchor | One topic rule, limits/envelopes, exclusion test, split signal | [ANCHOR.md](ANCHOR.md) |
 | Navigation | UP-only rule, why not mesh, hub pattern, HOLD:AGENT parallel | [NAVIGATION.md](NAVIGATION.md) |

@@ -1,7 +1,7 @@
 """BigQuery sync service - syncs from canonical source to all systems."""
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 
@@ -78,9 +78,9 @@ class BigQuerySyncService:
             Dict with sync summary
         """
         if not last_sync_time:
-            from datetime import timedelta
+            from datetime import UTC, timedelta
 
-            last_sync_time = datetime.utcnow() - timedelta(hours=24)
+            last_sync_time = datetime.now(UTC) - timedelta(hours=24)
 
         query = """
         SELECT * FROM `identity.contacts_master`
@@ -315,8 +315,8 @@ class BigQuerySyncService:
                     local_contact.get("ai_insights", "{}"),
                     local_contact.get("recommendations", "{}"),
                     local_contact.get("sync_metadata", "{}"),
-                    datetime.utcnow().isoformat(),
-                    datetime.utcnow().isoformat(),
+                    datetime.now(UTC).isoformat(),
+                    datetime.now(UTC).isoformat(),
                 ),
             )
             self.local_db.commit()

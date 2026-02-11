@@ -9,6 +9,7 @@ import { getConfig } from './config';
 import { loadSecrets } from './config/secrets';
 import adminRoutes from './api/routes/admin';
 import customerRoutes from './api/routes/customer';
+import integrationRoutes from './api/routes/integration';
 
 // Load secrets from Google Cloud Secret Manager before starting server
 async function startServer() {
@@ -36,6 +37,7 @@ async function startServer() {
     // Portal routes
     app.use('/admin', adminRoutes);
     app.use('/customer', customerRoutes);
+    app.use('/integration', integrationRoutes);
 
     // Start server
     const PORT = config.port;

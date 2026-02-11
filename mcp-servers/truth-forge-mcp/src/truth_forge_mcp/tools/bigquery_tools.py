@@ -150,7 +150,7 @@ def get_bigquery_tools() -> list[tuple[Tool, Any]]:
             return "\n".join(lines)
 
         except Exception as e:
-            logger.error("query_entities_failed", error=str(e), exc_info=True)
+            logger.error("query_entities_failed: %s", e, exc_info=True)
             return f"Error querying entities: {type(e).__name__}: {e!s}"
 
     tools.append((query_entities_tool, handle_query_entities))
@@ -239,7 +239,7 @@ def get_bigquery_tools() -> list[tuple[Tool, Any]]:
             return "\n".join(lines)
 
         except Exception as e:
-            logger.error("query_enrichments_failed", error=str(e), exc_info=True)
+            logger.error("query_enrichments_failed: %s", e, exc_info=True)
             return f"Error querying enrichments: {type(e).__name__}: {e!s}"
 
     tools.append((query_enrichments_tool, handle_query_enrichments))

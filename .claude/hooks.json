@@ -1,0 +1,12 @@
+{
+  "$schema": "https://raw.githubusercontent.com/anthropics/claude-code/main/schemas/hooks.json",
+  "hooks": [
+    {
+      "event": "pre_tool_call",
+      "tools": ["Edit", "Write"],
+      "command": "python scripts/hooks/claude_pre_write_check.py",
+      "blocking": true,
+      "description": "Block dangerous patterns before any file write"
+    }
+  ]
+}

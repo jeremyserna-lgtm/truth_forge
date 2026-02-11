@@ -1,0 +1,306 @@
+# Standards Pattern Schema
+# ========================
+# The 11 canonical standards as machine-readable rules.
+# Standards are genetic memory - how the organism behaves.
+#
+# "Standards ARE the genetic code."
+# — 07_STANDARDS.md
+
+schema_version: "1.0.0"
+pattern_name: standards
+authority: THE_FRAMEWORK
+status: CANONICAL
+source_document: "framework/07_STANDARDS.md"
+
+provides:
+  - NAMING_CONVENTION
+  - FOLDER_STRUCTURE
+  - DOCUMENT_FORMAT
+  - DEPRECATION
+  - ERROR_HANDLING
+  - LOGGING
+  - TESTING
+  - CONFIGURATION
+  - SECURITY
+  - API_DESIGN
+  - VERSION_CONTROL
+
+traces_to: genesis
+
+# =============================================================================
+# THE 11 CANONICAL STANDARDS
+# =============================================================================
+
+standards:
+  # ---------------------------------------------------------------------------
+  # 1. NAMING_CONVENTION
+  # ---------------------------------------------------------------------------
+  naming_convention:
+    id: STD-001
+    document: "framework/standards/NAMING_CONVENTION.md"
+    purpose: "What to call things"
+    rules:
+      - rule: "Python files use snake_case"
+        pattern: "^[a-z][a-z0-9_]*\\.py$"
+        examples: ["service.py", "my_module.py"]
+
+      - rule: "Classes use PascalCase"
+        pattern: "^[A-Z][a-zA-Z0-9]*$"
+        examples: ["AssessmentService", "StageIndicators"]
+
+      - rule: "Constants use SCREAMING_SNAKE_CASE"
+        pattern: "^[A-Z][A-Z0-9_]*$"
+        examples: ["MOLT_SOURCE", "MAX_RETRIES"]
+
+      - rule: "Private methods start with underscore"
+        pattern: "^_[a-z][a-z0-9_]*$"
+        examples: ["_agent_logic", "_calculate_score"]
+
+  # ---------------------------------------------------------------------------
+  # 2. FOLDER_STRUCTURE
+  # ---------------------------------------------------------------------------
+  folder_structure:
+    id: STD-002
+    document: "framework/standards/FOLDER_STRUCTURE.md"
+    purpose: "Where things live"
+    rules:
+      - rule: "Services in central_services/"
+        path: "Primitive/central_services/{service_name}/"
+        required_files: ["__init__.py", "service.py"]
+
+      - rule: "Templates in seed/templates/"
+        path: "Primitive/seed/templates/{template_name}/"
+
+      - rule: "Governance in governance/"
+        path: "Primitive/governance/"
+
+      - rule: "Framework docs in framework/"
+        path: "framework/"
+        subdirs: ["standards/", "patterns/"]
+
+  # ---------------------------------------------------------------------------
+  # 3. DOCUMENT_FORMAT
+  # ---------------------------------------------------------------------------
+  document_format:
+    id: STD-003
+    document: "framework/standards/DOCUMENT_FORMAT.md"
+    purpose: "How markdown files are structured"
+    rules:
+      - rule: "Documents have H1 title"
+        check: "First line starts with # "
+
+      - rule: "Framework docs have three layers"
+        layers: ["WHY (Theory)", "WHAT (Specification)", "HOW (Reference)"]
+
+      - rule: "No orphan documents"
+        check: "Document must be in an INDEX.md"
+
+  # ---------------------------------------------------------------------------
+  # 4. DEPRECATION
+  # ---------------------------------------------------------------------------
+  deprecation:
+    id: STD-004
+    document: "framework/standards/DEPRECATION.md"
+    purpose: "Safe phase-out of code"
+    rules:
+      - rule: "Use @deprecated decorator"
+        syntax: "@deprecated(since='x.x.x', removal='y.y.y', reason='...')"
+
+      - rule: "30-day minimum deprecation period"
+        check: "removal date >= since date + 30 days"
+
+      - rule: "Provide replacement"
+        check: "replacement parameter specified"
+
+    enforcement:
+      decorator: "framework/standards/deprecation/deprecation_utils.py"
+      checker: "framework/standards/deprecation/deprecation_checker.py"
+
+  # ---------------------------------------------------------------------------
+  # 5. ERROR_HANDLING
+  # ---------------------------------------------------------------------------
+  error_handling:
+    id: STD-005
+    document: "framework/standards/ERROR_HANDLING.md"
+    purpose: "Failure management"
+    rules:
+      - rule: "No bare except"
+        pattern_forbidden: "except:"
+        suggestion: "Use except Exception as e:"
+
+      - rule: "Errors must be visible"
+        check: "No silent failures (except: pass)"
+
+      - rule: "Use structured errors"
+        check: "Return error signals, don't just log"
+
+      - rule: "Preserve traceback"
+        check: "Use exc_info=True or traceback.format_exc()"
+
+  # ---------------------------------------------------------------------------
+  # 6. LOGGING
+  # ---------------------------------------------------------------------------
+  logging:
+    id: STD-006
+    document: "framework/standards/LOGGING.md"
+    purpose: "Event recording"
+    rules:
+      - rule: "Use get_logger(__name__)"
+        pattern: "logger = get_logger(__name__)"
+
+      - rule: "Structured logging with extra dict"
+        pattern: 'logger.info("message", extra={...})'
+
+      - rule: "No print statements in production code"
+        pattern_forbidden: "print("
+
+      - rule: "Log levels used appropriately"
+        levels:
+          DEBUG: "Detailed diagnostic info"
+          INFO: "Normal operation events"
+          WARNING: "Something unexpected but handled"
+          ERROR: "Failure that affects functionality"
+          CRITICAL: "System-wide failure"
+
+  # ---------------------------------------------------------------------------
+  # 7. TESTING
+  # ---------------------------------------------------------------------------
+  testing:
+    id: STD-007
+    document: "framework/standards/TESTING.md"
+    purpose: "Code verification"
+    rules:
+      - rule: "Tests in tests/ directory"
+        path: "Primitive/tests/"
+
+      - rule: "Test files start with test_"
+        pattern: "^test_.*\\.py$"
+
+      - rule: "Use pytest"
+        framework: "pytest"
+
+      - rule: "No skipped tests without reason"
+        pattern_forbidden: "@pytest.mark.skip()"
+        suggestion: "@pytest.mark.skip(reason='...')"
+
+  # ---------------------------------------------------------------------------
+  # 8. CONFIGURATION
+  # ---------------------------------------------------------------------------
+  configuration:
+    id: STD-008
+    document: "framework/standards/CONFIGURATION.md"
+    purpose: "Settings management"
+    rules:
+      - rule: "No hardcoded secrets"
+        pattern_forbidden: "password = \"..."
+        suggestion: "Use environment variables"
+
+      - rule: "Config from environment"
+        check: "os.getenv() or config file"
+
+      - rule: "YAML for complex config"
+        formats: ["yaml", "env"]
+
+  # ---------------------------------------------------------------------------
+  # 9. SECURITY
+  # ---------------------------------------------------------------------------
+  security:
+    id: STD-009
+    document: "framework/standards/SECURITY.md"
+    purpose: "System protection"
+    rules:
+      - rule: "No secrets in code"
+        check: "Scan for API keys, passwords"
+
+      - rule: "Use Spark for code execution"
+        check: "Code execution requires spark authorization"
+
+      - rule: "Input validation at boundaries"
+        check: "External input validated before use"
+
+      - rule: "Least privilege"
+        check: "Request minimum required permissions"
+
+  # ---------------------------------------------------------------------------
+  # 10. API_DESIGN
+  # ---------------------------------------------------------------------------
+  api_design:
+    id: STD-010
+    document: "framework/standards/API_DESIGN.md"
+    purpose: "Interface contracts"
+    rules:
+      - rule: "Consistent naming"
+        patterns:
+          create: "create_{thing}"
+          read: "get_{thing}"
+          update: "update_{thing}"
+          delete: "delete_{thing}"
+          list: "list_{things}"
+
+      - rule: "Return types documented"
+        check: "Type hints on public methods"
+
+      - rule: "Use dataclasses for complex returns"
+        check: "Structured responses, not raw dicts"
+
+  # ---------------------------------------------------------------------------
+  # 11. VERSION_CONTROL
+  # ---------------------------------------------------------------------------
+  version_control:
+    id: STD-011
+    document: "framework/standards/VERSION_CONTROL.md"
+    purpose: "Code versioning"
+    rules:
+      - rule: "Semantic versioning"
+        pattern: "^\\d+\\.\\d+\\.\\d+$"
+        format: "MAJOR.MINOR.PATCH"
+
+      - rule: "Commit messages descriptive"
+        check: "Not empty, not 'fix'"
+
+      - rule: "No force push to main"
+        forbidden: "git push --force main"
+
+# =============================================================================
+# REQUIREMENTS FOR CODE TRACING TO STANDARDS
+# =============================================================================
+requirements:
+  markers: []  # Standards is about behavior, not markers
+
+  behaviors:
+    - "Follows naming conventions"
+    - "In correct folder location"
+    - "Uses structured logging"
+    - "Has error handling"
+    - "Has tests"
+
+  molt_source_required: false  # Standards apply to all code
+
+# =============================================================================
+# LINEAGE
+# =============================================================================
+lineage:
+  this_pattern: "standards"
+  traces_to: "genesis"
+  children:
+    - "All code in the organism"
+  note: "Standards are genetic memory, apply everywhere"
+
+# =============================================================================
+# ENFORCEMENT
+# =============================================================================
+enforcement:
+  pre_molt:
+    checker: "Primitive/molt/standards.py"
+    function: "check_molt_standards()"
+    blocks_on: "BLOCKING violations"
+
+  pre_commit:
+    hooks:
+      - "black (formatting)"
+      - "ruff (linting)"
+      - "mypy (type checking)"
+
+  continuous:
+    - "Deprecation checker in CI"
+    - "Security scanning"

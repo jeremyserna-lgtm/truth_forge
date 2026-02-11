@@ -42,6 +42,7 @@ class TruthForgeSettings(BaseSettings):
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",  # Ignore unknown env vars
+        populate_by_name=True,  # Accept both field names and aliases
     )
 
     # =========================================================================

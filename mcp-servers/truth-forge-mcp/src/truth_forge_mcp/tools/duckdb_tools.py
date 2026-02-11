@@ -120,7 +120,7 @@ def get_duckdb_tools() -> list[tuple[Tool, Any]]:
             return "\n".join(lines)
 
         except Exception as e:
-            logger.error("query_duckdb_failed", error=str(e), exc_info=True)
+            logger.error("query_duckdb_failed: %s", e, exc_info=True)
             return f"Error querying DuckDB: {type(e).__name__}: {e!s}"
 
     tools.append((query_duckdb_tool, handle_query_duckdb))
@@ -190,7 +190,7 @@ def get_duckdb_tools() -> list[tuple[Tool, Any]]:
             return "\n".join(lines)
 
         except Exception as e:
-            logger.error("list_databases_failed", error=str(e), exc_info=True)
+            logger.error("list_databases_failed: %s", e, exc_info=True)
             return f"Error listing databases: {type(e).__name__}: {e!s}"
 
     tools.append((list_databases_tool, handle_list_databases))
@@ -268,7 +268,7 @@ def get_duckdb_tools() -> list[tuple[Tool, Any]]:
             return "\n".join(lines)
 
         except Exception as e:
-            logger.error("get_schema_failed", error=str(e), exc_info=True)
+            logger.error("get_schema_failed: %s", e, exc_info=True)
             return f"Error getting schema: {type(e).__name__}: {e!s}"
 
     tools.append((get_schema_tool, handle_get_schema))

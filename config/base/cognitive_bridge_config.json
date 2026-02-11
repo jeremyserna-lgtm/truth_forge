@@ -1,0 +1,33 @@
+{
+  "models": {
+    "scout": {
+      "provider": "scout",
+      "endpoint": "http://localhost:8765/v1",
+      "max_context": 10000000
+    },
+    "maverick": {
+      "provider": "maverick",
+      "endpoint": "http://localhost:8766/v1",
+      "max_context": 131072
+    },
+    "r1": {
+      "provider": "r1",
+      "endpoint": "http://localhost:8767/v1",
+      "max_context": 32768
+    }
+  },
+  "routing": {
+    "simple_chat": "scout",
+    "context_filtering": "scout",
+    "code_review": "scout",
+    "architecture_design": "maverick",
+    "complex_reasoning": "maverick",
+    "research_synthesis": "maverick",
+    "autonomous_discovery": "r1",
+    "stage_5_sovereign_execution": "r1",
+    "fallback_chain": ["scout", "maverick", "r1"]
+  },
+  "thresholds": {
+    "large_context_tokens": 80000
+  }
+}

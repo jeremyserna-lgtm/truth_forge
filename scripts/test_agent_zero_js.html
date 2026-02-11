@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Agent Zero JavaScript Test</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1e1e1e; color: #00ff00; }
+        .test { margin: 10px 0; }
+        .pass { color: #00ff00; }
+        .fail { color: #ff0000; }
+        .info { color: #ffff00; }
+        pre { background: #000; padding: 10px; border: 1px solid #333; }
+    </style>
+</head>
+<body>
+    <h1>Agent Zero JavaScript Diagnostic</h1>
+    <div id="results"></div>
+
+    <script>
+        const results = document.getElementById('results');
+
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `test ${type}`;
+            div.textContent = message;
+            results.appendChild(div);
+        }
+
+        function testFetch() {
+            log('[1/5] Testing fetch to Agent Zero...', 'info');
+            fetch('http://192.168.68.121:8080/')
+                .then(response => {
+                    log(`✓ Fetch succeeded (HTTP ${response.status})`, 'pass');
+                    return response.text();
+                })
+                .then(html => {
+                    log(`✓ Got ${html.length} bytes of HTML`, 'pass');
+                    testJSLoad();
+                })
+                .catch(error => {
+                    log(`✗ Fetch failed: ${error.message}`, 'fail');
+                    testJSLoad();
+                });
+        }
+
+        function testJSLoad() {
+            log('[2/5] Testing JavaScript module loading...', 'info');
+            fetch('http://192.168.68.121:8080/index.js')
+                .then(response => {
+                    log(`✓ index.js loads (HTTP ${response.status})`, 'pass');
+                    testModules();
+                })
+                .catch(error => {
+                    log(`✗ index.js failed: ${error.message}`, 'fail');
+                    testModules();
+                });
+        }
+
+        function testModules() {
+            log('[3/5] Testing ES module imports...', 'info');
+
+            // Try to load as module
+            const script = document.createElement('script');
+            script.type = 'module';
+            script.textContent = `
+                try {
+                    import('/index.js').then(() => {
+                        window.postMessage('MODULE_LOADED', '*');
+                    }).catch(err => {
+                        window.postMessage('MODULE_ERROR:' + err.message, '*');
+                    });
+                } catch (e) {
+                    window.postMessage('MODULE_ERROR:' + e.message, '*');
+                }
+            `;
+
+            window.addEventListener('message', (event) => {
+                if (event.data === 'MODULE_LOADED') {
+                    log('✓ ES modules work', 'pass');
+                } else if (event.data.startsWith('MODULE_ERROR')) {
+                    log(`✗ Module error: ${event.data.split(':')[1]}`, 'fail');
+                }
+                testConsole();
+            });
+
+            document.head.appendChild(script);
+
+            // Timeout fallback
+            setTimeout(() => testConsole(), 3000);
+        }
+
+        function testConsole() {
+            log('[4/5] Checking browser console errors...', 'info');
+            log('Open browser console (Cmd+Option+I) to see JavaScript errors', 'info');
+
+            // Capture console errors
+            const originalError = console.error;
+            const errors = [];
+            console.error = function(...args) {
+                errors.push(args.join(' '));
+                originalError.apply(console, args);
+            };
+
+            setTimeout(() => {
+                if (errors.length > 0) {
+                    log(`Found ${errors.length} console errors:`, 'fail');
+                    errors.forEach(err => log(`  - ${err}`, 'fail'));
+                } else {
+                    log('No console errors detected', 'pass');
+                }
+                summary();
+            }, 2000);
+        }
+
+        function summary() {
+            log('[5/5] Summary', 'info');
+            const passes = document.querySelectorAll('.pass').length;
+            const fails = document.querySelectorAll('.fail').length;
+            log(`Tests passed: ${passes}`, 'pass');
+            log(`Tests failed: ${fails}`, fails > 0 ? 'fail' : 'pass');
+
+            log('', 'info');
+            log('DIAGNOSIS:', 'info');
+            if (fails === 0) {
+                log('All tests passed - the issue is likely in Agent Zero\'s UI code', 'info');
+                log('Check: Alpine.js loading, DOM rendering, WebSocket connection', 'info');
+            } else {
+                log('Found issues - review failed tests above', 'fail');
+            }
+        }
+
+        // Start tests
+        setTimeout(testFetch, 100);
+    </script>
+</body>
+</html>

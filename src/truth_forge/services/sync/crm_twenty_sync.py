@@ -5,7 +5,7 @@ Uses TwentyCRMClient which gets API key from secrets manager.
 
 import json
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 
@@ -135,7 +135,7 @@ class CRMTwentySyncService:
         # Update sync metadata
         sync_metadata.update(
             {
-                "last_updated": crm_contact.get("updatedAt", datetime.utcnow().isoformat()),
+                "last_updated": crm_contact.get("updatedAt", datetime.now(UTC).isoformat()),
                 "last_updated_by": "crm_twenty",
                 "version": sync_metadata.get("version", 0) + 1,
                 "sync_status": "synced",
@@ -189,8 +189,8 @@ class CRMTwentySyncService:
             # Sync Metadata
             "sync_metadata": sync_metadata,
             # Timestamps
-            "created_at": crm_contact.get("createdAt", datetime.utcnow().isoformat()),
-            "updated_at": crm_contact.get("updatedAt", datetime.utcnow().isoformat()),
+            "created_at": crm_contact.get("createdAt", datetime.now(UTC).isoformat()),
+            "updated_at": crm_contact.get("updatedAt", datetime.now(UTC).isoformat()),
         }
 
     def _upsert_to_bigquery(self, contact: dict[str, Any]) -> dict[str, Any]:

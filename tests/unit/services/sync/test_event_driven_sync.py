@@ -3,7 +3,7 @@
 Achieves 95%+ coverage with all branches and edge cases tested.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from unittest.mock import Mock, patch
 
 from truth_forge.services.sync.cdc_sync_service import ChangeType
@@ -58,7 +58,7 @@ class TestEventDrivenSyncService:
                 entity_id="123",
                 change_type=ChangeType.INSERT,
                 priority=EventPriority.NORMAL,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 data={},
             )
 
@@ -127,7 +127,7 @@ class TestEventDrivenSyncService:
                 entity_id="123",
                 change_type=ChangeType.INSERT,
                 priority=EventPriority.NORMAL,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 data={},
             )
 
@@ -149,7 +149,7 @@ class TestEventDrivenSyncService:
                 entity_id="123",
                 change_type=ChangeType.INSERT,
                 priority=EventPriority.NORMAL,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 data={},
             )
 
@@ -173,7 +173,7 @@ class TestEventDrivenSyncService:
                 entity_id="123",
                 change_type=ChangeType.INSERT,
                 priority=EventPriority.NORMAL,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 data={},
                 retry_count=0,
                 max_retries=3,
@@ -202,7 +202,7 @@ class TestEventDrivenSyncService:
                 entity_id="123",
                 change_type=ChangeType.INSERT,
                 priority=EventPriority.NORMAL,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 data={},
                 retry_count=3,
                 max_retries=3,
@@ -230,7 +230,7 @@ class TestEventDrivenSyncService:
                 entity_id="123",
                 change_type=ChangeType.UPDATE,
                 priority=EventPriority.HIGH,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 data={"version": 2},
             )
 
@@ -258,7 +258,7 @@ class TestEventDrivenSyncService:
                 entity_id="456",
                 change_type=ChangeType.INSERT,
                 priority=EventPriority.NORMAL,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 data={"version": 1},
             )
 
@@ -285,7 +285,7 @@ class TestEventDrivenSyncService:
                 entity_id="789",
                 change_type=ChangeType.DELETE,
                 priority=EventPriority.LOW,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 data={},
             )
 

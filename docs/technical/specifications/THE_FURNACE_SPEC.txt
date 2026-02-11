@@ -1,0 +1,440 @@
+
+THE FURNACE
+Scout as the AGENT in HOLD → AGENT → HOLD
+Knowledge Atomizer Pipeline Specification
+
+1. WHY (Theory)
+
+The Architect has hundreds of documents: Framework philosophy, codebase files, business plans, research documents, conversation exports, and app specifications. Today, the Architect carries context across systems and sessions by hand, connecting things manually because no single system can hold it all at once.
+
+Scout (Llama 4 Scout, running locally on EXO) has a 10 million token context window. This means Scout can hold the entire codebase AND the Framework AND business plans AND research documents AND conversation exports all at once—and produce Knowledge Atoms that carry cross-references no single-document pass could ever find.
+
+The purpose of this pipeline is:
+
+
+
+This is not a document summarizer. This is total crystallization—the Time Crystal doing its actual job.
+2. WHAT (Specification)
+
+2.1 System Overview
+
+The Furnace is a pipeline with three stages, following the HOLD → AGENT → HOLD pattern:
+
+
+
+The pipeline also includes INHALE (file discovery), EXHALE (downstream notification), and CARE (source file archival and logging) stages that wrap the core three.
+
+2.2 The Full Pipeline Flow
+
+INHALE → HOLD₁ → AGENT (Scout) → HOLD₂ → EXHALE → CARE
+
+
+2.3 The Knowledge Atom Schema
+
+A Knowledge Atom is the smallest unit of truth that can be stored, retrieved, and used. Every atom follows this schema:
+
+{
+  "atom_id": "ka_<uuid>",
+  "content": "The actual knowledge statement. One atomic fact or insight.",
+  "atom_type": "fact | concept | relationship | directive | pattern | reference",
+  "confidence": 0.95,
+  "sources": [
+    {
+      "file_path": "framework/01_THE_FRAMEWORK.md",
+      "file_type": "markdown",
+      "section": "Section heading or line range",
+      "excerpt": "Brief excerpt from source for traceability"
+    }
+  ],
+  "cross_references": [
+    {
+      "target_file": "src/services/knowledge_atomizer.py",
+      "relationship": "implements | extends | contradicts | depends_on | illustrates",
+      "description": "How this atom relates to the target"
+    }
+  ],
+  "tags": ["framework", "metabolism", "architecture"],
+  "layer": "theory | structure | dynamic",
+  "dimension": "identity | perception | metabolism | architecture | extension",
+  "created_at": "2026-02-06T12:00:00Z",
+  "batch_id": "batch_<uuid>",
+  "scout_model": "llama-4-scout",
+  "context_window_utilization": 0.87
+}
+
+2.4 Atom Type Taxonomy
+
+
+2.5 Scout’s System Prompt (The Combustion Instructions)
+
+When Scout is called as the AGENT, it receives a system prompt that instructs it on how to decompose documents into atoms. This prompt is the Furnace’s fire—it defines what combustion means.
+
+
+
+CRITICAL: The system prompt above is a starting point. It should be stored as a separate configuration file (e.g., config/scout_system_prompt.md) so the Architect can iterate on it without modifying pipeline code.
+2.6 Infrastructure Requirements
+
+
+
+
+3. HOW (Implementation Reference)
+
+3.1 Directory Structure
+
+knowledge-atomizer/
+├── main.py                    # Entry point. Orchestrates the full pipeline.
+├── config/
+│   ├── pipeline_config.yaml   # Source dirs, BigQuery dataset, batch settings
+│   └── scout_system_prompt.md # Scout’s combustion instructions (editable)
+├── stages/
+│   ├── __init__.py
+│   ├── inhale.py              # INHALE: File discovery + manifest building
+│   ├── hold_input.py          # HOLD₁: Read files, chunk into batches, build payloads
+│   ├── agent_scout.py         # AGENT: Send batches to Scout, receive raw atoms
+│   ├── hold_output.py         # HOLD₂: Validate, deduplicate, enrich atoms
+│   ├── exhale.py              # EXHALE: Write to BigQuery + notify
+│   └── care.py                # CARE: Archive sources, write logs, clean up
+├── models/
+│   ├── __init__.py
+│   ├── knowledge_atom.py      # Pydantic model for Knowledge Atom schema
+│   ├── batch.py               # Pydantic model for batch payloads
+│   └── manifest.py            # Pydantic model for file manifest
+├── utils/
+│   ├── __init__.py
+│   ├── token_counter.py       # Token counting for batch sizing
+│   ├── file_reader.py         # Read any file type into text
+│   └── checkpoint.py          # Checkpoint/resume logic
+├── data/
+│   ├── checkpoints/           # Resume state for interrupted runs
+│   ├── processed/             # Archived source files after processing
+│   └── logs/                  # Processing logs per run
+└── tests/
+    ├── test_atom_schema.py    # Validate atom output matches schema
+    └── test_pipeline.py       # End-to-end with small test corpus
+3.2 Stage-by-Stage Implementation
+
+3.2.1 INHALE (inhale.py)
+
+Purpose: Discover all source files and build a manifest.
+
+def inhale(config: PipelineConfig) -> Manifest:
+    """Scan source directories. Build manifest of all files to process."""
+    manifest = Manifest()
+    for source_dir in config.source_directories:
+        for file_path in walk_directory(source_dir, config.file_extensions):
+            file_info = FileInfo(
+                path=file_path,
+                type=detect_file_type(file_path),
+                size_bytes=file_path.stat().st_size,
+                modified_at=file_path.stat().st_mtime,
+                token_count=count_tokens(read_file(file_path))
+            )
+            manifest.add(file_info)
+    manifest.calculate_totals()  # total tokens, total files, estimated batches
+    log.info(f"INHALE complete: {manifest.total_files} files, ~{manifest.total_tokens:,} tokens")
+    return manifest
+
+
+
+3.2.2 HOLD₁ — Input Hold (hold_input.py)
+
+Purpose: Read files, chunk into batches sized to Scout’s context window, build structured payloads.
+
+def hold_input(manifest: Manifest, config: PipelineConfig) -> list[Batch]:
+    """Build batches that maximize Scout context window utilization."""
+    SYSTEM_PROMPT_TOKENS = count_tokens(config.scout_system_prompt)
+    RESPONSE_RESERVE = config.response_token_reserve  # e.g., 500_000
+    MAX_INPUT_TOKENS = config.scout_context_window - SYSTEM_PROMPT_TOKENS - RESPONSE_RESERVE
+    
+    batches = []
+    current_batch = Batch()
+    
+    # Sort files: Framework docs first, then code, then conversations
+    # This ensures Scout always has the Framework as grounding context
+    sorted_files = sort_by_priority(manifest.files)
+    
+    for file_info in sorted_files:
+        content = read_file(file_info.path)
+        tokens = file_info.token_count
+        
+        if current_batch.total_tokens + tokens > MAX_INPUT_TOKENS:
+            batches.append(current_batch)
+            current_batch = Batch()
+            # CRITICAL: Always include Framework core docs in every batch
+            # so Scout has grounding context for cross-references
+            current_batch.add_grounding_docs(config.grounding_docs)
+        
+        current_batch.add(file_info, content)
+    
+    if current_batch.files:
+        batches.append(current_batch)
+    
+    log.info(f"HOLD₁ complete: {len(batches)} batches created")
+    for i, b in enumerate(batches):
+        log.info(f"  Batch {i+1}: {b.file_count} files, ~{b.total_tokens:,} tokens ({b.utilization:.0%} window)")
+    return batches
+
+
+3.2.3 AGENT — Scout Combustion (agent_scout.py)
+
+Purpose: Send batches to Scout via EXO API. Scout decomposes documents into Knowledge Atoms. This is the fire.
+
+def agent_scout(batch: Batch, config: PipelineConfig) -> list[dict]:
+    """Send a batch to Scout. Receive raw Knowledge Atoms."""
+    
+    system_prompt = load_system_prompt(config.scout_system_prompt_path)
+    
+    # Build the user message: all documents in the batch
+    user_content = build_batch_payload(batch)
+    # Format: "=== FILE: path/to/file.md ===\n<content>\n\n" for each file
+    
+    response = requests.post(
+        config.scout_api_url,  # http://localhost:52415/v1/chat/completions
+        json={
+            "model": config.scout_model,  # e.g., "llama-4-scout"
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_content}
+            ],
+            "temperature": 0.1,      # Low temp for consistent factual extraction
+            "max_tokens": config.response_token_reserve,
+            "stream": True           # Stream for progress tracking
+        },
+        stream=True,
+        timeout=config.scout_timeout  # Long timeout for large batches
+    )
+    
+    raw_output = collect_stream(response)  # Collect streamed chunks
+    atoms = parse_json_output(raw_output)  # Parse JSON array from response
+    
+    log.info(f"AGENT complete: {len(atoms)} raw atoms from batch {batch.id}")
+    checkpoint.save(batch.id, atoms)  # Save checkpoint for resume
+    return atoms
+
+
+
+3.2.4 HOLD₂ — Output Hold (hold_output.py)
+
+Purpose: Validate, deduplicate, and enrich raw atoms from Scout into final Knowledge Atoms.
+
+def hold_output(raw_atoms: list[dict], batch: Batch) -> list[KnowledgeAtom]:
+    """Validate, deduplicate, enrich raw atoms."""
+    validated = []
+    errors = []
+    
+    for raw in raw_atoms:
+        try:
+            atom = KnowledgeAtom.model_validate(raw)  # Pydantic validation
+            atom.atom_id = generate_atom_id()          # ka_<uuid>
+            atom.batch_id = batch.id
+            atom.created_at = utcnow()
+            atom.scout_model = config.scout_model
+            atom.context_window_utilization = batch.utilization
+            validated.append(atom)
+        except ValidationError as e:
+            errors.append({"raw": raw, "error": str(e)})
+    
+    # Deduplicate: same content + same sources = duplicate
+    deduplicated = deduplicate_atoms(validated)
+    
+    log.info(f"HOLD₂ complete: {len(deduplicated)} atoms validated, {len(errors)} errors, {len(validated) - len(deduplicated)} duplicates removed")
+    if errors:
+        log.warning(f"Validation errors saved to {save_errors(errors)}")
+    return deduplicated
+3.2.5 EXHALE (exhale.py)
+
+Purpose: Write validated atoms to BigQuery. Notify downstream systems.
+
+def exhale(atoms: list[KnowledgeAtom], config: PipelineConfig) -> ExhaleResult:
+    """Write atoms to BigQuery. Emit availability notification."""
+    
+    # Convert atoms to BigQuery rows
+    rows = [atom.to_bq_row() for atom in atoms]
+    
+    # Write to BigQuery
+    client = bigquery.Client()
+    table_ref = f"{config.bq_project}.{config.bq_dataset}.{config.bq_table}"
+    errors = client.insert_rows_json(table_ref, rows)
+    
+    if errors:
+        log.error(f"BigQuery insert errors: {errors}")
+        raise ExhaleError(f"Failed to write {len(errors)} atoms")
+    
+    log.info(f"EXHALE complete: {len(atoms)} atoms written to {table_ref}")
+    
+    # Also write atoms to local JSONL as backup
+    backup_path = config.output_dir / f"atoms_{batch_id}.jsonl"
+    write_jsonl(backup_path, rows)
+    
+    return ExhaleResult(atoms_written=len(atoms), table=table_ref)
+
+3.2.6 CARE (care.py)
+
+Purpose: Archive source files. Write processing logs. Clean up. The final giving of care.
+
+def care(manifest: Manifest, results: list[ExhaleResult], config: PipelineConfig):
+    """Archive sources, write logs, clean up. The final giving of care."""
+    
+    # Write comprehensive processing log
+    log_entry = ProcessingLog(
+        run_id=generate_run_id(),
+        started_at=manifest.created_at,
+        completed_at=utcnow(),
+        files_processed=manifest.total_files,
+        total_tokens=manifest.total_tokens,
+        batches=len(results),
+        atoms_produced=sum(r.atoms_written for r in results),
+        errors=collect_all_errors(),
+    )
+    write_log(config.log_dir / f"run_{log_entry.run_id}.json", log_entry)
+    
+    # Archive processed files (move to processed/ with timestamp)
+    if config.archive_after_processing:
+        archive_files(manifest.files, config.processed_dir)
+    
+    # Clean up checkpoints for completed batches
+    checkpoint.clean(completed_batch_ids)
+    
+    # Print summary for the Architect
+    print_summary(log_entry)  # Human-readable summary with stats
+3.3 Orchestrator (main.py)
+
+def main():
+    """The Furnace. INHALE → HOLD₁ → AGENT → HOLD₂ → EXHALE → CARE"""
+    
+    config = load_config("config/pipeline_config.yaml")
+    
+    # Support modes: full, dry-run, resume
+    args = parse_args()  # --dry-run, --resume, --batch-limit N
+    
+    # INHALE: Discover all source files
+    manifest = inhale(config)
+    
+    if args.dry_run:
+        print_dry_run_report(manifest)  # Show what WOULD happen
+        return
+    
+    # HOLD₁: Build batches
+    batches = hold_input(manifest, config)
+    
+    # Check for resume state
+    if args.resume:
+        batches = checkpoint.filter_completed(batches)
+        log.info(f"Resuming: {len(batches)} batches remaining")
+    
+    # Process each batch through AGENT → HOLD₂ → EXHALE
+    all_results = []
+    for i, batch in enumerate(batches):
+        log.info(f"\n=== BATCH {i+1}/{len(batches)} ===")
+        log.info(f"Files: {batch.file_count}, Tokens: ~{batch.total_tokens:,}, Utilization: {batch.utilization:.0%}")
+        
+        # AGENT: Scout combustion
+        raw_atoms = agent_scout(batch, config)
+        
+        # HOLD₂: Validate and enrich
+        atoms = hold_output(raw_atoms, batch)
+        
+        # EXHALE: Store
+        result = exhale(atoms, config)
+        all_results.append(result)
+        
+        if args.batch_limit and i + 1 >= args.batch_limit:
+            log.info(f"Batch limit reached ({args.batch_limit}). Stopping.")
+            break
+    
+    # CARE: Archive, log, clean up
+    care(manifest, all_results, config)
+    
+    log.info("\n=== FURNACE COMPLETE ===")
+
+
+if __name__ == "__main__":
+    main()
+3.4 Configuration (pipeline_config.yaml)
+
+# The Furnace - Pipeline Configuration
+
+scout:
+  api_url: "http://localhost:52415/v1/chat/completions"
+  model: "llama-4-scout"    # Verify model name from EXO
+  context_window: 10000000  # 10M tokens
+  response_token_reserve: 500000  # Reserve for Scout’s output
+  timeout: 7200             # 2 hours per batch max
+  temperature: 0.1
+  system_prompt_path: "config/scout_system_prompt.md"
+
+sources:
+  directories:
+    - "/Users/jeremyserna/truth_forge/framework"
+    - "/Users/jeremyserna/truth_forge/src"
+    - "/Users/jeremyserna/truth_forge/apps"
+    - "/Users/jeremyserna/truth_forge/docs"
+    - "/Users/jeremyserna/truth_forge/pipelines"
+    - "/Users/jeremyserna/truth_forge/conversations"
+  extensions: [".md", ".py", ".yaml", ".yml", ".json", ".txt", ".html", ".js", ".ts", ".sh", ".sql"]
+  exclude: ["node_modules/", ".git/", "__pycache__/", "*.pyc", ".DS_Store", "*.lock"]
+
+grounding:
+  # Always included in every batch for cross-referencing
+  docs:
+    - "framework/01_THE_FRAMEWORK.md"
+    - "framework/PRIMITIVES.md"
+    - "framework/STANDARDS.md"
+
+bigquery:
+  project: "your-gcp-project"     # Set to actual project
+  dataset: "knowledge_atoms"
+  table: "atoms"
+
+output:
+  dir: "data/output"
+  log_dir: "data/logs"
+  processed_dir: "data/processed"
+  checkpoint_dir: "data/checkpoints"
+  archive_after_processing: false  # Set true once confident
+4. BigQuery Table Schema
+
+CREATE TABLE IF NOT EXISTS `knowledge_atoms.atoms` (
+  atom_id STRING NOT NULL,
+  content STRING NOT NULL,
+  atom_type STRING NOT NULL,  -- fact|concept|relationship|directive|pattern|reference
+  confidence FLOAT64,
+  sources ARRAY<STRUCT<
+    file_path STRING,
+    file_type STRING,
+    section STRING,
+    excerpt STRING
+  >>,
+  cross_references ARRAY<STRUCT<
+    target_file STRING,
+    relationship STRING,
+    description STRING
+  >>,
+  tags ARRAY<STRING>,
+  layer STRING,              -- theory|structure|dynamic
+  dimension STRING,          -- identity|perception|metabolism|architecture|extension
+  created_at TIMESTAMP NOT NULL,
+  batch_id STRING NOT NULL,
+  scout_model STRING,
+  context_window_utilization FLOAT64,
+  run_id STRING
+);
+5. Build Order
+
+Follow this sequence. Each step is testable before proceeding to the next.
+
+
+
+
+6. What This Is NOT
+
+This is NOT a chat application. Scout is not having a conversation. Scout is inside the pipeline as the combustion engine. There is no UI. There is no conversation history. There is input, processing, and output.
+
+This is NOT a RAG system. This pipeline does not retrieve and generate at query time. It produces a static atomic database from a corpus. RAG may be built later ON TOP of this database, but this pipeline is the crystallization step, not the query step.
+
+This is NOT a document summarizer. Summarization loses information. Atomization preserves and decomposes every fact, connection, and pattern. The atom database should contain MORE accessible knowledge than the source documents, not less.
+
+This is NOT a one-time tool. The Furnace runs again whenever new documents arrive. New atoms from new runs merge with existing atoms in BigQuery. The database grows. The foundation deepens. This is how the system devours time into eternity.
+
+
+Build the Furnace. Put Scout inside it. Light the fire.

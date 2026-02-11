@@ -2,7 +2,7 @@
 
 import logging
 import traceback
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 
@@ -184,8 +184,8 @@ class RelationshipSyncService:
                     local_relationship.get("role"),
                     local_relationship.get("is_current", True),
                     str(local_relationship.get("sync_metadata", {})),
-                    datetime.utcnow().isoformat(),
-                    datetime.utcnow().isoformat(),
+                    datetime.now(UTC).isoformat(),
+                    datetime.now(UTC).isoformat(),
                 ),
             )
             self.local_db.commit()

@@ -10,7 +10,7 @@ import logging
 import threading
 import time
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any, Optional
 
 from google.cloud import bigquery
@@ -134,7 +134,7 @@ class AutoSyncService:
         """One sync cycle - syncs changes from all sources."""
         self._ensure_clients()
 
-        cycle_start = datetime.utcnow()
+        cycle_start = datetime.now(UTC)
         logger.info(f"\n{'=' * 60}")
         logger.info(f"SYNC CYCLE - {cycle_start.isoformat()}")
         logger.info(f"{'=' * 60}")
@@ -156,7 +156,7 @@ class AutoSyncService:
         self.stats.total_synced += total_synced
         self.stats.last_sync_time = cycle_start
 
-        cycle_duration = (datetime.utcnow() - cycle_start).total_seconds()
+        cycle_duration = (datetime.now(UTC) - cycle_start).total_seconds()
         logger.info(f"\n{'=' * 60}")
         logger.info("SYNC CYCLE COMPLETE")
         logger.info(f"{'=' * 60}")
@@ -179,7 +179,7 @@ class AutoSyncService:
         try:
             last_sync = self.last_bq_sync
             if not last_sync:
-                last_sync = datetime.utcnow() - timedelta(days=1)
+                last_sync = datetime.now(UTC) - timedelta(days=1)
 
             query = """
             SELECT contact_id
@@ -224,7 +224,7 @@ class AutoSyncService:
 
             # Update last sync time
             if synced > 0:
-                self.last_bq_sync = datetime.utcnow()
+                self.last_bq_sync = datetime.now(UTC)
 
             return synced
 
@@ -247,7 +247,7 @@ class AutoSyncService:
         try:
             last_sync = self.last_crm_sync
             if not last_sync:
-                last_sync = datetime.utcnow() - timedelta(days=1)
+                last_sync = datetime.now(UTC) - timedelta(days=1)
 
             contacts = service.crm_client.list_contacts(
                 updated_since=last_sync,
@@ -286,7 +286,7 @@ class AutoSyncService:
 
             # Update last sync time
             if synced > 0:
-                self.last_crm_sync = datetime.utcnow()
+                self.last_crm_sync = datetime.now(UTC)
 
             return synced
 
@@ -313,7 +313,7 @@ class AutoSyncService:
 
             last_sync = self.last_supabase_sync
             if not last_sync:
-                last_sync = datetime.utcnow() - timedelta(days=1)
+                last_sync = datetime.now(UTC) - timedelta(days=1)
 
             result = (
                 service.supabase.table("contacts_master")
@@ -354,7 +354,7 @@ class AutoSyncService:
 
             # Update last sync time
             if synced > 0:
-                self.last_supabase_sync = datetime.utcnow()
+                self.last_supabase_sync = datetime.now(UTC)
 
             return synced
 

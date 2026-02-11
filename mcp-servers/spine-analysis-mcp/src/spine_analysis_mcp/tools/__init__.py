@@ -6,7 +6,10 @@ Tool modules for BigQuery spine dataset analysis.
 from spine_analysis_mcp.tools import (
     concept_tools,
     cross_level_tools,
+    data_ghost_tools,
+    discovery_tools,
     enrichment_tools,
+    notme_analytics_tools,
     pattern_tools,
     query_tools,
     relationship_tools,
@@ -20,7 +23,10 @@ from spine_analysis_mcp.tools import (
 __all__ = [
     "concept_tools",
     "cross_level_tools",
+    "data_ghost_tools",
+    "discovery_tools",
     "enrichment_tools",
+    "notme_analytics_tools",
     "pattern_tools",
     "query_tools",
     "relationship_tools",

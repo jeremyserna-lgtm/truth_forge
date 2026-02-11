@@ -1,0 +1,13 @@
+{
+    "organism": "truth_forge",
+    "role": "THE_BRAIN",
+    "type": "genesis",
+    "description": "Truth Forge is the unmoved mover. It holds the soul, maintains the state, provides THE FRAMEWORK. All other organisms descend from it.",
+    "generation": 0,
+    "fertile": true,
+    "can_spawn": [
+        "sterile",
+        "fertile"
+    ],
+    "framework_authority": true
+}

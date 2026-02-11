@@ -31,6 +31,9 @@ class TestModelProvider:
         assert ModelProvider.CLAUDE.value == "claude"
         assert ModelProvider.GEMINI.value == "gemini"
         assert ModelProvider.OLLAMA.value == "ollama"
+        assert ModelProvider.SCOUT.value == "scout"
+        assert ModelProvider.MAVERICK.value == "maverick"
+        assert ModelProvider.R1.value == "r1"
 
     def test_from_string(self) -> None:
         """Test creating from string."""
@@ -38,6 +41,9 @@ class TestModelProvider:
         assert ModelProvider.from_string("CLAUDE") == ModelProvider.CLAUDE
         assert ModelProvider.from_string("gemini") == ModelProvider.GEMINI
         assert ModelProvider.from_string("ollama") == ModelProvider.OLLAMA
+        assert ModelProvider.from_string("scout") == ModelProvider.SCOUT
+        assert ModelProvider.from_string("maverick") == ModelProvider.MAVERICK
+        assert ModelProvider.from_string("r1") == ModelProvider.R1
 
     def test_from_string_invalid(self) -> None:
         """Test from_string raises for invalid provider."""
@@ -96,6 +102,9 @@ class TestModels:
             "ollama-llama",
             "ollama-mistral",
             "ollama-embed",
+            "scout-genesis",
+            "maverick-genesis",
+            "r1-genesis",
         ]
         for model_name in expected:
             assert model_name in MODELS

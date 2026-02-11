@@ -11,6 +11,7 @@ Commands:
 - status: Show system status
 - seed: Seed a new project
 - govern: Check governance status
+- bootstrap: Check triad runtime bootstrap readiness (MLX + EXO + tools)
 
 Example:
     python -m truth_forge.cli status
@@ -39,14 +40,14 @@ def create_parser() -> argparse.ArgumentParser:
         Configured ArgumentParser.
     """
     parser = argparse.ArgumentParser(
-        prog="truth_forge",
-        description="truth_forge CLI - The Genesis",
+        prog="truth-forge",
+        description="truth-forge CLI - The Genesis",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  truth_forge status              Show system status
-  truth_forge seed my_project     Seed a new project
-  truth_forge govern --check      Check governance status
+  truth-forge status              Show system status
+  truth-forge seed my_project     Seed a new project
+  truth-forge govern --check      Check governance status
         """,
     )
 
@@ -101,6 +102,17 @@ Examples:
         "--violations",
         action="store_true",
         help="Show recent violations",
+    )
+
+    # Bootstrap command
+    bootstrap_parser = subparsers.add_parser(
+        "bootstrap",
+        help="Check triad bootstrap readiness (Scout/Maverick/R1 + EXO + MLX)",
+    )
+    bootstrap_parser.add_argument(
+        "--smoke",
+        action="store_true",
+        help="Run small inference smoke tests on available triad models",
     )
 
     return parser
@@ -265,6 +277,68 @@ def cmd_govern(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_bootstrap(args: argparse.Namespace) -> int:
+    """Execute bootstrap readiness command.
+
+    Args:
+        args: Parsed arguments.
+
+    Returns:
+        Exit code.
+    """
+    from truth_forge.bootstrap_runtime import collect_bootstrap_runtime
+
+    report = collect_bootstrap_runtime(smoke=bool(args.smoke))
+
+    if getattr(args, "json", False):
+        print(json.dumps(report, indent=2))
+        return 0
+
+    caps = report["capabilities"]
+    services = report["services"]
+
+    def mark(ok: bool) -> str:
+        return "YES" if ok else "NO"
+
+    print("Triad Bootstrap Status")
+    print("=" * 40)
+    print(f"Takeover Ready: {mark(bool(caps['takeover_ready']))}")
+    print(f"Triad Online:   {mark(bool(caps['triad_online']))}")
+    print(f"EXO Online:     {mark(bool(caps['exo_online']))}")
+    print(f"MLX Online:     {mark(bool(caps['mlx_online']))}")
+    print(f"Handover Stack: {mark(bool(caps.get('handover_support_stack', False)))}")
+    print(f"Sentinel Stack: {mark(bool(caps.get('continuity_sentinel_stack', False)))}")
+    print(f"Recursive Stack:{mark(bool(caps.get('recursive_synthesis_stack', False)))}")
+    print()
+    print("Services:")
+    print(f"  Scout (MLX):  {mark(bool(services['scout_mlx']['available']))}")
+    print(f"  Maverick:     {mark(bool(services['maverick']['available']))}")
+    print(f"  R1/DeepSeek:  {mark(bool(services['r1']['available']))}")
+    print(f"  EXO:          {mark(bool(services['exo'].get('available', False)))}")
+    print(
+        f"  Handover API: {mark(bool(services.get('handover_support', {}).get('available', False)))}"
+    )
+    print(f"  Sentinel API: {mark(bool(services.get('sentinel', {}).get('available', False)))}")
+    print(
+        f"  Recursive API:{mark(bool(services.get('recursive_synthesis', {}).get('available', False)))}"
+    )
+    print(f"  Filesystem:   {mark(bool(caps['filesystem_exec']['available']))}")
+    print(f"  Vision Stack: {mark(bool(caps['vision_stack']['available']))}")
+
+    if args.smoke and "smoke" in report:
+        print()
+        print("Smoke Tests:")
+        for name, status in report["smoke"].items():
+            print(f"  {name}: {mark(bool(status.get('ok', False)))}")
+
+    print()
+    print("Next Actions:")
+    for item in report["next_actions"]:
+        print(f"  - {item}")
+
+    return 0
+
+
 def main(argv: list[str] | None = None) -> NoReturn:
     """Main entry point.
 
@@ -290,6 +364,7 @@ def main(argv: list[str] | None = None) -> NoReturn:
         "status": cmd_status,
         "seed": cmd_seed,
         "govern": cmd_govern,
+        "bootstrap": cmd_bootstrap,
     }
 
     handler = commands.get(args.command)

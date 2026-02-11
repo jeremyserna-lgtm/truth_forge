@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { KnowledgeAtom, GenesisConfig, JeremyArcMetric, ModelConfig, TrainingExport } from '../types';
 import { analyzeStage5Density, checkCoherenceAnchor, generateGenesisDataset } from '../services/geminiService';
-import { 
-    CpuChipIcon, ShieldCheckIcon, ChartBarIcon, ArrowDownTrayIcon, 
+import {
+    CpuChipIcon, ShieldCheckIcon, ChartBarIcon, ArrowDownTrayIcon,
     ExclamationTriangleIcon, BoltIcon, CheckCircleIcon
 } from '@heroicons/react/24/solid';
 
@@ -24,7 +24,7 @@ const GenesisView: React.FC<GenesisViewProps> = ({ atoms, activeModel, isLoading
 
     // Metric State
     const [arcMetric, setArcMetric] = useState<JeremyArcMetric | null>(null);
-    const [coherence, setCoherence] = useState<{passed: boolean, score: number} | null>(null);
+    const [coherence, setCoherence] = useState<{ passed: boolean, score: number } | null>(null);
     const [exportData, setExportData] = useState<TrainingExport | null>(null);
 
     // Auto-analyze metrics on mount if data exists
@@ -41,7 +41,7 @@ const GenesisView: React.FC<GenesisViewProps> = ({ atoms, activeModel, isLoading
             setArcMetric(m);
             const c = await checkCoherenceAnchor(atoms);
             setCoherence({ passed: c.passed, score: c.score });
-        } catch (e) {
+        } catch (_e) {
             alert("Analysis failed");
         } finally {
             setLoading(false);
@@ -52,7 +52,7 @@ const GenesisView: React.FC<GenesisViewProps> = ({ atoms, activeModel, isLoading
         if (atoms.length === 0) return;
         const result = generateGenesisDataset(atoms, config);
         setExportData(result);
-        
+
         // Trigger download
         const link = document.createElement('a');
         link.href = result.blobUrl;
@@ -73,7 +73,7 @@ const GenesisView: React.FC<GenesisViewProps> = ({ atoms, activeModel, isLoading
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full min-h-0">
-                
+
                 {/* Left: Configuration */}
                 <div className="lg:col-span-4 space-y-6">
                     <div className="bg-slate-900 rounded-2xl border border-slate-800 p-6">
@@ -81,15 +81,15 @@ const GenesisView: React.FC<GenesisViewProps> = ({ atoms, activeModel, isLoading
                             <BoltIcon className="w-5 h-5 mr-2" />
                             Core Architecture
                         </h3>
-                        
+
                         <div className="space-y-4">
                             <div>
                                 <label className="text-xs font-bold text-slate-500 uppercase block mb-2">Training Paradigm</label>
                                 <div className="grid grid-cols-2 gap-2">
                                     {['Seeing', 'Prediction'].map(p => (
-                                        <button 
-                                            key={p} 
-                                            onClick={() => setConfig(c => ({...c, paradigm: p as any}))}
+                                        <button
+                                            key={p}
+                                            onClick={() => setConfig(c => ({ ...c, paradigm: p as any }))}
                                             title={p === 'Seeing' ? "Optimize for descriptive truth" : "Optimize for predictive sequence"}
                                             className={`p-2 rounded-lg text-xs font-bold border ${config.paradigm === p ? 'bg-emerald-900/30 border-emerald-500 text-emerald-300' : 'bg-slate-800 border-slate-700 text-slate-400'}`}
                                         >
@@ -104,9 +104,9 @@ const GenesisView: React.FC<GenesisViewProps> = ({ atoms, activeModel, isLoading
 
                             <div>
                                 <label className="text-xs font-bold text-slate-500 uppercase block mb-2">Error Signal</label>
-                                <select 
+                                <select
                                     value={config.errorSignal}
-                                    onChange={(e) => setConfig(c => ({...c, errorSignal: e.target.value as any}))}
+                                    onChange={(e) => setConfig(c => ({ ...c, errorSignal: e.target.value as any }))}
                                     title="Choose error signal calculation method"
                                     className="w-full bg-slate-800 text-white text-sm px-3 py-2 rounded-lg border border-slate-700"
                                 >
@@ -122,9 +122,9 @@ const GenesisView: React.FC<GenesisViewProps> = ({ atoms, activeModel, isLoading
                                 <label className="text-xs font-bold text-slate-500 uppercase block mb-2">Mode</label>
                                 <div className="flex bg-slate-800 rounded-lg p-1">
                                     {['Continuous', 'Frozen'].map(m => (
-                                        <button 
-                                            key={m} 
-                                            onClick={() => setConfig(c => ({...c, mode: m as any}))}
+                                        <button
+                                            key={m}
+                                            onClick={() => setConfig(c => ({ ...c, mode: m as any }))}
                                             title={`Set mode to ${m}`}
                                             className={`flex-1 py-1.5 rounded text-xs font-bold ${config.mode === m ? 'bg-slate-700 text-white shadow' : 'text-slate-500'}`}
                                         >
@@ -151,7 +151,7 @@ const GenesisView: React.FC<GenesisViewProps> = ({ atoms, activeModel, isLoading
                                 <span className="text-xs text-slate-600">Not Run</span>
                             )}
                         </div>
-                        <button 
+                        <button
                             onClick={handleRunAnalysis}
                             disabled={isLoading}
                             title="Run metrics validation on current dataset"
@@ -164,7 +164,7 @@ const GenesisView: React.FC<GenesisViewProps> = ({ atoms, activeModel, isLoading
 
                 {/* Right: Metrics & Export */}
                 <div className="lg:col-span-8 flex flex-col gap-6">
-                    
+
                     {/* The Jeremy Arc Metric */}
                     <div className="bg-slate-900 rounded-2xl border border-slate-800 p-8 relative overflow-hidden">
                         <div className="absolute top-0 right-0 p-4 opacity-10">
@@ -186,10 +186,9 @@ const GenesisView: React.FC<GenesisViewProps> = ({ atoms, activeModel, isLoading
                                 </div>
                                 <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-800">
                                     <div className="text-slate-500 text-xs font-bold uppercase mb-1">Readiness Status</div>
-                                    <div className={`text-2xl font-bold ${
-                                        arcMetric?.readiness === 'Genesis Ready' ? 'text-green-400' : 
-                                        arcMetric?.readiness === 'Converging' ? 'text-yellow-400' : 'text-slate-400'
-                                    }`}>
+                                    <div className={`text-2xl font-bold ${arcMetric?.readiness === 'Genesis Ready' ? 'text-green-400' :
+                                            arcMetric?.readiness === 'Converging' ? 'text-yellow-400' : 'text-slate-400'
+                                        }`}>
                                         {arcMetric?.readiness || 'Unknown'}
                                     </div>
                                 </div>
@@ -218,7 +217,7 @@ const GenesisView: React.FC<GenesisViewProps> = ({ atoms, activeModel, isLoading
                                 <p className="text-slate-400 mb-6 text-sm">
                                     Generates <strong>{atoms.length}</strong> training examples formatted for {config.paradigm} paradigm.
                                 </p>
-                                <button 
+                                <button
                                     onClick={handleExport}
                                     title="Export current atoms as a JSONL training dataset"
                                     className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl font-bold shadow-lg flex items-center justify-center space-x-3 transition-all transform hover:-translate-y-1"
@@ -233,8 +232,8 @@ const GenesisView: React.FC<GenesisViewProps> = ({ atoms, activeModel, isLoading
                                             Export Complete
                                         </div>
                                         <div className="text-slate-300 text-xs font-mono">
-                                            Size: {exportData.datasetSize} lines<br/>
-                                            Est. Epochs: {exportData.estimatedEpochs}<br/>
+                                            Size: {exportData.datasetSize} lines<br />
+                                            Est. Epochs: {exportData.estimatedEpochs}<br />
                                             System Prompt: "{exportData.systemPrompt.substring(0, 40)}..."
                                         </div>
                                     </div>

@@ -117,7 +117,7 @@ class Stage(ABC):
 
         logger.debug(
             "Stage initialized",
-            extra={"name": self.name, "type": self.STAGE_TYPE},
+            extra={"stage_name": self.name, "stage_type": self.STAGE_TYPE},
         )
 
     @abstractmethod
@@ -195,7 +195,7 @@ class Stage(ABC):
         started_at = datetime.now(UTC)
         self._errors.clear()
 
-        logger.info("Stage starting", extra={"name": self.name})
+        logger.info("Stage starting", extra={"stage_name": self.name})
 
         # HOLD1: Read input
         input_records = self.read_input()
@@ -212,7 +212,7 @@ class Stage(ABC):
                 self._errors.append({"record": record, "error": str(e)})
                 logger.warning(
                     "Transform error",
-                    extra={"stage": self.name, "error": str(e)},
+                    extra={"stage_name": self.name, "error": str(e)},
                 )
 
         # HOLD2: Write output
@@ -235,7 +235,7 @@ class Stage(ABC):
         logger.info(
             "Stage completed",
             extra={
-                "name": self.name,
+                "stage_name": self.name,
                 "status": result.status,
                 "records_in": records_in,
                 "records_out": records_out,

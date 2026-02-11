@@ -39,17 +39,11 @@ def test_check_readiness_ready_threshold(monkeypatch, tmp_path):
 
     import truth_forge.services.model_readiness as mod
 
-    # Patch both HF_CACHE and _dir_size_bytes
-    original_hf_cache = mod.HF_CACHE
-    mod.HF_CACHE = tmp_path
-
-    try:
-        with patch.object(mod, "_dir_size_bytes", return_value=expected_bytes):
-            readiness = check_readiness()
-            assert readiness["scout"].ready is True
-            assert readiness["scout"].size_gb == 95.0
-    finally:
-        mod.HF_CACHE = original_hf_cache
+    monkeypatch.setenv("HF_HOME", str(tmp_path))
+    with patch.object(mod, "_dir_size_bytes", return_value=expected_bytes):
+        readiness = check_readiness()
+        assert readiness["scout"].ready is True
+        assert readiness["scout"].size_gb == 95.0
 
 
 def test_check_readiness_not_ready_threshold(monkeypatch, tmp_path):
@@ -64,14 +58,8 @@ def test_check_readiness_not_ready_threshold(monkeypatch, tmp_path):
 
     import truth_forge.services.model_readiness as mod
 
-    # Patch both HF_CACHE and _dir_size_bytes
-    original_hf_cache = mod.HF_CACHE
-    mod.HF_CACHE = tmp_path
-
-    try:
-        with patch.object(mod, "_dir_size_bytes", return_value=expected_bytes):
-            readiness = check_readiness()
-            assert readiness["scout"].ready is False
-            assert readiness["scout"].size_gb == 85.0
-    finally:
-        mod.HF_CACHE = original_hf_cache
+    monkeypatch.setenv("HF_HOME", str(tmp_path))
+    with patch.object(mod, "_dir_size_bytes", return_value=expected_bytes):
+        readiness = check_readiness()
+        assert readiness["scout"].ready is False
+        assert readiness["scout"].size_gb == 85.0

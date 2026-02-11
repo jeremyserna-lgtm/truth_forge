@@ -35,14 +35,51 @@ Each service is a specialized cell with a **Membrane** (its public API) and a **
 
 ### `GovernanceService` (The DNA & Immune System)
 
-*   **Role:** Records the immutable history of the organism.
+*   **Role:** Records the immutable history of the organism and enforces boundaries.
 *   **Public API:**
     *   `inhale(data: dict)`: Receives event data from the `ServiceMediator`.
     *   `query_events(...)`: Allows other services to query the historical event log.
+    *   `gate_operation(operation, source, target)`: Gates operations through governance checks.
+    *   `check_cost(service, operation, estimated_cost)`: Validates budget before expensive operations.
+    *   `record_cost(service, operation, actual_cost)`: Records actual cost after completion.
 *   **`HOLD_2` Schema (`governance.duckdb`):**
     *   `id`: Unique ID for the event.
     *   `data`: JSON object containing the full event record.
     *   Indexed fields: `event_type`, `source`, `timestamp`.
+
+#### Governance Subsystems
+
+| Subsystem | Role | Biological Metaphor |
+|-----------|------|---------------------|
+| **UnifiedGovernance** | Orchestrates all governance components | Cell membrane (complete) |
+| **HoldIsolation** | Enforces HOLD₁/HOLD₂ boundary integrity | Selective permeability |
+| **AuditTrail** | Records all operations for compliance | Cellular memory (epigenetics) |
+| **CostEnforcer** | Gates operations based on budget | Metabolic regulation |
+
+#### HoldIsolation: The Membrane
+
+Enforces the sacred boundaries of THE_PATTERN:
+- HOLD₁ (intake) can only be written by external sources
+- AGENT transforms HOLD₁ → HOLD₂
+- HOLD₂ (processed) is the output, protected from direct writes
+
+```
+External → HOLD₁ → AGENT → HOLD₂ → Consumers
+```
+
+#### CostEnforcer: Metabolic Regulation
+
+Every operation that consumes resources must pass through the cost gate:
+- **BudgetConfig**: Daily, monthly, and per-run limits
+- **CostAction**: ALLOW (soft limit), WARN, DENY, THROTTLE
+- **CostRecord**: Tracks service, operation, cost_usd, tokens
+
+#### AuditTrail: Cellular Memory
+
+Every operation is recorded with:
+- **AuditLevel**: DEBUG, INFO, WARNING, ERROR, CRITICAL, VIOLATION
+- **AuditCategory**: HOLD_OPERATION, AGENT_ACTION, GOVERNANCE, COST, FEDERATION, SYSTEM
+- **AuditRecord**: Immutable record with timestamp, run_id, context
 
 ---
 
@@ -126,3 +163,96 @@ Each service is a specialized cell with a **Membrane** (its public API) and a **
 *   **`HOLD_2` Schema (`relationship.duckdb`):**
     *   `id`: `partner_id` (unique identifier for the person or system).
     *   `data`: JSON object containing the `Partnership` model, including `trust_level`, `interaction_count`, `preferences`, and interaction history.
+---
+## Agentic Protocol Landscape
+---
+
+### External Protocol Integration Architecture
+
+Truth Forge unifies three complementary agentic protocols into a coherent interoperability layer, enabling autonomous agent operations across discovery, payment, and credentialing.
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                       EXTERNAL AGENT                                 │
+└─────────────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│  LAYER 1: MCP (Model Context Protocol)                              │
+│  ─────────────────────────────────────                              │
+│  Standard: Anthropic (Nov 2024) - adopted by OpenAI, Google, MS     │
+│  Purpose: Tool discovery, invocation, and API abstraction           │
+│  Truth Forge Tools: verify_claim, issue_credential, query_spine     │
+│  Implementation: mcp-servers/truth-engine-mcp/                      │
+└─────────────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│  LAYER 2: x402 Protocol (Coinbase)                                  │
+│  ────────────────────────────────                                   │
+│  Standard: HTTP 402 Payment Required + USDC on Base                 │
+│  Purpose: Autonomous agent-to-agent payments without API keys       │
+│  Flow: Request → 402 → Sign Payment → Fulfill                       │
+│  Implementation: src/truth_engine/x402/payments.py                  │
+│  Related: AP2 (Agent Payments Protocol) - Google partnership        │
+└─────────────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│  LAYER 3: W3C Verifiable Credentials 2.0                            │
+│  ───────────────────────────────────────                            │
+│  Standard: W3C Recommendation (May 2025)                            │
+│  Purpose: Interoperable credential issuance and verification        │
+│  Ecosystem: EU EBSI, MIT Digital Credentials, TruAge                │
+│  Role: Credential Atlas as VC Issuer/Verifier                       │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Protocol Comparison & Selection Rationale
+
+| Protocol | Origin | Purpose | Truth Forge Role |
+|----------|--------|---------|------------------|
+| **MCP** | Anthropic (2024) | Tool discovery & invocation | Primary agent interface |
+| **x402** | Coinbase (2025) | Autonomous micropayments | NOT-ME economic layer |
+| **W3C VC 2.0** | W3C (2025) | Credential interoperability | Credential Atlas standard |
+| **AP2** | Google + Coinbase | Agent Payments Protocol | Interoperability bridge |
+
+### Competing Standards (Not Adopted)
+
+| Standard | Why Not Selected |
+|----------|------------------|
+| **OpenAPI + Function Calling** | Vendor-specific, not agent-native |
+| **LangChain Tool Standard** | Framework-locked, not protocol |
+| **Custom JSON-RPC** | Lacks ecosystem momentum |
+
+### Integration Points
+
+**MCP → x402 Bridge:**
+```python
+# MCP tool returns 402 if payment required
+@server.call_tool("verify_claim")
+async def verify_claim(claim: str):
+    if not payment_verified():
+        return PaymentRequired(
+            amount="0.002",
+            currency="USDC",
+            network="base"
+        )
+    # ... verification logic
+```
+
+**x402 → Credential Atlas Bridge:**
+```python
+# Payment history builds trust score
+class WorkerCredential:
+    payment_history: List[PaymentRecord]  # From x402
+    trust_score: float                     # Calculated from history
+    # Issued as W3C VC 2.0 credential
+```
+
+### Resources
+
+- **MCP Docs**: https://modelcontextprotocol.io/
+- **x402 Docs**: https://docs.cdp.coinbase.com/x402/
+- **W3C VC 2.0**: https://www.w3.org/TR/vc-data-model-2.0/
+- **Deep Dives**: `docs/research/deep_dives/01_MCP_Model_Context_Protocol.md`, `docs/research/deep_dives/02_x402_Agentic_Payments.md`

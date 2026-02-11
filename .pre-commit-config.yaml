@@ -1,0 +1,122 @@
+# Pre-commit configuration for truth_forge
+#
+# Per DATA PROTECTION LAWS:
+# - ALL checks must pass before commit
+# - No bypass allowed (CI runs same checks)
+# - Streaming inserts are FORBIDDEN
+#
+# Install: pip install pre-commit && pre-commit install
+# Manual run: pre-commit run --all-files
+
+default_language_version:
+  python: python3.11
+
+repos:
+  # ==========================================================================
+  # Standard code quality
+  # ==========================================================================
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.0
+    hooks:
+      - id: ruff
+        name: ruff lint
+        args: [--fix, --exit-non-zero-on-fix]
+        types_or: [python, pyi]
+      - id: ruff-format
+        name: ruff format
+        types_or: [python, pyi]
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.8.0
+    hooks:
+      - id: mypy
+        name: mypy strict
+        args: [--strict, --ignore-missing-imports]
+        additional_dependencies:
+          - types-toml
+          - pydantic
+        # Only run on src/ and pipelines/ (exclude tests for speed)
+        files: ^(src|pipelines)/
+
+  # ==========================================================================
+  # Data protection hooks (CRITICAL)
+  # ==========================================================================
+
+  - repo: local
+    hooks:
+      # Block streaming inserts
+      - id: no-streaming-insert
+        name: Block streaming inserts
+        entry: python scripts/hooks/block_streaming_insert.py
+        language: python
+        files: \.py$
+        exclude: ^(tests/|scripts/hooks/)
+
+      # Block WRITE_TRUNCATE on production tables
+      - id: no-write-truncate-production
+        name: Block WRITE_TRUNCATE on production
+        entry: python scripts/hooks/block_write_truncate.py
+        language: python
+        files: \.py$
+        exclude: ^(tests/|scripts/hooks/)
+
+      # Block silent exceptions
+      - id: no-silent-exceptions
+        name: Block silent exceptions
+        entry: python scripts/hooks/block_silent_exceptions.py
+        language: python
+        files: \.py$
+        exclude: ^(tests/|scripts/hooks/)
+
+      # Require structured logging (no print in prod code)
+      - id: no-print-statements
+        name: Block print statements in production
+        entry: python scripts/hooks/require_structured_logging.py
+        language: python
+        files: ^(src|pipelines)/.*\.py$
+        exclude: ^(tests/|scripts/hooks/|.*cli.*\.py$)
+
+  # ==========================================================================
+  # Standard pre-commit hooks
+  # ==========================================================================
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: check-yaml
+        name: Check YAML syntax
+      - id: check-json
+        name: Check JSON syntax
+      - id: check-toml
+        name: Check TOML syntax
+      - id: check-merge-conflict
+        name: Check for merge conflicts
+      - id: check-added-large-files
+        name: Check for large files
+        args: [--maxkb=1000]
+      - id: end-of-file-fixer
+        name: Fix end of file
+      - id: trailing-whitespace
+        name: Trim trailing whitespace
+      - id: mixed-line-ending
+        name: Check line endings
+        args: [--fix=lf]
+
+  # ==========================================================================
+  # Security checks
+  # ==========================================================================
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        name: Detect secrets
+        args: [--baseline, .secrets.baseline]
+        exclude: ^(\.secrets\.baseline|tests/)
+
+# ==========================================================================
+# CI configuration (runs same hooks)
+# ==========================================================================
+# These hooks are also run in CI via .github/workflows/enforcement.yml
+# This ensures hooks cannot be bypassed with --no-verify

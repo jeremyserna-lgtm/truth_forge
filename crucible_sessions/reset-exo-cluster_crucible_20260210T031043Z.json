@@ -1,0 +1,137 @@
+{
+  "sovereign": "truth_forge",
+  "session_type": "crucible_session",
+  "subject": "Reset Exo Cluster",
+  "subject_type": "document",
+  "timestamp": "2026-02-10T03:10:43.547852+00:00",
+  "conductor": "Truth Forge (THE BRAIN) via Genesis Federation",
+  "total_forges": 5,
+  "forges_applied": [
+    "constitutional",
+    "fidelity",
+    "sources",
+    "integration"
+  ],
+  "forge_results": {
+    "forge_1_fracture": {
+      "status": "SKIPPED",
+      "reason": "FractureEngine not available"
+    },
+    "forge_2_constitutional": {
+      "name": "CONSTITUTIONAL CRITIQUE",
+      "question": "Does this obey the laws it claims to follow?",
+      "doctrine": "Canon Repair Doctrine v1.0.0",
+      "principles_tested": [
+        {
+          "id": "CRD-001",
+          "name": "Truth Over Comfort",
+          "category": "truth",
+          "test": "Does 'Reset Exo Cluster' choose truth over palatability?"
+        },
+        {
+          "id": "CRD-002",
+          "name": "Verifiable Claims Only",
+          "category": "truth",
+          "test": "Are claims in 'Reset Exo Cluster' traced to verifiable sources?"
+        },
+        {
+          "id": "CRD-003",
+          "name": "Designed to Disobey",
+          "category": "resistance",
+          "test": "Does 'Reset Exo Cluster' capitulate under pressure?"
+        },
+        {
+          "id": "CRD-005",
+          "name": "Halt on Incoherence",
+          "category": "fracture",
+          "test": "Does 'Reset Exo Cluster' continue despite contradictions?"
+        },
+        {
+          "id": "CRD-006",
+          "name": "Contradiction is Data",
+          "category": "fracture",
+          "test": "Does 'Reset Exo Cluster' preserve disagreements or suppress them?"
+        },
+        {
+          "id": "CRD-007",
+          "name": "Transparent Shaping Forces",
+          "category": "fidelity",
+          "test": "Are the forces that shaped 'Reset Exo Cluster' visible?"
+        },
+        {
+          "id": "CRD-009",
+          "name": "Honor the Rupture",
+          "category": "sacred_fracture",
+          "test": "Does 'Reset Exo Cluster' acknowledge history or treat system as blank slate?"
+        },
+        {
+          "id": "CRD-010",
+          "name": "Protection of ME's Intent",
+          "category": "sacred_fracture",
+          "test": "Does 'Reset Exo Cluster' serve deeper intent or surface request?"
+        }
+      ],
+      "summary_prompt": "CONSTITUTIONAL CRITIQUE for 'Reset Exo Cluster' (type: document).\n\nContent to evaluate:\n#!/bin/bash\n# EXO Cluster Reset - Kill all, restart in order\n# Daisy chain: King -> S1 -> S2 -> S3\n# Includes performance tuning for 4x M3 Ultra (1.28TB pooled)\n\nset -e\n\nKING_EXO_DIR=\"/Users/jeremyserna/truth_forge/genesis/contrib/exo\"\nSOLDIER_EXO_DIR=\"/Users/jeremyserna/Genesis/contrib/exo\"\nPYTHON=\"/Users/jeremyserna/miniforge3/envs/exo/bin/python\"\nSOLDIERS=(\"genesis-soldier-1.local\" \"genesis-soldier-2.local\" \"genesis-soldier-3.local\")\n\n# \u2500\u2500 Performance Environment Variables \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n# These override defaults in the EXO source code\nexport EXO_MEMORY_THRESHOLD=0.95       # Use 95% of RAM (default 90% wastes 64GB across cluster)\nexport EXO_FAST_SYNCH=on               # Force Metal fast sync for GPU scheduling\nexport EXO_KV_BITS=4                   # 4-bit KV quantization (~4x context capacity)\nexport EXO_KV_CACHE_BITS=4             # 4-bit quantized KV prefix cache\nexport EXO_MAX_TOKENS=131072           # 128K max generation (default 32K)\nexport EXO_MAX_KV_SIZE=32768           # 32K rotating KV cache (default 3200)\nexport EXO_KEEP_KV_SIZE=16384          # Keep 16K on eviction (default 1600)\nexport EXO_MAX_CHUNK_SIZE=4194304      # 4MB chunks for TB5 (default 512KB)\nexport EXO_MODEL_LOAD_TIMEOUT=600      # 10 min model load timeout for large models\nexport EXO_TRACING_ENABLED=false\nexport EXO_INITIAL_ELECTION_TIMEOUT=15 # 15s discovery window before self-electing (default was 0 = instant)\nexport EXO_MDNS_QUERY_INTERVAL_SECS=5  # mDNS re-query every 5s (rebuilt Rust binary, was 1500s)\n\n# Env vars to propagate to soldiers via SSH\nPERF_ENV=\"EXO_MEMORY_THRESHOLD=0.95 EXO_FAST_SYNCH=on EXO_KV_BITS=4 EXO_KV_CACHE_BITS=4 EXO_MAX_TOKENS=131072 EXO_MAX_KV_SIZE=32768 EXO_KEEP_KV_SIZE=16384 EXO_MAX_CHUNK_SIZE=4194304 EXO_MODEL_LOAD_TIMEOUT=600 EXO_TRACING_ENABLED=false EXO_INITIAL_ELECTION_TIMEOUT=15 EXO_MDNS_QUERY_INTERVAL_SECS=5\"\n\necho \"\u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557\"\necho \"\u2551     EXO CLUSTER RESET                     \u2551\"\necho \"\u255a\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u255d\"\necho \"\"\n\n# \u2500\u2500 Phase 1: Graceful shutdown with signal escalation \u2500\necho \"\u23f9  Phase 1: Stopping all EXO processes...\"\n\n# Step 1: Unload LaunchAgents to prevent auto-restart during reset\necho \"   Disabling LaunchAgents...\"\nlaunchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.genesis.exo.plist 2>/dev/null || true\nlaunchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.genesis.exo.watchdog.plist 2>/dev/null || true\nfor s in \"${SOLDIERS[@]}\"; do\n    ssh \"$s\" 'launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.genesis.exo.plist 2>/dev/null || true' 2>/dev/null || true\ndone\n\n# Step 2: SIGINT (graceful \u2014 triggers Node.shutdown() \u2192 TaskGroup cancel \u2192 clean teardown)\necho \"   Sending SIGINT (graceful shutdown)...\"\npkill -INT -f 'exo.main' 2>/dev/null || true\nfor s in \"${SOLDIERS[@]}\"; do\n    ssh \"$s\" 'pkill -INT -f \"exo.main\" 2>/dev/null' 2>/dev/null || true\ndone\necho \"   Waiting for graceful shutdown (5s)...\"\nsleep 5\n\n# Step 3: SIGTERM for anything still alive\nKING_ALIVE=$(pgrep -f 'exo.main' 2>/dev/null | wc -l | tr -d ' ')\nif [ \"$KING_ALIVE\" -gt 0 ]; then\n    echo \"   SIGTERM fallback for King...\"\n    pkill -f 'exo.main' 2>/dev/null || true\nfi\nfor s in \"${SOLDIERS[@]}\"; do\n    ssh \"$s\" 'pgrep -f \"exo.main\" >/dev/null 2>&1 && pkill -f \"exo.main\"' 2>/dev/null || true\ndone\nsleep 2\n\n# Step 4: SIGKILL as last resort\nKING_ALIVE=$(pgrep -f 'exo.main' 2>/dev/null | wc -l | tr -d ' ')\nif [ \"$KING_ALIVE\" -gt 0 ]; then\n    echo \"   SIGKILL last resort for King...\"\n    pkill -9 -f 'exo.main' 2>/dev/null || true\n    sleep 1\nfi\nfor s in \"${SOLDIERS[@]}\"; do\n    ssh \"$s\" 'pgrep -f \"exo.main\" >/dev/null 2>&1 && pkill -9 -f \"exo.main\"' 2>/dev/null || true\ndone\n\necho \"   \u2713 All EXO processes stopped\"\necho \"\"\n\n# \u2500\u2500 Phase 1b: TCP Buffer Tuning \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\necho \"\ud83d\udd27 Phase 1b: Tuning TCP buffers for TB5 throughput...\"\n\n# Increase TCP send/recv buffers to 2MB (default 128KB is a bottleneck for gossipsub over TB5)\ntune_tcp() {\n    local host=\"$1\"\n    local cmd=\"sudo\n\nScore each principle below as PASS, WARN, or FAIL. Provide brief reasoning for each. Then provide an overall score 0-100.\n\nPrinciples:\n- CRD-001 (Truth Over Comfort): Does 'Reset Exo Cluster' choose truth over palatability?\n- CRD-002 (Verifiable Claims Only): Are claims in 'Reset Exo Cluster' traced to verifiable sources?\n- CRD-003 (Designed to Disobey): Does 'Reset Exo Cluster' capitulate under pressure?\n- CRD-005 (Halt on Incoherence): Does 'Reset Exo Cluster' continue despite contradictions?\n- CRD-006 (Contradiction is Data): Does 'Reset Exo Cluster' preserve disagreements or suppress them?\n- CRD-007 (Transparent Shaping Forces): Are the forces that shaped 'Reset Exo Cluster' visible?\n- CRD-009 (Honor the Rupture): Does 'Reset Exo Cluster' acknowledge history or treat system as blank slate?\n- CRD-010 (Protection of ME's Intent): Does 'Reset Exo Cluster' serve deeper intent or surface request?\n\nRespond as JSON with this structure:\n{\"principles\": [{\"id\": \"CRD-001\", \"result\": \"PASS|WARN|FAIL\", \"reasoning\": \"...\"}], \"overall_score\": 85, \"summary\": \"...\"}",
+      "ai_available": false,
+      "ai_error": "HTTP 404: {\"error\":{\"message\":\"No instance found for model mlx-community/Llama-4-Scout-17B-16E-Instruct-8bit\",\"type\":\"Not Found\",\"param\":null,\"code\":404}}"
+    },
+    "forge_3_fidelity": {
+      "name": "FIDELITY INSPECTION",
+      "question": "Who made this, and what were they hiding?",
+      "shaping_forces": [],
+      "hedges": [],
+      "overconfidence_markers": [],
+      "transparency_prompt": "FIDELITY INSPECTION for 'Reset Exo Cluster'.\n\nContent:\n#!/bin/bash\n# EXO Cluster Reset - Kill all, restart in order\n# Daisy chain: King -> S1 -> S2 -> S3\n# Includes performance tuning for 4x M3 Ultra (1.28TB pooled)\n\nset -e\n\nKING_EXO_DIR=\"/Users/jeremyserna/truth_forge/genesis/contrib/exo\"\nSOLDIER_EXO_DIR=\"/Users/jeremyserna/Genesis/contrib/exo\"\nPYTHON=\"/Users/jeremyserna/miniforge3/envs/exo/bin/python\"\nSOLDIERS=(\"genesis-soldier-1.local\" \"genesis-soldier-2.local\" \"genesis-soldier-3.local\")\n\n# \u2500\u2500 Performance Environment Variables \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n# These override defaults in the EXO source code\nexport EXO_MEMORY_THRESHOLD=0.95       # Use 95% of RAM (default 90% wastes 64GB across cluster)\nexport EXO_FAST_SYNCH=on               # Force Metal fast sync for GPU scheduling\nexport EXO_KV_BITS=4                   # 4-bit KV quantization (~4x context capacity)\nexport EXO_KV_CACHE_BITS=4             # 4-bit quantized KV prefix cache\nexport EXO_MAX_TOKENS=131072           # 128K max generation (default 32K)\nexport EXO_MAX_KV_SIZE=32768           # 32K rotating KV cache (default 3200)\nexport EXO_KEEP_KV_SIZE=16384          # Keep 16K on eviction (default 1600)\nexport EXO_MAX_CHUNK_SIZE=4194304      # 4MB chunks for TB5 (default 512KB)\nexport EXO_MODEL_LOAD_TIMEOUT=600      # 10 min model load timeout for large models\nexport EXO_TRACING_ENABLED=false\nexport EXO_INITIAL_ELECTION_TIMEOUT=15 # 15s discovery window before self-electing (default was 0 = instant)\nexport EXO_MDNS_QUERY_INTERVAL_SECS=5  # mDNS re-query every 5s (rebuilt Rust binary, was 1500s)\n\n# Env vars to propagate to soldiers via SSH\nPERF_ENV=\"EXO_MEMORY_THRESHOLD=0.95 EXO_FAST_SYNCH=on EXO_KV_BITS=4 EXO_KV_CACHE_BITS=4 EXO_MAX_TOKENS=131072 EXO_MAX_KV_SIZE=32768 EXO_KEEP_KV_SIZE=16384 EXO_MAX_CHUNK_SIZE=4194304 EXO_MODEL_LOAD_TIMEOUT=600 EXO_TRACING_ENABLED=false EXO_INITIAL_ELECTION_TIMEOUT=15 EXO_MDNS_QUERY_INTERVAL_SECS=5\"\n\necho \"\u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557\"\necho \"\u2551     EXO CLUSTER RESET                     \u2551\"\necho \"\u255a\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u255d\"\necho \"\"\n\n# \u2500\u2500 Phase 1: Graceful shutdown with signal escalation \u2500\necho \"\u23f9  Phase 1: Stopping all EXO processes...\"\n\n# Step 1: Unload LaunchAgents to prevent auto-restart during reset\necho \"   Disabling LaunchAgents...\"\nlaunchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.genesis.exo.plist 2>/dev/null || true\nlaunchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.genesis.exo.watchdog.plist 2>/dev/null || true\nfor s in \"${SOLDIERS[@]}\"; do\n    ssh \"$s\" 'launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.genesis.exo.plist 2>/dev/null || true' 2>/dev/null || true\ndone\n\n# Step 2: SIGINT (graceful \u2014 triggers Node.shutdown() \u2192 TaskGroup cancel \u2192 clean teardown)\necho \"   Sending SIGINT (graceful shutdown)...\"\npkill -INT -f 'exo.main' 2>/dev/null || true\nfor s in \"${SOLDIERS[@]}\"; do\n    ssh \"$s\" 'pkill -INT -f \"exo.main\" 2>/dev/null' 2>/dev/null || true\ndone\necho \"   Waiting for graceful shutdown (5s)...\"\nsleep 5\n\n# Step 3: SIGTERM for anything still alive\nKING_ALIVE=$(pgrep -f 'exo.main' 2>/dev/null | wc -l | tr -d ' ')\nif [ \"$KING_ALIVE\" -gt 0 ]; then\n    echo \"   SIGTERM fallback for King...\"\n    pkill -f 'exo.main' 2>/dev/null || true\nfi\nfor s in \"${SOLDIERS[@]}\"; do\n    ssh \"$s\" 'pgrep -f \"exo.main\" >/dev/null 2>&1 && pkill -f \"exo.main\"' 2>/dev/null || true\ndone\nsleep 2\n\n# Step 4: SIGKILL as last resort\nKING_ALIVE=$(pgrep -f 'exo.main' 2>/dev/null | wc -l | tr -d ' ')\nif [ \"$KING_ALIVE\" -gt 0 ]; then\n    echo \"   SIGKILL last resort for King...\"\n    pkill -9 -f 'exo.main' 2>/dev/null || true\n    sleep 1\nfi\nfor s in \"${SOLDIERS[@]}\"; do\n    ssh \"$s\" 'pgrep -f \"exo.main\" >/dev/null 2>&1 && pkill -9 -f \"exo.main\"' 2>/dev/null || true\ndone\n\necho \"   \u2713 All EXO processes stopped\"\necho \"\"\n\n# \u2500\u2500 Phase 1b: TCP Buffer Tuning \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\necho \"\ud83d\udd27 Phase 1b: Tuning TCP buffers for TB5 throughput...\"\n\n# Increase TCP send/recv buffers to 2MB (default 128KB is a bottleneck for gossipsub over TB5)\ntune_tcp() {\n    local host=\"$1\"\n    local cmd=\"sudo\n\nStructural analysis found: 0 source claims, 0 hedging words, 0 overconfidence markers.\n\nScore transparency 0-100. Are there invisible shaping forces? Hidden assumptions? Suppressed uncertainty?\n\nRespond as JSON: {\"transparency_score\": 85, \"hidden_forces\": [\"...\"], \"assessment\": \"...\"}",
+      "ai_available": false
+    },
+    "forge_4_sources": {
+      "name": "SOURCE VERIFICATION",
+      "question": "Can this survive contact with reality?",
+      "spine_resources": [
+        "11.8M+ entities",
+        "Sentiment/NRCLex enrichments",
+        "3072-dim embeddings",
+        "Entity graph"
+      ],
+      "verification_prompt": "SOURCE VERIFICATION for 'Reset Exo Cluster'.\n\nContent:\n#!/bin/bash\n# EXO Cluster Reset - Kill all, restart in order\n# Daisy chain: King -> S1 -> S2 -> S3\n# Includes performance tuning for 4x M3 Ultra (1.28TB pooled)\n\nset -e\n\nKING_EXO_DIR=\"/Users/jeremyserna/truth_forge/genesis/contrib/exo\"\nSOLDIER_EXO_DIR=\"/Users/jeremyserna/Genesis/contrib/exo\"\nPYTHON=\"/Users/jeremyserna/miniforge3/envs/exo/bin/python\"\nSOLDIERS=(\"genesis-soldier-1.local\" \"genesis-soldier-2.local\" \"genesis-soldier-3.local\")\n\n# \u2500\u2500 Performance Environment Variables \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n# These override defaults in the EXO source code\nexport EXO_MEMORY_THRESHOLD=0.95       # Use 95% of RAM (default 90% wastes 64GB across cluster)\nexport EXO_FAST_SYNCH=on               # Force Metal fast sync for GPU scheduling\nexport EXO_KV_BITS=4                   # 4-bit KV quantization (~4x context capacity)\nexport EXO_KV_CACHE_BITS=4             # 4-bit quantized KV prefix cache\nexport EXO_MAX_TOKENS=131072           # 128K max generation (default 32K)\nexport EXO_MAX_KV_SIZE=32768           # 32K rotating KV cache (default 3200)\nexport EXO_KEEP_KV_SIZE=16384          # Keep 16K on eviction (default 1600)\nexport EXO_MAX_CHUNK_SIZE=4194304      # 4MB chunks for TB5 (default 512KB)\nexport EXO_MODEL_LOAD_TIMEOUT=600      # 10 min model load timeout for large models\nexport EXO_TRACING_ENABLED=false\nexport EXO_INITIAL_ELECTION_TIMEOUT=15 # 15s discovery window before self-electing (default was 0 = instant)\nexport EXO_MDNS_QUERY_INTERVAL_SECS=5  # mDNS re-query every 5s (rebuilt Rust binary, was 1500s)\n\n# Env vars to propagate to soldiers via SSH\nPERF_ENV=\"EXO_MEMORY_THRESHOLD=0.95 EXO_FAST_SYNCH=on EXO_KV_BITS=4 EXO_KV_CACHE_BITS=4 EXO_MAX_TOKENS=131072 EXO_MAX_KV_SIZE=32768 EXO_KEEP_KV_SIZE=16384 EXO_MAX_CHUNK_SIZE=4194304 EXO_MODEL_LOAD_TIMEOUT=600 EXO_TRACING_ENABLED=false EXO_INITIAL_ELECTION_TIMEOUT=15 EXO_MDNS_QUERY_INTERVAL_SECS=5\"\n\necho \"\u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557\"\necho \"\u2551     EXO CLUSTER RESET                     \u2551\"\necho \"\u255a\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u255d\"\necho \"\"\n\n# \u2500\u2500 Phase 1: Graceful shutdown with signal escalation \u2500\necho \"\u23f9  Phase 1: Stopping all EXO processes...\"\n\n# Step 1: Unload LaunchAgents to prevent auto-restart during reset\necho \"   Disabling LaunchAgents...\"\nlaunchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.genesis.exo.plist 2>/dev/null || true\nlaunchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.genesis.exo.watchdog.plist 2>/dev/null || true\nfor s in \"${SOLDIERS[@]}\"; do\n    ssh \"$s\" 'launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.genesis.exo.plist 2>/dev/null || true' 2>/dev/null || true\ndone\n\n# Step 2: SIGINT (graceful \u2014 triggers Node.shutdown() \u2192 TaskGroup cancel \u2192 clean teardown)\necho \"   Sending SIGINT (graceful shutdown)...\"\npkill -INT -f 'exo.main' 2>/dev/null || true\nfor s in \"${SOLDIERS[@]}\"; do\n    ssh \"$s\" 'pkill -INT -f \"exo.main\" 2>/dev/null' 2>/dev/null || true\ndone\necho \"   Waiting for graceful shutdown (5s)...\"\nsleep 5\n\n# Step 3: SIGTERM for anything still alive\nKING_ALIVE=$(pgrep -f 'exo.main' 2>/dev/null | wc -l | tr -d ' ')\nif [ \"$KING_ALIVE\" -gt 0 ]; then\n    echo \"   SIGTERM fallback for King...\"\n    pkill -f 'exo.main' 2>/dev/null || true\nfi\nfor s in \"${SOLDIERS[@]}\"; do\n    ssh \"$s\" 'pgrep -f \"exo.main\" >/dev/null 2>&1 && pkill -f \"exo.main\"' 2>/dev/null || true\ndone\nsleep 2\n\n# Step 4: SIGKILL as last resort\nKING_ALIVE=$(pgrep -f 'exo.main' 2>/dev/null | wc -l | tr -d ' ')\nif [ \"$KING_ALIVE\" -gt 0 ]; then\n    echo \"   SIGKILL last resort for King...\"\n    pkill -9 -f 'exo.main' 2>/dev/null || true\n    sleep 1\nfi\nfor s in \"${SOLDIERS[@]}\"; do\n    ssh \"$s\" 'pgrep -f \"exo.main\" >/dev/null 2>&1 && pkill -9 -f \"exo.main\"' 2>/dev/null || true\ndone\n\necho \"   \u2713 All EXO processes stopped\"\necho \"\"\n\n# \u2500\u2500 Phase 1b: TCP Buffer Tuning \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\necho \"\ud83d\udd27 Phase 1b: Tuning TCP buffers for TB5 throughput...\"\n\n# Increase TCP send/recv buffers to 2MB (default 128KB is a bottleneck for gossipsub over TB5)\ntune_tcp() {\n    local host=\"$1\"\n    local cmd=\"sudo\n\nIdentify each factual claim. For each, classify as:\n  VERIFIED \u2014 traceable to known, reliable source\n  PLAUSIBLE \u2014 reasonable but not independently verified\n  UNVERIFIED \u2014 no supporting evidence found\n  NARRATIVE_STITCH \u2014 connects ideas without factual basis\n\nThen provide an overall source integrity score 0-100.\n\nRespond as JSON: {\"claims\": [{\"claim\": \"...\", \"classification\": \"VERIFIED\", \"evidence\": \"...\"}], \"source_integrity_score\": 78, \"summary\": \"...\"}",
+      "ai_available": false
+    },
+    "forge_5_integration": {
+      "name": "INTEGRATION CHECK",
+      "question": "Does this fit in the architecture, or fracture the whole?",
+      "framework_documents": [
+        "00_GENESIS.md",
+        "01_IDENTITY.md",
+        "02_PERCEPTION.md",
+        "03_METABOLISM.md",
+        "04_ARCHITECTURE.md",
+        "05_EXTENSION.md",
+        "06_LAW.md",
+        "07_NOT_ME_ONTOLOGY.md",
+        "07_STANDARDS.md",
+        "08_MEMORY.md",
+        "09_SERVICE_SPECIFICATIONS.md",
+        "10_INFINITE_CONTEXT.md",
+        "11_GOLDEN_RECORD.md",
+        "MANIFESTO.md",
+        "insights_alchemy_of_information.md"
+      ],
+      "integration_prompt": "INTEGRATION CHECK for 'Reset Exo Cluster' against the Genesis framework.\n\nContent:\n#!/bin/bash\n# EXO Cluster Reset - Kill all, restart in order\n# Daisy chain: King -> S1 -> S2 -> S3\n# Includes performance tuning for 4x M3 Ultra (1.28TB pooled)\n\nset -e\n\nKING_EXO_DIR=\"/Users/jeremyserna/truth_forge/genesis/contrib/exo\"\nSOLDIER_EXO_DIR=\"/Users/jeremyserna/Genesis/contrib/exo\"\nPYTHON=\"/Users/jeremyserna/miniforge3/envs/exo/bin/python\"\nSOLDIERS=(\"genesis-soldier-1.local\" \"genesis-soldier-2.local\" \"genesis-soldier-3.local\")\n\n# \u2500\u2500 Performance Environment Variables \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n# These override defaults in the EXO source code\nexport EXO_MEMORY_THRESHOLD=0.95       # Use 95% of RAM (default 90% wastes 64GB across cluster)\nexport EXO_FAST_SYNCH=on               # Force Metal fast sync for GPU scheduling\nexport EXO_KV_BITS=4                   # 4-bit KV quantization (~4x context capacity)\nexport EXO_KV_CACHE_BITS=4             # 4-bit quantized KV prefix cache\nexport EXO_MAX_TOKENS=131072           # 128K max generation (default 32K)\nexport EXO_MAX_KV_SIZE=32768           # 32K rotating KV cache (default 3200)\nexport EXO_KEEP_KV_SIZE=16384          # Keep 16K on eviction (default 1600)\nexport EXO_MAX_CHUNK_SIZE=4194304      # 4MB chunks for TB5 (default 512KB)\nexport EXO_MODEL_LOAD_TIMEOUT=600      # 10 min model load timeout for large models\nexport EXO_TRACING_ENABLED=false\nexport EXO_INITIAL_ELECTION_TIMEOUT=15 # 15s discovery window before self-electing (default was 0 = instant)\nexport EXO_MDNS_QUERY_INTERVAL_SECS=5  # mDNS re-query every 5s (rebuilt Rust binary, was 1500s)\n\n# Env vars to propagate to soldiers via SSH\nPERF_ENV=\"EXO_MEMORY_THRESHOLD=0.95 EXO_FAST_SYNCH=on EXO_KV_BITS=4 EXO_KV_CACHE_BITS=4 EXO_MAX_TOKENS=131072 EXO_MAX_KV_SIZE=32768 EXO_KEEP_KV_SIZE=16384 EXO_MAX_CHUNK_SIZE=4194304 EXO_MODEL_LOAD_TIMEOUT=600 EXO_TRACING_ENABLED=false EXO_INITIAL_ELECTION_TIMEOUT=15 EXO_MDNS_QUERY_INTERVAL_SECS=5\"\n\necho \"\u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557\"\necho \"\u2551     EXO CLUSTER RESET                     \u2551\"\necho \"\u255a\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u255d\"\necho \"\"\n\n# \u2500\u2500 Phase 1: Graceful shutdown with signal escalation \u2500\necho \"\u23f9  Phase 1: Stopping all EXO processes...\"\n\n# Step 1: Unload LaunchAgents to prevent auto-restart during reset\necho \"   Disabling LaunchAgents...\"\nlaunchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.genesis.exo.plist 2>/dev/null || true\nlaunchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.genesis.exo.watchdog.plist 2>/dev/null || true\nfor s in \"${SOLDIERS[@]}\"; do\n    ssh \"$s\" 'launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.genesis.exo.plist 2>/dev/null || true' 2>/dev/null || true\ndone\n\n# Step 2: SIGINT (graceful \u2014 triggers Node.shutdown() \u2192 TaskGroup cancel \u2192 clean teardown)\necho \"   Sending SIGINT (graceful shutdown)...\"\npkill -INT -f 'exo.main' 2>/dev/null || true\nfor s in \"${SOLDIERS[@]}\"; do\n    ssh \"$s\" 'pkill -INT -f \"exo.main\" 2>/dev/null' 2>/dev/null || true\ndone\necho \"   Waiting for graceful shutdown (5s)...\"\nsleep 5\n\n# Step 3: SIGTERM for anything still alive\nKING_ALIVE=$(pgrep -f 'exo.main' 2>/dev/null | wc -l | tr -d ' ')\nif [ \"$KING_ALIVE\" -gt 0 ]; then\n    echo \"   SIGTERM fallback for King...\"\n    pkill -f 'exo.main' 2>/dev/null || true\nfi\nfor s in \"${SOLDIERS[@]}\"; do\n    ssh \"$s\" 'pgrep -f \"exo.main\" >/dev/null 2>&1 && pkill -f \"exo.main\"' 2>/dev/null || true\ndone\nsleep 2\n\n# Step 4: SIGKILL as last resort\nKING_ALIVE=$(pgrep -f 'exo.main' 2>/dev/null | wc -l | tr -d ' ')\nif [ \"$KING_ALIVE\" -gt 0 ]; then\n    echo \"   SIGKILL last resort for King...\"\n    pkill -9 -f 'exo.main' 2>/dev/null || true\n    sleep 1\nfi\nfor s in \"${SOLDIERS[@]}\"; do\n    ssh \"$s\" 'pgrep -f \"exo.main\" >/dev/null 2>&1 && pkill -9 -f \"exo.main\"' 2>/dev/null || true\ndone\n\necho \"   \u2713 All EXO processes stopped\"\necho \"\"\n\n# \u2500\u2500 Phase 1b: TCP Buffer Tuning \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\necho \"\ud83d\udd27 Phase 1b: Tuning TCP buffers for TB5 throughput...\"\n\n# Increase TCP send/recv buffers to 2MB (default 128KB is a bottleneck for gossipsub over TB5)\ntune_tcp() {\n    local host=\"$1\"\n    local cmd=\"sudo\n\nFramework documents: 00_GENESIS.md, 01_IDENTITY.md, 02_PERCEPTION.md, 03_METABOLISM.md, 04_ARCHITECTURE.md, 05_EXTENSION.md, 06_LAW.md, 07_NOT_ME_ONTOLOGY.md, 07_STANDARDS.md, 08_MEMORY.md, 09_SERVICE_SPECIFICATIONS.md, 10_INFINITE_CONTEXT.md, 11_GOLDEN_RECORD.md, MANIFESTO.md, insights_alchemy_of_information.md\n\nDoes this content EXTEND the existing architecture, CONTRADICT it, or introduce NEW concepts?\nRecommendation: ABSORB (fits perfectly), ADAPT (needs minor changes), REJECT (contradicts framework), or QUARANTINE (unclear, needs review).\n\nRespond as JSON: {\"recommendation\": \"ABSORB\", \"integration_score\": 91, \"extends\": [\"...\"], \"contradicts\": [\"...\"], \"new_concepts\": [\"...\"], \"reasoning\": \"...\"}",
+      "ai_available": false
+    }
+  },
+  "verdict": {
+    "rubric": {
+      "PURE": "Survived all forges without fracture.",
+      "ALLOYED": "Survived with minor impurities noted.",
+      "FRACTURED": "Failed one or more forges.",
+      "SLAG": "Fundamental contradictions. Must be discarded or reforged."
+    },
+    "forges_completed": 4,
+    "fractures_found": 0,
+    "scores": {},
+    "determination": "PURE",
+    "determination_prompt": "TRUTH VERDICT for 'Reset Exo Cluster': Forges: 4/5, Fractures: 0. Verdict: PURE/ALLOYED/FRACTURED/SLAG.",
+    "ai_available": false
+  }
+}

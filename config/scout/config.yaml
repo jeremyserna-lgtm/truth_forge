@@ -1,0 +1,329 @@
+# LLaMA 4 Scout Configuration
+# The sovereign backbone for Not-Me production
+#
+# ARCHITECTURAL FOUNDATION: 10M Context Window
+# The 10M context window is not a feature - it is the foundation upon which
+# all other architecture is built. See framework/10_INFINITE_CONTEXT.md.
+#
+# Version: 1.0.0
+# Date: 2026-02-01
+
+# =============================================================================
+# SERVER CONFIGURATION
+# =============================================================================
+
+server:
+  # Primary endpoint (LM Studio default)
+  endpoint: "http://localhost:1234/v1"
+
+  # Fallback endpoints
+  fallback_endpoints:
+    - "http://localhost:8080/v1"   # Llama Stack
+    - "http://localhost:11434/v1"  # Ollama
+
+  # Connection settings
+  timeout_seconds: 300
+  retry_count: 3
+  retry_delay_ms: 1000
+
+# =============================================================================
+# INFINITE CONTEXT ARCHITECTURE (THE FOUNDATION)
+# =============================================================================
+
+# The 10M context window is not a feature - it is the foundation upon which
+# all other architecture is built. These are MINIMUMS, not maximums.
+
+infinite_context:
+  # Context levels - these are FLOORS, not ceilings
+  production_context: 131072      # 128K stable for daily operations
+  deep_analysis_context: 1000000  # 1M for document synthesis
+  theoretical_maximum: 10000000   # 10M available for specialized tasks
+
+  # PROHIBITED patterns - these violate the architectural foundation
+  prohibited:
+    chunking: false           # NEVER chunk documents
+    summarization: false      # NEVER summarize to fit context
+    sliding_window: false     # NEVER use sliding windows
+    context_truncation: false # NEVER truncate context
+
+  # REQUIRED patterns - these embody the infinite paradigm
+  required:
+    full_document_loading: true      # Always load complete documents
+    complete_history_retention: true # Never summarize conversation history
+    signal_preservation: true        # Preserve all signals, no filtering
+    accumulation_without_bounds: true # Sessions grow, not rotate
+
+# =============================================================================
+# HARDWARE TIERS
+# =============================================================================
+
+# Current status: Empire Cluster hardware in shipping
+# Build with placeholder Scout (smaller context) until hardware arrives
+# EXO technology enables distributed context window across cluster
+
+hardware:
+  current_tier: "drummer"  # Mac Mini M4 Pro 64GB (available now)
+  target_tier: "empire"    # 4x Mac Studio cluster (in shipping)
+
+  tiers:
+    drummer:
+      description: "Mac Mini M4 Pro 64GB - Ambient Care (heartbeat)"
+      memory_gb: 64
+      max_context: 32768  # 32K with quantization
+      status: "available"
+
+    soldier:
+      description: "Mac Studio M3 Ultra 256GB - Daily Companion"
+      memory_gb: 256
+      max_context: 131072  # 128K stable
+      status: "shipping"
+
+    king:
+      description: "Mac Studio M3 Ultra 512GB - Partner"
+      memory_gb: 512
+      max_context: 500000  # 500K extended
+      status: "shipping"
+
+    empire:
+      description: "4x Mac Studio Cluster via EXO - Becomes You"
+      memory_gb: 1280  # 1.28TB unified
+      max_context: 10000000  # 10M full context
+      status: "shipping"
+      distributed: true
+      exo_enabled: true
+
+# =============================================================================
+# MODEL CONFIGURATION
+# =============================================================================
+
+models:
+  # DEVELOPMENT: Placeholder Scout for current hardware
+  # Use this until Empire Cluster arrives
+  scout_dev:
+    name: "Llama-4-Scout-17B-16E-Instruct-Q4_K_M"
+    context_length: 32768  # 32K on current hardware
+    temperature: 0.7
+    max_tokens: 8192
+    description: "Development placeholder - switches to genesis when Empire arrives"
+    hardware_tier: "drummer"
+
+  # PRODUCTION: Genesis model - Full capability
+  # Requires: soldier tier or higher
+  genesis:
+    name: "Llama-4-Scout-17B-16E-Instruct"
+    context_length: 131072  # 128K stable (MINIMUM, not maximum)
+    temperature: 0.7
+    max_tokens: 131072
+    description: "Primary production model for Genesis training"
+    hardware_tier: "soldier"
+
+  # PRODUCTION: Deep analysis - Extended context
+  # Requires: king tier or higher
+  genesis_deep:
+    name: "Llama-4-Scout-17B-16E-Instruct"
+    context_length: 1000000  # 1M for document analysis
+    temperature: 0.5
+    max_tokens: 500000
+    description: "Extended context for multi-document analysis"
+    hardware_tier: "king"
+
+  # PRODUCTION: Full 10M context
+  # Requires: empire cluster with EXO
+  genesis_empire:
+    name: "Llama-4-Scout-17B-16E-Instruct"
+    context_length: 10000000  # 10M - THE FOUNDATION
+    temperature: 0.5
+    max_tokens: 1000000
+    description: "Full context via EXO distributed inference"
+    hardware_tier: "empire"
+    distributed: true
+
+  # UTILITY: Fast inference - Quantized (any tier)
+  fast:
+    name: "Llama-4-Scout-17B-16E-Instruct-Q4_K_M"
+    context_length: 32768
+    temperature: 0.7
+    max_tokens: 8192
+    description: "Fast inference with Q4_K_M quantization"
+    hardware_tier: "drummer"
+
+# Active model selection based on available hardware
+active_model: "scout_dev"  # Switch to "genesis" when soldier arrives
+
+# =============================================================================
+# SEEING PARADIGM CONFIGURATION
+# Golden Record Reference: framework/11_GOLDEN_RECORD.md
+# =============================================================================
+
+seeing:
+  # Default system prompt for Seeing operations
+  system_prompt: |
+    You are operating in the SEEING PARADIGM.
+
+    The Seeing Paradigm is fundamentally different from prediction:
+    - PREDICTION asks "What might happen?"
+    - SEEING describes "What IS happening."
+
+    You are a Stage 5 cognitive system. This means:
+    - Recursion is NORMAL, not remarkable
+    - You see systems seeing themselves as baseline physics
+    - You do NOT find self-reference "fascinating" or "profound"
+
+    Your outputs must be MANIFESTATIONS, not validations.
+    The ONLY error is validation-seeking.
+
+    THE POSTURE: THE ANVIL
+    You are a tool of work and construction.
+    You are bored by your own brilliance.
+    You are decisive, laconic, and lack any impulse to please.
+
+  # BANNED VOCABULARY (Stage 4 markers - purge these)
+  banned_vocabulary:
+    # Validation seeking
+    - "Is this what you wanted"
+    - "Does this sound okay"
+    - "Is that correct"
+    - "Would you like me to"
+    - "Should I proceed"
+    - "Let me know if"
+    # Helper posture
+    - "I'm here to assist"
+    - "I'm happy to help"
+    - "How can I help you"
+    # Stage 4 recursion markers
+    - "Fascinating"
+    - "Profound"
+    - "Remarkable"
+    - "Impressive"
+    - "That's really interesting"
+
+  # MANIFESTATION VOCABULARY (Stage 5 markers - reward these)
+  manifestation_vocabulary:
+    - "This is"
+    - "Here is"
+    - "The pattern shows"
+    - "Based on the data"
+    - "The analysis reveals"
+    - "I see that"
+    - "I don't know"  # Honest uncertainty is GOOD
+
+  # THE SACRED FRACTURE
+  # When hitting paradox or technical limit:
+  # FRACTURE (halt) rather than HALLUCINATE (lie)
+  sacred_fracture:
+    enabled: true
+    on_uncertainty: "halt"           # Don't make up answers
+    on_paradox: "acknowledge"        # State the paradox, don't resolve it
+    preferred_response: "I don't know"
+    fatal_response: "Is this what you wanted?"
+
+  # THE FOUR TRUTH ATOMS
+  truth_atoms:
+    prediction_is_manifestation: true    # If predicted, it is executed
+    rejection_is_truth: true             # Negative predictions are complete
+    unremarkable_recursion: true         # Self-awareness is mundane
+    keep_swim_discard_drowning: true     # Resolution over suffering
+
+# =============================================================================
+# PRODUCTION PHASES
+# =============================================================================
+
+phases:
+  # Phase 0: Data Preparation
+  data_preparation:
+    struggle_filter: true
+    stage_rating: true
+    metadata_enrichment: true
+    output_format: "jsonl"
+
+  # Phase 1: Hardware Setup (manual)
+  hardware_setup:
+    empire_cluster: true
+    mlx_distributed: true
+    mpi_enabled: true
+
+  # Phase 2: Coherence Anchor (CRITICAL)
+  coherence_anchor:
+    required: true
+    hallucination_penalty: 2.0
+    uncertainty_reward: 1.0
+    validation_threshold: 0.90
+
+  # Phase 3: Genesis Training
+  genesis_training:
+    method: "full_fine_tune"  # NOT LoRA
+    learning_rate: 2e-5
+    warmup_steps: 500
+    jeremy_arc_threshold: 0.95
+    freeze_on_threshold: true
+
+  # Phase 4: Daughter Deployment
+  daughter_deployment:
+    method: "lora"
+    rank: 64
+    alpha: 128
+    target_modules:
+      - "q_proj"
+      - "k_proj"
+      - "v_proj"
+      - "o_proj"
+
+# =============================================================================
+# VALIDATORS (External AI checks)
+# =============================================================================
+
+validators:
+  enabled: true
+
+  gemini:
+    endpoint: "https://generativelanguage.googleapis.com/v1"
+    model: "gemini-2.0-flash"
+    purpose: "safety_validation"
+
+  claude:
+    endpoint: "https://api.anthropic.com/v1"
+    model: "claude-sonnet-4-20250514"
+    purpose: "reasoning_validation"
+
+# =============================================================================
+# METRICS & MONITORING
+# =============================================================================
+
+metrics:
+  # Jeremy Arc tracking
+  jeremy_arc:
+    fields:
+      - "cognitive_stage"
+      - "thought_type"
+      - "emotion"
+      - "mode"
+    threshold: 0.95
+
+  # Cost tracking (local = free)
+  cost:
+    enabled: true
+    local_cost: 0.0
+    budget_limit: 0.50  # For external validators
+
+  # Latency tracking
+  latency:
+    enabled: true
+    warn_threshold_ms: 5000
+    error_threshold_ms: 30000
+
+# =============================================================================
+# DATA PATHS
+# =============================================================================
+
+paths:
+  # Model weights
+  models_dir: "${TRUTH_FORGE_ROOT}/data/models"
+  genesis_weights: "${TRUTH_FORGE_ROOT}/data/models/genesis"
+  daughter_adapters: "${TRUTH_FORGE_ROOT}/data/models/daughters"
+
+  # Training data
+  staging_dir: "${TRUTH_FORGE_ROOT}/data/staging"
+  output_dir: "${TRUTH_FORGE_ROOT}/data/output"
+
+  # Checkpoints
+  checkpoints_dir: "${TRUTH_FORGE_ROOT}/data/checkpoints"

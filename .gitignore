@@ -119,3 +119,21 @@ data/
 **/web_exports/**/*.json
 **/governance_intake.jsonl
 **/.search-index/
+
+# ============================================
+# Migration Optimization (added 2026-02-11)
+# ============================================
+
+# Recursive repo copies - Genesis is its own repo
+apps/genesis/
+genesis/
+AI-Breakdown-Prevention/
+
+# Large model weights - belong on external drive
+**/lmstudio-community/
+*.gguf
+*.bin
+*.safetensors
+
+# Genesis console build (large)
+genesis-console/node_modules/

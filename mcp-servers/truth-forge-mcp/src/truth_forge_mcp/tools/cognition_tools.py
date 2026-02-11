@@ -76,7 +76,7 @@ def get_cognition_tools() -> list[tuple[Tool, Any]]:
             return "\n".join(lines)
 
         except Exception as e:
-            logger.error("get_cognitive_state_failed", error=str(e), exc_info=True)
+            logger.error("get_cognitive_state_failed: %s", e, exc_info=True)
             return f"Error getting cognitive state: {type(e).__name__}: {e!s}"
 
     tools.append((state_tool, handle_get_cognitive_state))
@@ -128,7 +128,7 @@ def get_cognition_tools() -> list[tuple[Tool, Any]]:
             return "\n".join(lines)
 
         except Exception as e:
-            logger.error("query_thoughts_failed", error=str(e), exc_info=True)
+            logger.error("query_thoughts_failed: %s", e, exc_info=True)
             return f"Error querying thoughts: {type(e).__name__}: {e!s}"
 
     tools.append((thoughts_tool, handle_query_thoughts))

@@ -49,6 +49,8 @@ For WHY this layer exists and WHAT theory documents ARE, see [README.md](README.
 | [06_LAW](06_LAW.md) | How do we survive? | Four Pillars |
 | [07_STANDARDS](07_STANDARDS.md) | How do we do things? | Standards as DNA |
 | [08_MEMORY](08_MEMORY.md) | How do we remember? | Three Memories |
+| [10_INFINITE_CONTEXT](10_INFINITE_CONTEXT.md) | How do we hold? | **THE FOUNDATION** |
+| [11_GOLDEN_RECORD](11_GOLDEN_RECORD.md) | What is immutable? | The Smelted Truth |
 | [decisions/](decisions/INDEX.md) | Why this decision? | ADRs |
 
 ---

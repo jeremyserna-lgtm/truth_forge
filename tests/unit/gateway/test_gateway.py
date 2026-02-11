@@ -45,6 +45,13 @@ class TestModelGateway:
         assert gateway.enable_cache is False
         assert gateway.cache_ttl == 1800
 
+    def test_init_includes_sovereign_providers(self) -> None:
+        """Triad providers should be available in gateway registry."""
+        gateway = ModelGateway()
+        assert ModelProvider.SCOUT in gateway._providers
+        assert ModelProvider.MAVERICK in gateway._providers
+        assert ModelProvider.R1 in gateway._providers
+
     def test_get_available_providers(self) -> None:
         """Test getting available providers."""
         gateway = ModelGateway()

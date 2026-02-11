@@ -3,7 +3,7 @@
 Achieves 95%+ coverage with all branches and edge cases tested.
 """
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from unittest.mock import Mock, patch
 
 from truth_forge.services.sync.auto_sync_service import AutoSyncService
@@ -595,7 +595,7 @@ class TestAutoSyncService:
 
         service.stats.total_synced = 100
         service.stats.total_errors = 5
-        service.stats.last_sync_time = datetime.utcnow()
+        service.stats.last_sync_time = datetime.now(UTC)
         service.stats.last_error = "Test error"
 
         stats = service.get_stats()
@@ -745,7 +745,7 @@ class TestAutoSyncService:
             service = AutoSyncService()
             service.bq_client = mock_bq_client
             service.service = mock_service
-            service.last_bq_sync = datetime.utcnow() - timedelta(hours=1)
+            service.last_bq_sync = datetime.now(UTC) - timedelta(hours=1)
 
             # Mock BigQuery query
             mock_row = Mock()

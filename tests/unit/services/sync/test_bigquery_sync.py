@@ -3,7 +3,7 @@
 Achieves 95%+ coverage with all branches and edge cases tested.
 """
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from unittest.mock import Mock, patch
 
 from truth_forge.services.sync.bigquery_sync import BigQuerySyncService
@@ -391,7 +391,7 @@ class TestBigQuerySyncService:
         mock_twenty_crm_client: Mock,
     ) -> None:
         """Test syncing all contacts with last_sync_time."""
-        last_sync = datetime.utcnow() - timedelta(hours=12)
+        last_sync = datetime.now(UTC) - timedelta(hours=12)
 
         # Mock BigQuery query results
         mock_row1 = {
@@ -470,9 +470,8 @@ class TestBigQuerySyncService:
         )
 
         with patch("truth_forge.services.sync.bigquery_sync.datetime") as mock_dt:
-            mock_now = datetime(2026, 1, 27, 12, 0, 0)
-            mock_dt.utcnow.return_value = mock_now
-            mock_dt.timedelta = timedelta
+            mock_now = datetime(2026, 1, 27, 12, 0, 0, tzinfo=UTC)
+            mock_dt.now.return_value = mock_now
 
             result = service.sync_all_contacts(batch_size=100)
 

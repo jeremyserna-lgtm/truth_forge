@@ -5,7 +5,7 @@ Nothing is hidden or suppressed.
 """
 
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
@@ -76,7 +76,7 @@ class ErrorReporter:
             Error record
         """
         error = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "system": system,
             "error_type": error_type,
             "error_message": error_message,

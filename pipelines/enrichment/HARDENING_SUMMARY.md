@@ -25,15 +25,19 @@
    - BaseEnrichment sends failed records to DLQ in `run()`.
 
 2. **Retry**
-   - `_query_bq` and `_insert` use `@retry` (stop=3, wait exponential, retry on ConnectionError/TimeoutError/OSError).
+   - `_query_bq` and `_batch_load` use `@retry` (stop=3, wait exponential, retry on ConnectionError/TimeoutError/OSError).
 
-3. **Structured logging**
+3. **Batch Loading (not Streaming)**
+   - Changed from `insert_rows_json` (streaming) to `load_table_from_file` with temp NDJSON files.
+   - No streaming buffer issues, immediate data availability for UPDATEs.
+   - Follows codebase standard: "We don't do streaming batches in this codebase".
+
+4. **Structured logging**
    - Replaced f-strings in log calls with `extra={}` in base_enrichment, utils, dlq.
 
-4. **Type fixes**
+5. **Type fixes**
    - `enriched: list[dict[str, Any]]` and `out` for per-row dict in run overrides (taxonomy, quality, fine_grained, claims).
    - `metadata` → `out_meta` in quality to avoid overwriting row metadata; explicit `dict[str, Any]`.
-   - `_insert` return type `list[Any]` with `cast` for BQ `insert_rows_json`.
    - Optional deps (textblob, nrclex, etc.) covered by mypy overrides in `pyproject.toml`.
 
 5. **Ruff**

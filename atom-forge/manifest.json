@@ -1,0 +1,28 @@
+{
+  "name": "atom-forge",
+  "version": "1.0.0",
+  "description": "Universal Knowledge Atom Gateway — anything in, knowledge atoms out. The LLM IS the transformation engine.",
+  "author": "Truth Forge (THE GENESIS)",
+  "skills": [
+    {
+      "name": "atomize",
+      "description": "Universal atomization — extract knowledge atoms from ANY data source. The LLM reads, understands, and produces 12-dimensional knowledge atoms with full deduplication.",
+      "path": "skills/atomize"
+    },
+    {
+      "name": "ingest-sessions",
+      "description": "Ingest Claude Code session JSONL files — extract knowledge atoms from LLM conversation history. Facts, decisions, emotions, patterns, solutions.",
+      "path": "skills/ingest-sessions"
+    },
+    {
+      "name": "monitor",
+      "description": "Monitor atomization pipeline status, coverage metrics, deduplication rates, and enrichment progress.",
+      "path": "skills/monitor"
+    }
+  ],
+  "references": [
+    "references/atom-schema.md",
+    "references/source-adapters.md",
+    "references/architecture.md"
+  ]
+}

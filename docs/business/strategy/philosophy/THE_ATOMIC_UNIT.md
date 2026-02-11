@@ -178,6 +178,29 @@ But at the atomic level:
 
 ---
 
+## Cross-References
+
+| Document | Relationship |
+|----------|--------------|
+| `/docs/business/plans/NOT_ME_CORE_SPECIFICATION.md` | Technical specification (AUTHORITATIVE) — defines Knowledge Atoms §12, Genesis Integration §13 |
+| `/training/GENESIS_PROTOCOL.md` | How NOT-ME learns to truly understand ME through physiological verification |
+| `/docs/business/plans/FEDERATION_OPERATING_PLAN.md` | How the Federation enables connected NOT-MEs to evolve |
+
+**The Atomic Unit and Knowledge Atoms:**
+- "One year" is the time required to generate enough Knowledge Atoms for the NOT-ME to truly know its person
+- The heartbeat ($199/mo) funds continuous atom generation and federation sync
+- Connected NOT-MEs share anonymized patterns; disconnected ones have only their own atoms
+- See: NOT_ME_CORE_SPECIFICATION §12 for formal Knowledge Atom specification
+
+**The Atomic Unit and Genesis Protocol:**
+- Genesis Protocol is HOW the NOT-ME comes to know its person in that year
+- Genesis Atoms (physiologically-verified) accelerate the knowing process
+- The Becoming (GENESIS_PROTOCOL §7.7) documents the transformation over the year
+- See: NOT_ME_CORE_SPECIFICATION §13 for Genesis Integration architecture
+
+---
+
 *The Architect sets the parameter. The technology obeys. One year is the requirement because I said so.*
 
 — January 25, 2026
+— Updated: February 1, 2026 (Cross-References Added)

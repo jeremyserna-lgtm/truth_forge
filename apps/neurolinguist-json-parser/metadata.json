@@ -1,0 +1,5 @@
+{
+  "name": "NeuroLinguist JSON Parser",
+  "description": "A deep hierarchical parser for LLM chat logs that decomposes conversations into topic segments, turns, messages, sentences, spans, and words using Gemini.",
+  "requestFramePermissions": []
+}

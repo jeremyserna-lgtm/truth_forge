@@ -2,7 +2,7 @@
 
 import json
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 
@@ -73,9 +73,9 @@ class SupabaseSyncService:
             Sync summary
         """
         if not last_sync_time:
-            from datetime import timedelta
+            from datetime import UTC, timedelta
 
-            last_sync_time = datetime.utcnow() - timedelta(hours=24)
+            last_sync_time = datetime.now(UTC) - timedelta(hours=24)
 
         result = (
             self.supabase.table("contacts_master")
@@ -128,7 +128,7 @@ class SupabaseSyncService:
         # Update sync metadata
         sync_metadata.update(
             {
-                "last_updated": datetime.utcnow().isoformat(),
+                "last_updated": datetime.now(UTC).isoformat(),
                 "last_updated_by": "supabase",
                 "version": sync_metadata.get("version", 0) + 1,
                 "sync_status": "synced",
@@ -181,7 +181,7 @@ class SupabaseSyncService:
             "recommendations": recommendations,
             "sync_metadata": sync_metadata,
             "created_at": supabase_contact.get("created_at"),
-            "updated_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.now(UTC).isoformat(),
         }
 
     def _upsert_to_bigquery(self, contact: dict[str, Any]) -> dict[str, Any]:

@@ -1,316 +1,448 @@
-"""Enrichment orchestrator - Coordinate running multiple enrichment scripts.
+#!/usr/bin/env python3
+"""Autonomous Enrichment Orchestrator.
 
 THE PATTERN:
-- HOLD₁: Enrichment scripts and configuration
-- AGENT: Orchestrator (coordinates execution)
-- HOLD₂: Complete enrichment pipeline execution
+- HOLD₁: Enrichment queue and state
+- AGENT: Orchestrator (cycles through enrichments automatically)
+- HOLD₂: Enriched entities in BigQuery
 
-Purpose: Coordinate running multiple enrichment scripts in correct order with
-dependency management, progress tracking, and error handling.
+This runs autonomously. Start it and walk away.
+It will cycle through all enrichments, handle failures, and keep going.
+
+Usage:
+    python pipelines/enrichment/orchestrator.py          # Run forever
+    python pipelines/enrichment/orchestrator.py --once   # One full cycle
+    python pipelines/enrichment/orchestrator.py --status # Show status
+
+Stop gracefully with Ctrl+C or:
+    kill -TERM $(cat /tmp/enrichment_orchestrator.pid)
 """
 
 from __future__ import annotations
 
-import argparse
+import json
 import logging
+import os
+import signal
 import subprocess
 import sys
+import time
+from dataclasses import asdict, dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 
-logger = logging.getLogger(__name__)
+# Add project root to path
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
 
-# Enrichment phases and dependencies
-ENRICHMENT_PHASES = {
-    "p0": [
-        "enrichment_triage",
-        "enrichment_coverage_expander",
+# Ensure logs directory exists before setting up logging
+(PROJECT_ROOT / "logs").mkdir(exist_ok=True)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler(PROJECT_ROOT / "logs" / "orchestrator.log"),
     ],
-    "p1": [
-        "enrichment_textblob",
-        "enrichment_textstat",
-        "enrichment_nrclx",
-        "enrichment_goemotions",
-        "enrichment_roberta_hate",
-    ],
-    "p2": [
-        "enrichment_keybert",
-        "enrichment_bertopic",
-        "enrichment_clustering",
-        "enrichment_taxonomy",
-    ],
-    "p3": [
-        "enrichment_claims",
-        "enrichment_resonance",
-        "enrichment_fine_grained",
-        "enrichment_quality",
-    ],
-}
-
-# Enrichment groups
-ENRICHMENT_GROUPS = {
-    "a": ["enrichment_textblob", "enrichment_textstat"],  # CPU-only
-    "b": ["enrichment_goemotions", "enrichment_roberta_hate"],  # Classification
-    "c": ["enrichment_keybert", "enrichment_bertopic"],  # Embedding-based
-}
-
-# Dependencies (script needs these to run)
-DEPENDENCIES = {
-    "enrichment_keybert": ["sentence_embedding"],  # Needs embeddings
-    "enrichment_bertopic": ["sentence_embedding"],  # Needs embeddings
-    "enrichment_clustering": ["sentence_embedding"],  # Needs embeddings
-    "enrichment_resonance": ["sentence_embedding"],  # Needs embeddings
-}
+)
+logger = logging.getLogger("orchestrator")
 
 
-def run_enrichment_script(script_name: str, args: list[str] | None = None) -> dict[str, Any]:
-    """Run a single enrichment script.
+# Enrichment definitions - order matters (dependencies)
+ENRICHMENTS = [
+    # Phase 1: Foundation (CPU-only, fast)
+    {
+        "name": "textblob",
+        "script": "enrichment_textblob.py",
+        "phase": 1,
+        "requires_gpu": False,
+        "priority": 1,
+    },
+    {
+        "name": "textstat",
+        "script": "enrichment_textstat.py",
+        "phase": 1,
+        "requires_gpu": False,
+        "priority": 2,
+    },
+    {
+        "name": "nrclx",
+        "script": "enrichment_nrclx.py",
+        "phase": 1,
+        "requires_gpu": False,
+        "priority": 3,
+    },
+    # Phase 2: Sovereign (CPU-only, critical for training)
+    {
+        "name": "cognitive_stage",
+        "script": "enrichment_cognitive_stage.py",
+        "phase": 2,
+        "requires_gpu": False,
+        "priority": 4,
+    },
+    {
+        "name": "confidence",
+        "script": "enrichment_confidence.py",
+        "phase": 2,
+        "requires_gpu": False,
+        "priority": 6,
+    },
+    {
+        "name": "source_attribution",
+        "script": "enrichment_source_attribution.py",
+        "phase": 2,
+        "requires_gpu": False,
+        "priority": 7,
+    },
+    # Phase 3: GPU-based (optional, skip if no GPU)
+    {
+        "name": "goemotions",
+        "script": "enrichment_goemotions.py",
+        "phase": 3,
+        "requires_gpu": True,
+        "priority": 8,
+        "extra_args": ["--batch-size", "32"],
+    },
+    {
+        "name": "roberta_hate",
+        "script": "enrichment_roberta_hate.py",
+        "phase": 3,
+        "requires_gpu": True,
+        "priority": 9,
+        "extra_args": ["--batch-size", "32"],
+    },
+]
 
-    Args:
-        script_name: Name of enrichment script (without .py)
-        args: Additional arguments to pass to script
+# Orchestrator config
+STATE_FILE = PROJECT_ROOT / "checkpoints" / "orchestrator_state.json"
+PID_FILE = Path("/tmp/enrichment_orchestrator.pid")
+LEVELS = "4,5"
+PAGE_SIZE = 5000
+CYCLE_PAUSE_MINUTES = 5  # Pause between cycles
 
-    Returns:
-        Dictionary with execution results
-    """
-    script_path = Path(__file__).parent / f"{script_name}.py"
 
-    if not script_path.exists():
-        logger.error(f"Script not found: {script_path}")
-        return {"success": False, "error": f"Script not found: {script_name}"}
+@dataclass
+class OrchestratorState:
+    """Persistent state for the orchestrator."""
 
-    cmd = [sys.executable, str(script_path)]
-    if args:
-        cmd.extend(args)
+    current_enrichment_idx: int = 0
+    cycle_count: int = 0
+    total_processed: int = 0
+    total_written: int = 0
+    total_failed: int = 0
+    started_at: str = ""
+    last_update: str = ""
+    last_enrichment: str = ""
+    last_status: str = ""
+    running: bool = False
+    enrichments_completed_this_cycle: int = 0
 
-    logger.info(f"Running: {' '.join(cmd)}")
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
 
-    try:
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=3600,  # 1 hour timeout
-        )
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "OrchestratorState":
+        # Handle missing fields gracefully
+        valid_fields = {f.name for f in cls.__dataclass_fields__.values()}
+        filtered = {k: v for k, v in data.items() if k in valid_fields}
+        return cls(**filtered)
 
-        if result.returncode == 0:
-            logger.info(f"✅ {script_name} completed successfully")
-            return {
-                "success": True,
-                "script": script_name,
-                "stdout": result.stdout,
-                "stderr": result.stderr,
-            }
+    def save(self) -> None:
+        self.last_update = datetime.utcnow().isoformat()
+        STATE_FILE.parent.mkdir(exist_ok=True)
+        STATE_FILE.write_text(json.dumps(self.to_dict(), indent=2))
+
+    @classmethod
+    def load(cls) -> "OrchestratorState":
+        if STATE_FILE.exists():
+            try:
+                return cls.from_dict(json.loads(STATE_FILE.read_text()))
+            except Exception as e:
+                logger.warning(f"Failed to load state: {e}")
+        return cls()
+
+
+class Orchestrator:
+    """Autonomous enrichment orchestrator."""
+
+    def __init__(self, run_once: bool = False, skip_gpu: bool = True) -> None:
+        self.run_once = run_once
+        self.skip_gpu = skip_gpu
+        self.state = OrchestratorState.load()
+        self.shutdown_requested = False
+        self._setup_signal_handlers()
+
+        # Ensure directories exist
+        (PROJECT_ROOT / "logs").mkdir(exist_ok=True)
+        (PROJECT_ROOT / "checkpoints").mkdir(exist_ok=True)
+        (PROJECT_ROOT / "dlq").mkdir(exist_ok=True)
+
+    def _setup_signal_handlers(self) -> None:
+        def handle_signal(signum: int, _frame: Any) -> None:
+            logger.info(f"Shutdown requested (signal {signum})")
+            self.shutdown_requested = True
+
+        signal.signal(signal.SIGINT, handle_signal)
+        signal.signal(signal.SIGTERM, handle_signal)
+
+    def _write_pid(self) -> None:
+        PID_FILE.write_text(str(os.getpid()))
+
+    def _clear_pid(self) -> None:
+        if PID_FILE.exists():
+            PID_FILE.unlink()
+
+    def _get_enrichments_to_run(self) -> list[dict[str, Any]]:
+        """Get list of enrichments to run (filter out missing scripts and GPU if needed)."""
+        enrichments = []
+        for e in ENRICHMENTS:
+            script_path = PROJECT_ROOT / "pipelines" / "enrichment" / e["script"]
+            if not script_path.exists():
+                logger.debug(f"Skipping {e['name']} - script not found")
+                continue
+            if self.skip_gpu and e.get("requires_gpu", False):
+                logger.debug(f"Skipping {e['name']} - requires GPU")
+                continue
+            enrichments.append(e)
+        return enrichments
+
+    def _run_enrichment(self, enrichment: dict[str, Any]) -> bool:
+        """Run a single enrichment script. Returns True if successful."""
+        script = enrichment["script"]
+        name = enrichment["name"]
+        extra_args = enrichment.get("extra_args", [])
+
+        script_path = PROJECT_ROOT / "pipelines" / "enrichment" / script
+
+        cmd = [
+            sys.executable,
+            str(script_path),
+            "--level", LEVELS,
+            "--mode", "null-only",
+            "--progress",
+            "--production",
+            "--page-size", str(PAGE_SIZE),
+            "--resume",  # Always try to resume
+        ]
+
+        cmd.extend(extra_args)
+
+        logger.info(f">>> Starting: {name}")
+        self.state.last_enrichment = name
+        self.state.last_status = "running"
+        self.state.save()
+
+        try:
+            env = os.environ.copy()
+            env["PYTHONPATH"] = str(PROJECT_ROOT) + ":" + env.get("PYTHONPATH", "")
+
+            result = subprocess.run(
+                cmd,
+                cwd=str(PROJECT_ROOT),
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=3600 * 4,  # 4 hour timeout per enrichment
+            )
+
+            if result.returncode == 0:
+                logger.info(f"<<< {name}: SUCCESS")
+                self.state.last_status = "success"
+                self.state.enrichments_completed_this_cycle += 1
+                return True
+            else:
+                logger.error(f"<<< {name}: FAILED (code {result.returncode})")
+                if result.stderr:
+                    # Log last 500 chars of stderr
+                    logger.error(f"    Error: {result.stderr[-500:]}")
+                self.state.last_status = "failed"
+                return False
+
+        except subprocess.TimeoutExpired:
+            logger.error(f"<<< {name}: TIMEOUT (4 hours)")
+            self.state.last_status = "timeout"
+            return False
+        except Exception as e:
+            logger.error(f"<<< {name}: ERROR - {e}")
+            self.state.last_status = "error"
+            return False
+
+    def _run_cycle(self) -> int:
+        """Run one full cycle through all enrichments. Returns count of successful runs."""
+        enrichments = self._get_enrichments_to_run()
+        if not enrichments:
+            logger.warning("No enrichments available to run!")
+            return 0
+
+        self.state.enrichments_completed_this_cycle = 0
+        logger.info(f"=" * 60)
+        logger.info(f"CYCLE {self.state.cycle_count + 1}: {len(enrichments)} enrichments")
+        logger.info(f"=" * 60)
+
+        for i, enrichment in enumerate(enrichments):
+            if self.shutdown_requested:
+                logger.info("Shutdown requested, stopping cycle")
+                break
+
+            self.state.current_enrichment_idx = i
+            self.state.save()
+
+            success = self._run_enrichment(enrichment)
+
+            if not success:
+                # Brief delay before next to avoid hammering on errors
+                time.sleep(5)
+
+            # Brief pause between enrichments
+            if not self.shutdown_requested:
+                time.sleep(2)
+
+        self.state.cycle_count += 1
+        self.state.current_enrichment_idx = 0
+        completed = self.state.enrichments_completed_this_cycle
+        self.state.save()
+
+        logger.info(f"=" * 60)
+        logger.info(f"CYCLE {self.state.cycle_count} COMPLETE: {completed}/{len(enrichments)} succeeded")
+        logger.info(f"=" * 60)
+
+        return completed
+
+    def run(self) -> None:
+        """Main orchestrator loop."""
+        self._write_pid()
+        self.state.running = True
+        self.state.started_at = datetime.utcnow().isoformat()
+        self.state.save()
+
+        logger.info("")
+        logger.info("=" * 60)
+        logger.info("   ENRICHMENT ORCHESTRATOR STARTED")
+        logger.info("=" * 60)
+        logger.info(f"PID: {os.getpid()}")
+        logger.info(f"Levels: {LEVELS}")
+        logger.info(f"Mode: {'single cycle' if self.run_once else 'continuous'}")
+        logger.info(f"GPU: {'enabled' if not self.skip_gpu else 'skipped'}")
+        logger.info(f"State file: {STATE_FILE}")
+        logger.info(f"Log file: {PROJECT_ROOT / 'logs' / 'orchestrator.log'}")
+        logger.info("=" * 60)
+        logger.info("")
+
+        try:
+            if self.run_once:
+                self._run_cycle()
+            else:
+                while not self.shutdown_requested:
+                    completed = self._run_cycle()
+
+                    if self.shutdown_requested:
+                        break
+
+                    # If nothing was processed this cycle, backfill might be complete
+                    # Increase pause time
+                    if completed == 0:
+                        pause = CYCLE_PAUSE_MINUTES * 2
+                        logger.info(f"No work done. Pausing {pause} minutes...")
+                    else:
+                        pause = CYCLE_PAUSE_MINUTES
+                        logger.info(f"Pausing {pause} minutes before next cycle...")
+
+                    # Interruptible sleep
+                    for _ in range(pause * 60):
+                        if self.shutdown_requested:
+                            break
+                        time.sleep(1)
+
+        except Exception as e:
+            logger.error(f"Orchestrator error: {e}", exc_info=True)
+        finally:
+            self.state.running = False
+            self.state.save()
+            self._clear_pid()
+            logger.info("Orchestrator stopped")
+
+    @classmethod
+    def status(cls) -> None:
+        """Print current status."""
+        state = OrchestratorState.load()
+
+        print("\n" + "=" * 60)
+        print("ENRICHMENT ORCHESTRATOR STATUS")
+        print("=" * 60)
+
+        if PID_FILE.exists():
+            pid = PID_FILE.read_text().strip()
+            try:
+                os.kill(int(pid), 0)
+                print(f"Status: RUNNING (PID {pid})")
+            except ProcessLookupError:
+                print("Status: STOPPED (stale PID file)")
         else:
-            logger.error(f"❌ {script_name} failed with return code {result.returncode}")
-            logger.error(f"Stderr: {result.stderr}")
-            return {
-                "success": False,
-                "script": script_name,
-                "returncode": result.returncode,
-                "stderr": result.stderr,
-            }
+            print("Status: STOPPED")
 
-    except subprocess.TimeoutExpired:
-        logger.error(f"❌ {script_name} timed out after 1 hour")
-        return {"success": False, "script": script_name, "error": "timeout"}
-    except Exception as e:
-        logger.error(f"❌ {script_name} raised exception: {e}")
-        return {"success": False, "script": script_name, "error": str(e)}
+        print(f"Cycles completed: {state.cycle_count}")
+        print(f"Current enrichment: {state.last_enrichment or 'none'}")
+        print(f"Last status: {state.last_status or 'none'}")
+        print(f"Started: {state.started_at or 'never'}")
+        print(f"Last update: {state.last_update or 'never'}")
 
+        # Show checkpoint files
+        checkpoint_dir = PROJECT_ROOT / "checkpoints"
+        if checkpoint_dir.exists():
+            checkpoints = [f for f in checkpoint_dir.glob("*.json") if f.name != "orchestrator_state.json"]
+            if checkpoints:
+                print(f"\nActive enrichment checkpoints: {len(checkpoints)}")
+                for cp in sorted(checkpoints)[:5]:
+                    print(f"  - {cp.name}")
+                if len(checkpoints) > 5:
+                    print(f"  ... and {len(checkpoints) - 5} more")
 
-def run_phase(phase: str, common_args: list[str] | None = None) -> dict[str, Any]:
-    """Run all scripts in a phase.
+        # Show available enrichments
+        print("\nAvailable enrichments:")
+        for e in ENRICHMENTS:
+            script_path = PROJECT_ROOT / "pipelines" / "enrichment" / e["script"]
+            exists = "✓" if script_path.exists() else "✗"
+            gpu = " (GPU)" if e.get("requires_gpu") else ""
+            print(f"  {exists} {e['name']}{gpu}")
 
-    Args:
-        phase: Phase name (p0, p1, p2, p3)
-        common_args: Common arguments for all scripts
-
-    Returns:
-        Dictionary with phase execution results
-    """
-    if phase not in ENRICHMENT_PHASES:
-        return {"success": False, "error": f"Unknown phase: {phase}"}
-
-    scripts = ENRICHMENT_PHASES[phase]
-    results = []
-
-    logger.info(f"Running phase {phase} with {len(scripts)} scripts...")
-
-    for script in scripts:
-        result = run_enrichment_script(script, common_args)
-        results.append(result)
-
-        if not result["success"]:
-            logger.warning(f"Script {script} failed, continuing with next script...")
-
-    success_count = sum(1 for r in results if r.get("success"))
-    logger.info(f"Phase {phase} complete: {success_count}/{len(scripts)} scripts succeeded")
-
-    return {
-        "phase": phase,
-        "scripts": scripts,
-        "results": results,
-        "success_count": success_count,
-        "total_count": len(scripts),
-    }
-
-
-def run_group(group: str, common_args: list[str] | None = None) -> dict[str, Any]:
-    """Run all scripts in an enrichment group.
-
-    Args:
-        group: Group name (a, b, c)
-        common_args: Common arguments for all scripts
-
-    Returns:
-        Dictionary with group execution results
-    """
-    if group not in ENRICHMENT_GROUPS:
-        return {"success": False, "error": f"Unknown group: {group}"}
-
-    scripts = ENRICHMENT_GROUPS[group]
-    results = []
-
-    logger.info(f"Running group {group} with {len(scripts)} scripts...")
-
-    for script in scripts:
-        result = run_enrichment_script(script, common_args)
-        results.append(result)
-
-    success_count = sum(1 for r in results if r.get("success"))
-    logger.info(f"Group {group} complete: {success_count}/{len(scripts)} scripts succeeded")
-
-    return {
-        "group": group,
-        "scripts": scripts,
-        "results": results,
-        "success_count": success_count,
-        "total_count": len(scripts),
-    }
-
-
-def run_all(common_args: list[str] | None = None) -> dict[str, Any]:
-    """Run all phases in sequence.
-
-    Args:
-        common_args: Common arguments for all scripts
-
-    Returns:
-        Dictionary with all phase results
-    """
-    all_results = {}
-
-    for phase in ["p0", "p1", "p2", "p3"]:
-        logger.info(f"\n{'=' * 60}")
-        logger.info(f"Starting Phase {phase.upper()}")
-        logger.info(f"{'=' * 60}\n")
-
-        phase_result = run_phase(phase, common_args)
-        all_results[phase] = phase_result
-
-        if phase_result.get("success_count", 0) < phase_result.get("total_count", 1):
-            logger.warning(f"Phase {phase} had failures. Review results before proceeding.")
-
-    total_success = sum(r.get("success_count", 0) for r in all_results.values())
-    total_scripts = sum(r.get("total_count", 0) for r in all_results.values())
-
-    logger.info(f"\n{'=' * 60}")
-    logger.info(f"All phases complete: {total_success}/{total_scripts} scripts succeeded")
-    logger.info(f"{'=' * 60}\n")
-
-    return {
-        "phases": all_results,
-        "total_success": total_success,
-        "total_scripts": total_scripts,
-    }
+        print("=" * 60 + "\n")
 
 
 def main() -> None:
-    """CLI entry point."""
+    import argparse
+
     parser = argparse.ArgumentParser(
-        description="Enrichment orchestrator - Coordinate enrichment script execution"
+        description="Autonomous Enrichment Orchestrator",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python orchestrator.py              # Run continuously
+  python orchestrator.py --once       # Run one cycle and exit
+  python orchestrator.py --status     # Show status
+  python orchestrator.py --with-gpu   # Include GPU enrichments
+
+To stop gracefully:
+  Ctrl+C or: kill -TERM $(cat /tmp/enrichment_orchestrator.pid)
+        """,
     )
-    parser.add_argument(
-        "--phase",
-        type=str,
-        choices=["p0", "p1", "p2", "p3"],
-        help="Run specific phase only",
-    )
-    parser.add_argument(
-        "--group",
-        type=str,
-        choices=["a", "b", "c"],
-        help="Run specific enrichment group only",
-    )
-    parser.add_argument(
-        "--all",
-        action="store_true",
-        help="Run all phases in sequence",
-    )
-    parser.add_argument(
-        "--script",
-        type=str,
-        help="Run specific script only",
-    )
-    parser.add_argument(
-        "--common-args",
-        type=str,
-        help="Common arguments to pass to all scripts (space-separated)",
-    )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Show what would be run without executing",
-    )
-    parser.add_argument(
-        "--verbose",
-        action="store_true",
-        help="Enable verbose logging",
-    )
+    parser.add_argument("--once", action="store_true", help="Run one cycle and exit")
+    parser.add_argument("--status", action="store_true", help="Show status and exit")
+    parser.add_argument("--with-gpu", action="store_true", help="Include GPU enrichments")
 
     args = parser.parse_args()
 
-    # Setup logging
-    level = logging.DEBUG if args.verbose else logging.INFO
-    logging.basicConfig(
-        level=level,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    if args.status:
+        Orchestrator.status()
+        return
+
+    orchestrator = Orchestrator(
+        run_once=args.once,
+        skip_gpu=not args.with_gpu,
     )
-
-    # Parse common args
-    common_args = []
-    if args.common_args:
-        common_args = args.common_args.split()
-
-    if args.dry_run:
-        common_args.append("--dry-run")
-
-    # Execute based on mode
-    if args.script:
-        result = run_enrichment_script(args.script, common_args)
-        if not result.get("success"):
-            sys.exit(1)
-
-    elif args.group:
-        result = run_group(args.group, common_args)
-        if result.get("success_count", 0) < result.get("total_count", 1):
-            sys.exit(1)
-
-    elif args.phase:
-        result = run_phase(args.phase, common_args)
-        if result.get("success_count", 0) < result.get("total_count", 1):
-            sys.exit(1)
-
-    elif args.all:
-        result = run_all(common_args)
-        if result.get("total_success", 0) < result.get("total_scripts", 1):
-            sys.exit(1)
-
-    else:
-        parser.print_help()
-        sys.exit(1)
+    orchestrator.run()
 
 
 if __name__ == "__main__":

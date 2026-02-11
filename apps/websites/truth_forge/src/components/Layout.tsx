@@ -29,7 +29,7 @@ export default function Layout() {
               </Link>
             ))}
           </div>
-          <Link to="/preorder" className="nav-cta">Preorder</Link>
+          <Link to="/login" className="nav-cta">Client Portal</Link>
         </div>
       </nav>
 
@@ -41,12 +41,20 @@ export default function Layout() {
         <div className="container">
           <div className="footer-content">
             <div className="footer-section">
-              <h3 className="footer-title">TRUTH ENGINE FAMILY</h3>
-              <div className="footer-links">
-                <a href="https://truth-engine.ai" target="_blank" rel="noopener noreferrer">Truth Engine</a>
-                <a href="https://primitive-engine.ai" target="_blank" rel="noopener noreferrer">Primitive Engine</a>
-                <a href="https://credential-atlas.ai" target="_blank" rel="noopener noreferrer">Credential Atlas</a>
-                <a href="https://stage5mind.com" target="_blank" rel="noopener noreferrer">Stage 5 Mind</a>
+              <h3 className="footer-title">THE FEDERATION</h3>
+              <div className="footer-links federation-links">
+                <a href="https://truth-engine.ai" target="_blank" rel="noopener noreferrer">
+                  <span className="link-title">Truth Engine</span>
+                  <span className="link-desc">The brain — sovereign AI you own</span>
+                </a>
+                <a href="https://primitive-engine.ai" target="_blank" rel="noopener noreferrer">
+                  <span className="link-title">Primitive Engine</span>
+                  <span className="link-desc">The builder — forges your Not-Me</span>
+                </a>
+                <a href="https://credential-atlas.ai" target="_blank" rel="noopener noreferrer">
+                  <span className="link-title">Credential Atlas</span>
+                  <span className="link-desc">The seer — certifies Stage 5</span>
+                </a>
               </div>
             </div>
             

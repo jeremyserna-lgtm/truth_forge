@@ -1,0 +1,32 @@
+{
+  "mcpServers": {
+    "truth-browser-logger": {
+      "command": "/usr/local/bin/python3.12",
+      "args": ["-m", "truth_browser_logger.server"],
+      "cwd": "${PROJECT_ROOT}/mcp-servers/truth-browser-logger",
+      "env": {
+        "PYTHONPATH": "${PROJECT_ROOT}/mcp-servers/truth-browser-logger/src"
+      }
+    },
+    "spine-analysis": {
+      "command": "/usr/local/bin/python3.12",
+      "args": ["-m", "spine_analysis_mcp.server"],
+      "cwd": "${PROJECT_ROOT}/mcp-servers/spine-analysis-mcp",
+      "env": {
+        "PYTHONPATH": "${PROJECT_ROOT}/mcp-servers/spine-analysis-mcp/src",
+        "GOOGLE_APPLICATION_CREDENTIALS": "${HOME}/.config/gcloud/application_default_credentials.json",
+        "BQ_PROJECT_ID": "flash-clover-464719-g1",
+        "BQ_DATASET_ID": "spine"
+      }
+    },
+    "truth-forge": {
+      "command": "/usr/local/bin/python3.12",
+      "args": ["-m", "truth_forge_mcp.server"],
+      "cwd": "${PROJECT_ROOT}/mcp-servers/truth-forge-mcp",
+      "env": {
+        "PYTHONPATH": "${PROJECT_ROOT}/mcp-servers/truth-forge-mcp/src",
+        "TRUTH_FORGE_ROOT": "${PROJECT_ROOT}"
+      }
+    }
+  }
+}

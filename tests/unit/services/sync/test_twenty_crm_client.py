@@ -3,7 +3,7 @@
 Achieves 95%+ coverage with all branches and edge cases tested.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 from unittest.mock import Mock, patch
 
@@ -146,7 +146,7 @@ class TestTwentyCRMClient:
         mock_requests["get"].return_value = mock_response
 
         client = TwentyCRMClient(secret_service=mock_secret_service)
-        updated_since = datetime.utcnow()
+        updated_since = datetime.now(UTC)
         result = client.list_contacts(updated_since=updated_since, limit=10)
 
         assert isinstance(result, list)

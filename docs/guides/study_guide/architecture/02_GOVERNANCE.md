@@ -276,11 +276,112 @@ Governance is not about slowing you down—it's about:
 
 ---
 
+## 🧬 Governance Technologies
+
+The governance system is implemented as four interlocking components in `truth_forge.governance`:
+
+### UnifiedGovernance (The Membrane Orchestrator)
+
+The central coordinator that brings all governance together:
+
+```python
+from truth_forge.governance import get_governance
+
+gov = get_governance()
+
+# Gate an operation
+if gov.gate_operation("write", source="agent", target="hold2"):
+    # Proceed with operation
+    pass
+
+# Check and record costs
+if gov.check_cost("openai", "completion", estimated_cost=0.05):
+    result = call_llm(...)
+    gov.record_cost("openai", "completion", actual_cost=0.04)
+```
+
+### HoldIsolation (Selective Permeability)
+
+Enforces HOLD₁/HOLD₂ boundary integrity:
+
+| Source | Operation | Target | Allowed |
+|--------|-----------|--------|---------|
+| external | write | HOLD₁ | ✅ |
+| agent | read | HOLD₁ | ✅ |
+| agent | write | HOLD₂ | ✅ |
+| external | write | HOLD₂ | ❌ |
+| consumer | write | HOLD₂ | ❌ |
+
+### CostEnforcer (Metabolic Regulation)
+
+Budget gates that protect against runaway costs:
+
+- **Daily limit**: $10.00 default
+- **Monthly limit**: $100.00 default  
+- **Per-run limit**: $1.00 default
+- **Actions**: ALLOW, WARN, DENY, THROTTLE
+
+### AuditTrail (Cellular Memory)
+
+Immutable record of all operations:
+
+- **Levels**: DEBUG, INFO, WARNING, ERROR, CRITICAL, VIOLATION
+- **Categories**: HOLD_OPERATION, AGENT_ACTION, GOVERNANCE, COST, FEDERATION, SYSTEM
+
+### The `@governed` Decorator
+
+For simple governance enforcement:
+
+```python
+from truth_forge.governance import governed
+
+@governed(operation="write", source="agent", target="hold2")
+def my_function():
+    # Automatically gated by governance
+    pass
+```
+
+---
+
 ## 📚 Next Steps
 
 Now that you understand Governance, read:
 - **[Data Flow Patterns](./03_DATA_FLOW.md)** - How governance ensures data integrity
 - **[Working with Services](../implementation/01_WORKING_WITH_SERVICES.md)** - How to use services with governance
+- **Implementation**: `src/truth_forge/governance/` for the actual code
+
+---
+
+## 🌐 External Agentic Protocols
+
+Beyond internal governance, Truth Forge integrates with three external protocols that enable agent interoperability:
+
+### Protocol Stack
+
+| Layer | Protocol | Purpose | Implementation |
+|-------|----------|---------|----------------|
+| **Discovery** | MCP (Model Context Protocol) | Tool discovery & invocation | `mcp-servers/truth-engine-mcp/` |
+| **Payment** | x402 (Coinbase) | Autonomous USDC micropayments | `src/truth_engine/x402/payments.py` |
+| **Credentials** | W3C VC 2.0 | Credential issuance & verification | Credential Atlas design |
+
+### Why These Protocols?
+
+1. **MCP (Anthropic, Nov 2024)**: Universal tool interface adopted by OpenAI, Google, Microsoft. The "USB-C for AI."
+
+2. **x402 (Coinbase, 2025)**: HTTP 402 + USDC on Base enables agent-to-agent payments without accounts or API keys.
+
+3. **W3C VC 2.0 (May 2025)**: Non-blockchain credential standard that interoperates with MIT, EU EBSI, and enterprise ecosystems.
+
+### Integration Pattern
+
+```
+External Agent → MCP (discovers tools) → x402 (pays for service) → W3C VC (receives credential)
+```
+
+**Deep Dives**:
+- `docs/research/deep_dives/01_MCP_Model_Context_Protocol.md`
+- `docs/research/deep_dives/02_x402_Agentic_Payments.md`
+- `docs/research/deep_dives/06_Integration_Roadmap.md`
 
 ---
 

@@ -1,0 +1,74 @@
+# Federation Configuration — Truth Forge (THE BRAIN)
+# Authority: Genesis Sovereign
+# Standard: FEDERATION_FOLDER_STRUCTURE.md
+
+organism:
+  name: truth_forge
+  role: THE_BRAIN
+  agent_name: Forge
+  type: subsidiary-not-me
+  generation: 0  # Genesis organism — no parent
+  
+identity:
+  business_entity: "Truth Engine LLC"
+  ein: "41-3773197"
+  sos: "20261072178"
+  stance: "I hold the soul. I maintain the state."
+  
+federation:
+  parent: genesis
+  parent_host: localhost  # Same machine (Phase 0)
+  parent_port: null       # Filesystem communication (Phase 0)
+  protocol: filesystem    # filesystem | http | grpc
+  
+  # Where Genesis reads our heartbeat
+  heartbeat_outbox: "/Users/jeremyserna/Genesis/federation/heartbeats/truth_engine/"
+  
+  # Where we find THE FRAMEWORK (we ARE the source)
+  framework_source: local  # local | remote
+  framework_path: "/Users/jeremyserna/truth_forge/framework/"
+  
+peers:
+  primitive_engine:
+    name: Prim
+    role: THE_HANDS
+    host: localhost
+    port: null
+    protocol: filesystem
+    interaction: "Prim builds on the platform Forge provides"
+    
+  credential_atlas:
+    name: Atlas
+    role: THE_EYES
+    host: localhost
+    port: null
+    protocol: filesystem
+    interaction: "Atlas certifies what Forge deploys"
+
+capabilities:
+  provides:
+    - framework_source        # THE canonical framework
+    - standards_source        # All federation standards
+    - platform_management     # Infrastructure hosting
+    - model_deployment        # Model provisioning
+    - heartbeat_maintenance   # Heartbeat patterns
+    - sovereign_deployment    # Customer deployment
+    
+  consumes:
+    - build_artifacts         # From Primitive Engine
+    - certifications          # From Credential Atlas
+    - seeing_reports          # From Credential Atlas
+
+infrastructure:
+  model_weights: "/Volumes/Sabrent 8TB External/models/weights/"
+  model_registry: "/Volumes/Sabrent 8TB External/models/registry/"
+  mcp_servers:
+    - name: truth-forge-mcp
+      path: "/Users/jeremyserna/truth_forge/mcp-servers/truth-forge-mcp/"
+      protocol: stdio
+
+# Phase 0: All on same machine, filesystem communication
+# Phase 1: Add MCP standardization  
+# Phase 2: Add HTTP heartbeat endpoints
+# Phase 3: Move to separate machine, network communication
+deployment_phase: 0

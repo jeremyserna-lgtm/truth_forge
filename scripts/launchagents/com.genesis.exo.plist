@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.genesis.exo</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/jeremyserna/truth_forge/scripts/start_exo_node.sh</string>
+    </array>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <!-- Wait 15s between restart attempts to avoid rapid crash loops -->
+    <key>ThrottleInterval</key>
+    <integer>15</integer>
+
+    <key>StandardOutPath</key>
+    <string>/tmp/exo_launchagent_stdout.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/exo_launchagent_stderr.log</string>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/jeremyserna/truth_forge/genesis/contrib/exo</string>
+
+    <!-- High scheduling priority for LLM inference -->
+    <key>Nice</key>
+    <integer>-10</integer>
+
+    <!-- Soft resource limits -->
+    <key>SoftResourceLimits</key>
+    <dict>
+        <key>NumberOfFiles</key>
+        <integer>65535</integer>
+    </dict>
+    <key>HardResourceLimits</key>
+    <dict>
+        <key>NumberOfFiles</key>
+        <integer>65535</integer>
+    </dict>
+
+    <!-- Environment variables -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOME</key>
+        <string>/Users/jeremyserna</string>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Users/jeremyserna/miniforge3/envs/exo/bin</string>
+    </dict>
+
+    <!-- ProcessType: Interactive gives higher CPU/IO priority -->
+    <key>ProcessType</key>
+    <string>Interactive</string>
+</dict>
+</plist>

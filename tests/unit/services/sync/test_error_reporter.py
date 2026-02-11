@@ -3,7 +3,7 @@
 Achieves 95%+ coverage with all branches and edge cases tested.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from unittest.mock import Mock, patch
 
 import pytest
@@ -250,7 +250,7 @@ class TestErrorReporter:
         mock_bq_client.query.return_value = query_job
 
         error = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "system": "crm_twenty",
             "error_type": "sync",
             "error_message": "Test error",
@@ -273,7 +273,7 @@ class TestErrorReporter:
         mock_bq_client.query.return_value = query_job
 
         error = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "system": "bigquery",
             "error_type": "validation",
             "error_message": "Test error",
@@ -295,7 +295,7 @@ class TestErrorReporter:
         mock_bq_client.query.return_value = query_job
 
         error = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "system": "supabase",
             "error_type": "conflict",
             "error_message": "Test error",
@@ -317,7 +317,7 @@ class TestErrorReporter:
         mock_bq_client.insert_rows_json.return_value = []  # No errors
 
         error = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "system": "crm_twenty",
             "error_type": "sync",
             "error_message": "Test error",
@@ -339,7 +339,7 @@ class TestErrorReporter:
         mock_bq_client.insert_rows_json.return_value = [{"error": "Insert failed"}]
 
         error = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "system": "crm_twenty",
             "error_type": "sync",
             "error_message": "Test error",
@@ -357,7 +357,7 @@ class TestErrorReporter:
         reporter = ErrorReporter(mock_bq_client, alert_service=alert_service)
 
         error = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "system": "crm_twenty",
             "error_type": "sync",
             "error_message": "Test error",
@@ -377,7 +377,7 @@ class TestErrorReporter:
         reporter = ErrorReporter(mock_bq_client)
 
         error = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "system": "crm_twenty",
             "error_type": "sync",
             "error_message": "Test error",
@@ -396,7 +396,7 @@ class TestErrorReporter:
         reporter = ErrorReporter(mock_bq_client, alert_service=alert_service)
 
         error = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "system": "crm_twenty",
             "error_type": "sync",
             "error_message": "Test error",

@@ -1,0 +1,16 @@
+{
+  "enrichment_name": "textblob",
+  "levels": [
+    4,
+    5
+  ],
+  "mode": "null-only",
+  "last_offset": 13500,
+  "processed_count": 8500,
+  "written_count": 8500,
+  "failed_count": 0,
+  "started_at": "2026-02-02T11:13:47.893850",
+  "updated_at": "2026-02-02T11:18:32.839652",
+  "completed": true,
+  "last_entity_id": "msg:008889736a9ded5c:0000"
+}

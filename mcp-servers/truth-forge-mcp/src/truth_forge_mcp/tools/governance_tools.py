@@ -105,7 +105,7 @@ def get_governance_tools() -> list[tuple[Tool, Any]]:
             return "\n".join(lines)
 
         except Exception as e:
-            logger.error("query_events_failed", error=str(e), exc_info=True)
+            logger.error("query_events_failed: %s", e, exc_info=True)
             return f"Error querying events: {type(e).__name__}: {e!s}"
 
     tools.append((query_events_tool, handle_query_events))
@@ -165,7 +165,7 @@ def get_governance_tools() -> list[tuple[Tool, Any]]:
             return "\n".join(lines)
 
         except Exception as e:
-            logger.error("get_recent_events_failed", error=str(e), exc_info=True)
+            logger.error("get_recent_events_failed: %s", e, exc_info=True)
             return f"Error getting recent events: {type(e).__name__}: {e!s}"
 
     tools.append((recent_events_tool, handle_get_recent_events))
@@ -225,7 +225,7 @@ def get_governance_tools() -> list[tuple[Tool, Any]]:
             return "\n".join(lines)
 
         except Exception as e:
-            logger.error("get_governance_stats_failed", error=str(e), exc_info=True)
+            logger.error("get_governance_stats_failed: %s", e, exc_info=True)
             return f"Error getting governance stats: {type(e).__name__}: {e!s}"
 
     tools.append((stats_tool, handle_get_governance_stats))

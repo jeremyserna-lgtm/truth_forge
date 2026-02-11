@@ -26,7 +26,10 @@ from truth_forge.gateway.providers import (
     BaseProvider,
     ClaudeProvider,
     GeminiProvider,
+    MaverickProvider,
     OllamaProvider,
+    R1Provider,
+    ScoutProvider,
 )
 from truth_forge.gateway.types import (
     CompletionRequest,
@@ -47,7 +50,7 @@ class ModelGateway:
     """Unified gateway for all LLM operations.
 
     Features:
-    - Provider abstraction (Claude, Gemini, Ollama)
+    - Provider abstraction (Claude, Gemini, Ollama, Scout, Maverick, R1)
     - Cost tracking and limits
     - Response caching
     - Automatic fallback
@@ -91,6 +94,9 @@ class ModelGateway:
             ModelProvider.CLAUDE: ClaudeProvider(),
             ModelProvider.GEMINI: GeminiProvider(),
             ModelProvider.OLLAMA: OllamaProvider(),
+            ModelProvider.SCOUT: ScoutProvider(),
+            ModelProvider.MAVERICK: MaverickProvider(),
+            ModelProvider.R1: R1Provider(),
         }
 
         # Metrics
@@ -183,8 +189,8 @@ class ModelGateway:
             GatewayError: If all providers fail.
         """
         if fallback_order is None:
-            # Default: try free first, then cheap, then expensive
-            fallback_order = ["ollama", "gemini", "claude"]
+            # Default: try sovereign-local first, then cloud fallback.
+            fallback_order = ["scout", "maverick", "r1", "ollama", "gemini", "claude"]
 
         errors = []
         for provider_name in fallback_order:
@@ -295,6 +301,9 @@ class ModelGateway:
             ModelProvider.CLAUDE: "claude-haiku",
             ModelProvider.GEMINI: "gemini-flash",
             ModelProvider.OLLAMA: "ollama-llama",
+            ModelProvider.SCOUT: "scout-genesis",
+            ModelProvider.MAVERICK: "maverick-genesis",
+            ModelProvider.R1: "r1-genesis",
         }
         return defaults.get(provider, "claude-haiku")
 
@@ -405,7 +414,7 @@ def prompt(
     Args:
         task: The prompt/task description.
         content: Content to process.
-        provider: Provider to use (claude, gemini, ollama).
+        provider: Provider to use (claude, gemini, ollama, scout/mlx, maverick, r1/deepseek).
         model: Specific model (or uses provider default).
         as_json: Request JSON response.
         system: System prompt.
@@ -426,6 +435,11 @@ def prompt(
             "claude": "claude-haiku",
             "gemini": "gemini-flash",
             "ollama": "ollama-llama",
+            "scout": "scout-genesis",
+            "mlx": "scout-genesis",
+            "maverick": "maverick-genesis",
+            "r1": "r1-genesis",
+            "deepseek": "r1-genesis",
         }
         model = model_map.get(provider, "claude-haiku")
 
@@ -505,6 +519,11 @@ def stream(
             "claude": "claude-haiku",
             "gemini": "gemini-flash",
             "ollama": "ollama-llama",
+            "scout": "scout-genesis",
+            "mlx": "scout-genesis",
+            "maverick": "maverick-genesis",
+            "r1": "r1-genesis",
+            "deepseek": "r1-genesis",
         }
         model = model_map.get(provider, "claude-haiku")
 

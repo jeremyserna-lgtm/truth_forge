@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "~~trigger-source": {
+      "type": "http",
+      "url": "https://mcp.trigger-tool.com/mcp"
+    },
+    "~~action-target": {
+      "type": "http",
+      "url": "https://mcp.action-tool.com/mcp"
+    }
+  }
+}

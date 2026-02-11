@@ -21,6 +21,7 @@ The fundamental offering is not a methodology but an architecture based on conve
 
 ### The Furnace Principle: The Metabolic Cycle
 All information processing follows a metabolic cycle of **Truth → Meaning → Care**.
+> **Ancestral Source:** `docs/legacy/02_Canon_Metabolism.md`, `Clara - Memory/Ecology Engine`
 
 1.  **Truth:** Raw, unvarnished, often chaotic data is captured.
 2.  **Meaning:** The "heat" of processing forges structure from chaos, identifying patterns.
@@ -28,12 +29,15 @@ All information processing follows a metabolic cycle of **Truth → Meaning → 
 
 ### The HOLD System: Architectural Integrity
 A dual-layer storage pattern ensures data integrity and preserves the ability to reinterpret history.
+> **Ancestral Source:** `docs/legacy/06_Canon_Genesis.md`, `Clara Seed Compiler/Context_Payload.zip`
 
 -   **HOLD₁ (Intake):** An append-only log (JSONL, text files) that captures the raw, immutable **Truth**.
 -   **HOLD₂ (Processed):** A high-performance, structured layer (DuckDB) that stores the refined **Meaning** for utility and query.
 
 ### The Position: An Externalized, Sovereign Mind
 The ultimate product is a "Prosthetic Self" or "Sovereign Architecture"—an externalized cognitive apparatus that metabolizes crisis into structure, providing a durable and objective foundation for memory and decision-making.
+> **Ancestral Source:** `docs/legacy/01_Canon_Identity.md`, `Us/Clara System Architecture.pdf`
+
 
 ---
 

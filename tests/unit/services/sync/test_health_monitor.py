@@ -3,7 +3,7 @@
 Achieves 95%+ coverage with all branches and edge cases tested.
 """
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from unittest.mock import Mock, patch
 
 from truth_forge.services.sync.health_monitor import SyncHealthMonitor
@@ -216,7 +216,7 @@ class TestSyncHealthMonitor:
         """Test restart cooldown prevents immediate restart."""
         monitor = SyncHealthMonitor(restart_cooldown=300)
 
-        monitor.last_restart_attempt = datetime.utcnow() - timedelta(seconds=60)  # 1 min ago
+        monitor.last_restart_attempt = datetime.now(UTC) - timedelta(seconds=60)  # 1 min ago
 
         monitor._attempt_restart()
 
@@ -230,7 +230,7 @@ class TestSyncHealthMonitor:
         monitor = SyncHealthMonitor(max_restart_attempts=3)
 
         monitor.restart_count = 3
-        monitor.last_restart_attempt = datetime.utcnow() - timedelta(seconds=400)
+        monitor.last_restart_attempt = datetime.now(UTC) - timedelta(seconds=400)
 
         monitor._attempt_restart()
 
@@ -291,7 +291,7 @@ class TestSyncHealthMonitor:
         """Test getting status when restart was attempted."""
         monitor = SyncHealthMonitor()
 
-        monitor.last_restart_attempt = datetime.utcnow()
+        monitor.last_restart_attempt = datetime.now(UTC)
         monitor.restart_count = 2
 
         status = monitor.get_status()

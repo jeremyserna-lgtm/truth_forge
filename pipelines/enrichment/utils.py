@@ -10,9 +10,16 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+import tempfile
 from typing import Any
 
 from google.cloud import bigquery
+from google.cloud.bigquery import (
+    LoadJobConfig,
+    SourceFormat,
+    WriteDisposition,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -92,7 +99,12 @@ def write_batch_to_bigquery(
     columns: list[str],
     enrichment_name: str,
 ) -> int:
-    """Write batch of enrichment data to BigQuery.
+    """Write batch of enrichment data to BigQuery using batch load.
+
+    Uses load_table_from_file instead of streaming insert for:
+    - No streaming buffer issues
+    - Better performance for batch operations
+    - Immediate data availability for updates
 
     Args:
         client: BigQuery client
@@ -120,21 +132,33 @@ def write_batch_to_bigquery(
 
             formatted_rows.append(formatted_row)
 
-        # Use load job for better performance
-        table_ref = client.get_table(table_id)
-        errors = client.insert_rows_json(table_ref, formatted_rows)
+        # Use batch load (not streaming insert)
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".ndjson", delete=False) as f:
+            for row in formatted_rows:
+                f.write(json.dumps(row) + "\n")
+            temp_path = f.name
 
-        if errors:
-            logger.error(
-                "insert_rows_errors",
-                extra={
-                    "error_count": len(errors),
-                    "errors_sample": str(errors[:5]),
-                },
+        try:
+            job_config = LoadJobConfig(
+                source_format=SourceFormat.NEWLINE_DELIMITED_JSON,
+                write_disposition=WriteDisposition.WRITE_APPEND,
+                schema_update_options=["ALLOW_FIELD_ADDITION"],
             )
-            return 0
 
-        return len(formatted_rows)
+            with open(temp_path, "rb") as source_file:
+                load_job = client.load_table_from_file(
+                    source_file,
+                    table_id,
+                    job_config=job_config,
+                )
+                load_job.result()  # Wait for completion
+
+            return len(formatted_rows)
+        finally:
+            try:
+                os.unlink(temp_path)
+            except OSError:
+                pass
 
     except Exception as e:
         logger.error(

@@ -3,7 +3,7 @@
 Achieves 95%+ coverage with all branches and edge cases tested.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 from unittest.mock import Mock, patch
 
 from truth_forge.services.sync.cdc_sync_service import (
@@ -248,7 +248,7 @@ class TestCDCSyncService:
                 entity_type="contact",
                 entity_id="123",
                 change_type=ChangeType.INSERT,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 version=1,
                 data={"name": "Test"},
                 metadata={},
@@ -296,7 +296,7 @@ class TestCDCSyncService:
                 entity_type="contact",
                 entity_id="123",
                 change_type=ChangeType.INSERT,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 version=1,
                 data={},
                 metadata={},
@@ -343,7 +343,7 @@ class TestCDCSyncService:
                 entity_type="contact",
                 entity_id="123",
                 change_type=ChangeType.INSERT,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 version=1,
                 data={},
                 metadata={},
@@ -393,7 +393,7 @@ class TestCDCSyncService:
                 entity_type="contact",
                 entity_id="123",
                 change_type=ChangeType.INSERT,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 version=1,
                 data={},
                 metadata={},
@@ -445,7 +445,7 @@ class TestCDCSyncService:
                 entity_type="business",
                 entity_id="456",
                 change_type=ChangeType.UPDATE,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 version=2,
                 data={},
                 metadata={},
@@ -504,7 +504,7 @@ class TestCDCSyncService:
                 entity_type="contact",
                 entity_id="crm_123",
                 change_type=ChangeType.UPDATE,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 version=2,
                 data={},
                 metadata={},
@@ -563,7 +563,7 @@ class TestCDCSyncService:
                 entity_type="contact",
                 entity_id="uuid-123",
                 change_type=ChangeType.UPDATE,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 version=2,
                 data={},
                 metadata={},
@@ -615,7 +615,7 @@ class TestCDCSyncService:
                 entity_type="contact",
                 entity_id="123",
                 change_type=ChangeType.INSERT,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 version=1,
                 data={},
                 metadata={},
@@ -666,7 +666,7 @@ class TestCDCSyncService:
                 entity_type="contact",
                 entity_id="123",
                 change_type=ChangeType.INSERT,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(UTC),
                 version=1,
                 data={},
                 metadata={},
@@ -914,7 +914,7 @@ class TestCDCSyncService:
             mock_row.entity_type = "contact"
             mock_row.entity_id = "123"
             mock_row.change_type = "INSERT"
-            mock_row.timestamp = datetime.utcnow()
+            mock_row.timestamp = datetime.now(UTC)
             mock_row.version = 1
             mock_row.data = '{"name": "Test"}'
             mock_row.metadata = "{}"
@@ -1007,7 +1007,7 @@ class TestCDCSyncService:
             # Mock status query result
             mock_row = Mock()
             mock_row.source = "bigquery"
-            mock_row.last_sync = datetime.utcnow()
+            mock_row.last_sync = datetime.now(UTC)
             mock_row.change_count = 5
 
             query_job2 = Mock()

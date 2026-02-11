@@ -8,7 +8,7 @@ import logging
 import subprocess
 import threading
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -143,7 +143,7 @@ class SyncHealthMonitor:
         """Attempt to restart sync service."""
         # Check cooldown
         if self.last_restart_attempt:
-            elapsed = (datetime.utcnow() - self.last_restart_attempt).total_seconds()
+            elapsed = (datetime.now(UTC) - self.last_restart_attempt).total_seconds()
             if elapsed < self.restart_cooldown:
                 logger.debug(f"Restart cooldown active ({elapsed:.0f}s / {self.restart_cooldown}s)")
                 return
@@ -177,12 +177,12 @@ class SyncHealthMonitor:
             else:
                 logger.error(f"Failed to restart sync service: {result.stderr.decode()}")
                 self.restart_count += 1
-                self.last_restart_attempt = datetime.utcnow()
+                self.last_restart_attempt = datetime.now(UTC)
 
         except Exception as e:
             logger.error(f"Error restarting sync service: {e}", exc_info=True)
             self.restart_count += 1
-            self.last_restart_attempt = datetime.utcnow()
+            self.last_restart_attempt = datetime.now(UTC)
 
     def get_status(self) -> dict[str, Any]:
         """Get monitor status.

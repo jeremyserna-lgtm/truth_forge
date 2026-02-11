@@ -166,7 +166,7 @@ class BaseService(ABC):
         # Publish governance event, unless we ARE the governance service
         if self.service_name != "governance":
             mediator = cast("MediatorProtocol", get_service("mediator"))
-            mediator.publish("governance.record", event.dict())
+            mediator.publish("governance.record", event.model_dump())
 
         self._logger.debug(
             "record_inhaled",

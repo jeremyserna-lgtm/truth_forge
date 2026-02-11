@@ -105,7 +105,7 @@ def get_pipeline_tools() -> list[tuple[Tool, Any]]:
             return "\n".join(lines)
 
         except Exception as e:
-            logger.error("get_pipeline_status_failed", error=str(e), exc_info=True)
+            logger.error("get_pipeline_status_failed: %s", e, exc_info=True)
             return f"Error getting pipeline status: {type(e).__name__}: {e!s}"
 
     tools.append((pipeline_status_tool, handle_get_pipeline_status))
@@ -210,7 +210,7 @@ def get_pipeline_tools() -> list[tuple[Tool, Any]]:
             return "\n".join(lines)
 
         except Exception as e:
-            logger.error("get_stage_status_failed", error=str(e), exc_info=True)
+            logger.error("get_stage_status_failed: %s", e, exc_info=True)
             return f"Error getting stage status: {type(e).__name__}: {e!s}"
 
     tools.append((stage_status_tool, handle_get_stage_status))

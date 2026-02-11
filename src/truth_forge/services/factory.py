@@ -344,6 +344,18 @@ def _auto_register_services() -> None:
     with contextlib.suppress(ImportError):
         from truth_forge.services.knowledge import KnowledgeService  # noqa: F401
 
+    # Explorer service - autonomous data exploration with cognitive architecture
+    with contextlib.suppress(ImportError):
+        from truth_forge.services.explorer import ExplorerService  # noqa: F401
+
+    # Document service - LLM-first document retrieval and management
+    with contextlib.suppress(ImportError):
+        from truth_forge.services.document import DocumentService  # noqa: F401
+
+    # Genesis Heartbeat - NOT-ME's autonomic nervous system
+    with contextlib.suppress(ImportError):
+        from truth_forge.daemon.genesis_heartbeat import GenesisHeartbeat  # noqa: F401
+
 
 # Register services on import
 _auto_register_services()

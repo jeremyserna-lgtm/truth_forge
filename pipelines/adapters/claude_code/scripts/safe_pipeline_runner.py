@@ -185,8 +185,10 @@ class PipelineValidator:
                 print(f"  ❌ Preflight check failed:\n{result.stderr}")
                 return False
         except Exception as e:
-            print(f"  ⚠️  Preflight check error: {e}")
-            return True  # Don't block on preflight errors
+            logger.error("preflight_check_error", extra={"error": str(e)})
+            print(f"  ❌ Preflight check error: {e}")
+            self.errors.append(f"Preflight check error: {e}")
+            return False  # MUST block on preflight errors - no silent failures
     
     def validate_all(self, source_dir: Optional[Path] = None) -> Tuple[bool, List[str], List[str]]:
         """Run all validations."""
@@ -380,8 +382,8 @@ Examples:
                        help="Resume from last checkpoint")
     parser.add_argument("--resume-from", type=int,
                        help="Resume from specific stage number")
-    parser.add_argument("--skip-validation", action="store_true",
-                       help="Skip pre-run validation")
+    # REMOVED: --skip-validation flag
+    # Per DATA PROTECTION LAWS: Validation is MANDATORY, no bypass allowed
     parser.add_argument("--non-interactive", action="store_true",
                        help="Run without user confirmation (for automation)")
     
@@ -411,20 +413,21 @@ Examples:
         print("❌ No stages to run")
         return 1
     
-    # Run validation unless skipped
-    if not args.skip_validation:
-        validator = PipelineValidator()
-        valid, errors, warnings = validator.validate_all(args.source_dir)
-        
-        if not valid:
-            print("\n❌ Validation failed. Fix errors before running pipeline.")
-            print("\nTo skip validation (not recommended), use --skip-validation")
+    # Run validation ALWAYS - no bypass allowed per DATA PROTECTION LAWS
+    validator = PipelineValidator()
+    valid, errors, warnings = validator.validate_all(args.source_dir)
+
+    if not valid:
+        print("\n❌ Validation failed. Fix errors before running pipeline.")
+        print("\nValidation is MANDATORY. There is no bypass option.")
+        logger.error("validation_failed", extra={"errors": errors, "warnings": warnings})
+        return 1
+
+    if warnings and not args.non_interactive:
+        response = input("\n⚠️  Warnings found. Continue anyway? [y/N]: ").strip().lower()
+        if response != 'y':
+            logger.info("user_declined_warnings")
             return 1
-        
-        if warnings and not args.non_interactive:
-            response = input("\n⚠️  Warnings found. Continue anyway? [y/N]: ").strip().lower()
-            if response != 'y':
-                return 1
     
     # Determine if interactive
     interactive = args.full_safe_run or args.stage_by_stage

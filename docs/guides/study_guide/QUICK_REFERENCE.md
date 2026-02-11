@@ -75,12 +75,35 @@ data = service.inhale(query="...", limit=100)
 
 ## Governance Requirements
 
-### 1. Traceability
+### 1. Unified Governance (Preferred)
 ```python
-from architect_central_services.core import get_logger, get_current_run_id
+from truth_forge.governance import get_governance, governed
+
+gov = get_governance()
+
+# Gate operations
+if gov.gate_operation("write", source="agent", target="hold2"):
+    # Proceed with operation
+    pass
+
+# Check costs before expensive operations
+if gov.check_cost("openai", "completion", estimated_cost=0.05):
+    result = call_llm(...)
+    gov.record_cost("openai", "completion", actual_cost=0.04)
+
+# Or use the decorator
+@governed(operation="write", source="agent", target="hold2")
+def my_function():
+    pass
+```
+
+### 2. Traceability
+```python
+from truth_forge.governance import get_current_run_id
+import logging
 
 run_id = get_current_run_id()
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 logger.info("Operation", extra={
     'run_id': run_id,
@@ -89,34 +112,39 @@ logger.info("Operation", extra={
 })
 ```
 
-### 2. Audit Trail
+### 3. Audit Trail
 ```python
-from architect_central_services.governance.governance_service.unified_governance import get_unified_governance
-from architect_central_services.governance.governance_service.models import AuditRecord
+from truth_forge.governance import get_governance, AuditRecord, AuditCategory
 
-governance = get_unified_governance()
-governance.record_audit(AuditRecord(
-    operation="my_operation",
+gov = get_governance()
+gov.record_agent_action(
+    action="my_operation",
     component=__name__,
-    run_id=run_id,
-    status="success"
-))
+    success=True,
+    details={"records_processed": 100}
+)
 ```
 
-### 3. Error Handling
+### 4. Cost Enforcement
 ```python
-from architect_central_services.governance.diagnostic_enforcer import require_diagnostic_on_error
+from truth_forge.governance import CostEnforcer, BudgetConfig
 
-try:
-    result = do_work()
-except Exception as e:
-    diagnostic = require_diagnostic_on_error(
-        error=e,
-        operation="my_operation",
-        component=__name__,
-        run_id=run_id
-    )
-    raise
+# Custom budget limits
+config = BudgetConfig(
+    daily_budget_usd=Decimal("10.00"),
+    monthly_budget_usd=Decimal("100.00"),
+    per_run_budget_usd=Decimal("1.00")
+)
+```
+
+### 5. HOLD Isolation
+```python
+from truth_forge.governance import HoldIsolation, HoldLayer
+
+isolation = HoldIsolation()
+allowed, reason = isolation.check_with_reason(
+    "write", source="agent", target="hold2"
+)
 ```
 
 ---
