@@ -137,3 +137,8 @@ AI-Breakdown-Prevention/
 
 # Genesis console build (large)
 genesis-console/node_modules/
+
+# Large data files (exceed GitHub 100MB limit)
+AI-Breakdown-Prevention/
+training/consciousness_archive/
+*.json.bak
