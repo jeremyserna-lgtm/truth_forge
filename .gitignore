@@ -142,3 +142,4 @@ genesis-console/node_modules/
 AI-Breakdown-Prevention/
 training/consciousness_archive/
 *.json.bak
+.DS_Store
