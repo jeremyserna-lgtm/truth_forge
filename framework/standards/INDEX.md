@@ -270,7 +270,7 @@ How THE FRAMEWORK patterns manifest at the standards layer:
 | Position | Document |
 |----------|----------|
 | **ALPHA** | [00_GENESIS](../00_GENESIS.md) |
-| **PREVIOUS** | [08_MEMORY](../08_MEMORY.md) ← (from theory layer) |
+| **PREVIOUS** | [09_MEMORY](../09_MEMORY.md) ← (from theory layer) |
 | **NEXT** | [00_GENESIS](../00_GENESIS.md) → (loop closes) |
 | **OMEGA** | **standards/INDEX.md** (you are here) → returns to ALPHA |
 
@@ -295,8 +295,8 @@ This index is shaped by theory:
 - [04_ARCHITECTURE](../04_ARCHITECTURE.md) - HOLD:AGENT:HOLD structure
 - [05_EXTENSION](../05_EXTENSION.md) - The Molt principle
 - [06_LAW](../06_LAW.md) - Four Pillars of Hardening
-- [07_STANDARDS](../07_STANDARDS.md) - Standards as DNA
-- [08_MEMORY](../08_MEMORY.md) - Three memory types
+- [08_STANDARDS](../08_STANDARDS.md) - Standards as DNA
+- [09_MEMORY](../09_MEMORY.md) - Three memory types
 
 ---
 

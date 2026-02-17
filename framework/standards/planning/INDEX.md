@@ -2,7 +2,7 @@
 
 **The Standard** | Plans are not done until gates verify EXISTENCE, not just PASSING.
 
-**Authority**: [07_STANDARDS.md](../../07_STANDARDS.md) | **Status**: CANONICAL
+**Authority**: [08_STANDARDS.md](../../08_STANDARDS.md) | **Status**: CANONICAL
 
 ---
 

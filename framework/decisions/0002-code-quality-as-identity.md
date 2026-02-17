@@ -76,7 +76,7 @@ New approach: Standards as identity Claude embodies.
 ## References
 
 - [standards/code_quality/](../standards/code_quality/) - Canonical standard
-- [07_STANDARDS](../07_STANDARDS.md) - Standards as DNA
+- [08_STANDARDS](../08_STANDARDS.md) - Standards as DNA
 
 ---
 

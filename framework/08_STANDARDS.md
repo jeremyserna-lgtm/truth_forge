@@ -1,4 +1,4 @@
-# 07_STANDARDS
+# 08_STANDARDS
 
 **How We Do Things. Standards as Crystallized Decisions.**
 
@@ -10,7 +10,7 @@
 
 ### Standards as DNA
 
-Standards are the **genetic memory** of the organism (see [08_MEMORY](08_MEMORY.md)).
+Standards are the **genetic memory** of the organism (see [09_MEMORY](09_MEMORY.md)).
 
 ```
 DNA → Protein Synthesis → Consistent Cell Behavior
@@ -144,7 +144,7 @@ A good standard is invisible when followed and loud when violated.
 |----------|----------|
 | **ALPHA** | [00_GENESIS](00_GENESIS.md) |
 | **PREVIOUS** | [06_LAW](06_LAW.md) |
-| **NEXT** | [08_MEMORY](08_MEMORY.md) |
+| **NEXT** | [09_MEMORY](09_MEMORY.md) |
 | **UP** | [INDEX.md](INDEX.md) |
 
 ---

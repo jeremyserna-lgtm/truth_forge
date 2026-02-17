@@ -26,7 +26,7 @@ truth_forge/
     ├── 04_ARCHITECTURE.md    # Theory - HOLD:AGENT:HOLD
     ├── 05_EXTENSION.md       # Theory - The Molt
     ├── 06_LAW.md             # Theory - Inviolable rules
-    ├── 07_STANDARDS.md       # Theory - Standards as law
+    ├── 08_STANDARDS.md       # Theory - Standards as law
     │
     ├── standards/            # Canonical standards
     │   ├── INDEX.md          # Standards registry

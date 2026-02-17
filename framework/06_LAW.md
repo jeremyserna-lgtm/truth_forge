@@ -294,7 +294,7 @@ These are the Four Pillars. They are non-negotiable. They cannot be overridden b
 |----------|----------|
 | **ALPHA** | [00_GENESIS](00_GENESIS.md) |
 | **PREVIOUS** | [05_EXTENSION](05_EXTENSION.md) ← |
-| **NEXT** | [07_STANDARDS](07_STANDARDS.md) → |
+| **NEXT** | [08_STANDARDS](08_STANDARDS.md) → |
 | **UP** | [INDEX.md](INDEX.md) |
 
 ### All Documents
@@ -307,8 +307,8 @@ These are the Four Pillars. They are non-negotiable. They cannot be overridden b
 | `03_METABOLISM` | How do we process? | Furnace, Anchors |
 | `04_ARCHITECTURE` | How do we build? | Structure, Memory |
 | `05_EXTENSION` | How do we connect? | Interface, Evolution |
-| `07_STANDARDS` | How do we do things? | Standards as DNA |
-| `08_MEMORY` | How do we remember? | Three memories |
+| `08_STANDARDS` | How do we do things? | Standards as DNA |
+| `09_MEMORY` | How do we remember? | Three memories |
 
 ---
 

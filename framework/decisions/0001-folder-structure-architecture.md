@@ -57,7 +57,7 @@ framework/
 ├── 00_GENESIS.md           # AXIOMATIC - what IS true
 ├── 01_IDENTITY.md
 ├── ...
-├── 07_STANDARDS.md
+├── 08_STANDARDS.md
 ├── standards/              # NORMATIVE - what MUST be done
 ├── insights/               # EXPLORATORY - what COULD be understood
 ├── decisions/              # ADRs - why we decided what we decided

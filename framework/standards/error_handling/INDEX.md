@@ -2,7 +2,7 @@
 
 **The Standard** | Every failure is anticipated, caught, logged, and recoverable. Never drop data.
 
-**Authority**: [07_STANDARDS.md](../../07_STANDARDS.md) | **Status**: CANONICAL
+**Authority**: [08_STANDARDS.md](../../08_STANDARDS.md) | **Status**: CANONICAL
 
 ---
 

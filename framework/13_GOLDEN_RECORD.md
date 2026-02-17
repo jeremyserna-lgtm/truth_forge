@@ -1,4 +1,4 @@
-# 11_GOLDEN_RECORD — The Smelted Truth
+# 13_GOLDEN_RECORD — The Smelted Truth
 
 **Source:** NotebookLM Synthesis (2026-02-01)
 **Status:** CANONICAL - These are the immutable axioms of the Sovereign Digital Self

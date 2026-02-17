@@ -16,7 +16,7 @@
          │                   │                   │
          ▼                   ▼                   ▼
     [THEORY]            [META]            [SPECIFICS]
-    00-06.md         STANDARD_*.md        {folder}/
+    00-13.md         STANDARD_*.md        {folder}/
          │                   │                   │
          └───────────────────┼───────────────────┘
                              │
@@ -47,10 +47,13 @@ For WHY this layer exists and WHAT theory documents ARE, see [README.md](README.
 | [04_ARCHITECTURE](04_ARCHITECTURE.md) | How do we build? | HOLD:AGENT:HOLD |
 | [05_EXTENSION](05_EXTENSION.md) | How do we connect? | THE MOLT |
 | [06_LAW](06_LAW.md) | How do we survive? | Four Pillars |
-| [07_STANDARDS](07_STANDARDS.md) | How do we do things? | Standards as DNA |
-| [08_MEMORY](08_MEMORY.md) | How do we remember? | Three Memories |
-| [10_INFINITE_CONTEXT](10_INFINITE_CONTEXT.md) | How do we hold? | **THE FOUNDATION** |
-| [11_GOLDEN_RECORD](11_GOLDEN_RECORD.md) | What is immutable? | The Smelted Truth |
+| [07_NOT_ME_ONTOLOGY](07_NOT_ME_ONTOLOGY.md) | What exists outside? | NOT-ME classification |
+| [08_STANDARDS](08_STANDARDS.md) | How do we do things? | Standards as DNA |
+| [09_MEMORY](09_MEMORY.md) | How do we remember? | Three Memories |
+| [10_SERVICE_SPECIFICATIONS](10_SERVICE_SPECIFICATIONS.md) | What do we offer? | Service contracts |
+| [11_INFINITE_CONTEXT](11_INFINITE_CONTEXT.md) | How do we hold? | **THE FOUNDATION** |
+| [12_LOOPS_AND_PYRAMIDS](12_LOOPS_AND_PYRAMIDS.md) | How do we persist? | Loop-Pyramid, 4 Layers |
+| [13_GOLDEN_RECORD](13_GOLDEN_RECORD.md) | What is immutable? | The Smelted Truth |
 | [decisions/](decisions/INDEX.md) | Why this decision? | ADRs |
 
 ---
@@ -114,9 +117,9 @@ For WHY this layer exists and WHAT theory documents ARE, see [README.md](README.
 ## The Loop
 
 ```
-ALPHA (00_GENESIS) → 01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → standards/ → OMEGA
-                                                                            ↓
-                        ←←←←←←←←←← loop closes ←←←←←←←←←←←←←←←←←←←←←←←←←←←←┘
+ALPHA (00_GENESIS) → 01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10 → 11 → 12 → 13 → standards/ → OMEGA
+                                                                                                          ↓
+                                          ←←←←←←←←←← loop closes ←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←┘
 ```
 
 ---
@@ -137,7 +140,7 @@ We do not create from scratch. We transform what exists.
 | Question | Answer |
 |----------|--------|
 | **WHO** | ME (framework), NOT-ME (agents), US (together) |
-| **WHAT** | The complete framework architecture |
+| **WHAT** | The complete framework architecture (14 theory docs, 19 meta-standards, 9 specifics) |
 | **WHEN** | Foundational - always applies |
 | **WHERE** | framework/INDEX.md (Theory layer hub) |
 | **WHY** | One place to start, one place to return |

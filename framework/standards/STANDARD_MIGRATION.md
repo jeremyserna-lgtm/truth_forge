@@ -132,7 +132,7 @@ For each source file, determine category:
 
 | Source File | Exists in Target? | Belongs in Framework? | Category |
 |-------------|-------------------|----------------------|----------|
-| 07_STANDARDS.md | No | Yes | GAP |
+| 08_STANDARDS.md | No | Yes | GAP |
 | CODE_QUALITY.md | Yes (code_quality/) | Yes | REDUNDANCY |
 | general/*.md | No | No | EJECTION |
 | archive/*.md | N/A | N/A | ARCHIVE |

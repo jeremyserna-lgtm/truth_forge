@@ -2,7 +2,7 @@
 
 **The Standard** | Every behavior is verified, every edge case anticipated, every regression prevented.
 
-**Authority**: [07_STANDARDS.md](../../07_STANDARDS.md) | **Status**: CANONICAL
+**Authority**: [08_STANDARDS.md](../../08_STANDARDS.md) | **Status**: CANONICAL
 
 ---
 

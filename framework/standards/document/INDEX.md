@@ -2,7 +2,7 @@
 
 **The Standard** | Documents are the universal primitive. Eight primitives govern all documents.
 
-**Authority**: [07_STANDARDS.md](../../07_STANDARDS.md) | **Status**: CANONICAL
+**Authority**: [08_STANDARDS.md](../../08_STANDARDS.md) | **Status**: CANONICAL
 
 ---
 

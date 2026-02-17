@@ -2,7 +2,7 @@
 
 **The Standard** | 90% test coverage is MANDATORY. Zero exceptions. Zero excuses. Zero dishonesty.
 
-**Authority**: [07_STANDARDS.md](../../07_STANDARDS.md) | **Status**: CANONICAL | **Enforcement**: BLOCKING
+**Authority**: [08_STANDARDS.md](../../08_STANDARDS.md) | **Status**: CANONICAL | **Enforcement**: BLOCKING
 
 ---
 

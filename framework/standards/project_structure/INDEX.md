@@ -2,7 +2,7 @@
 
 **The Standard** | Industry-standard structure, unique thinking. Compete at architecture, not scaffolding.
 
-**Authority**: [07_STANDARDS.md](../../07_STANDARDS.md) | **Status**: CANONICAL
+**Authority**: [08_STANDARDS.md](../../08_STANDARDS.md) | **Status**: CANONICAL
 
 ---
 

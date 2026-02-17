@@ -1,4 +1,4 @@
-# 08_MEMORY
+# 09_MEMORY
 
 **How We Remember. Memory as Externalized Cognition.**
 
@@ -50,7 +50,7 @@ Standards are the DNA of the organism—the encoded instructions that ensure con
 | **Gene Expression** | Standard application in context |
 | **Mutation** | Standard evolution through deprecation |
 
-See [07_STANDARDS](07_STANDARDS.md) for the genetic code.
+See [08_STANDARDS](08_STANDARDS.md) for the genetic code.
 
 ### The Procedural Memory: Agent Knowledge
 
@@ -183,7 +183,7 @@ The organism that forgets repeats.
 | Position | Document |
 |----------|----------|
 | **ALPHA** | [00_GENESIS](00_GENESIS.md) |
-| **PREVIOUS** | [07_STANDARDS](07_STANDARDS.md) |
+| **PREVIOUS** | [08_STANDARDS](08_STANDARDS.md) |
 | **NEXT** | [standards/INDEX.md](standards/INDEX.md) → OMEGA |
 | **UP** | [INDEX.md](INDEX.md) |
 
